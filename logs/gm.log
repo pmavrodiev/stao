@@ -1,0 +1,62 @@
+2017-02-13 16:58:53,181 - INFO - [input_reader]	Read settings from settings.cfg
+2017-02-13 16:58:53,181 - INFO - [input_reader]	Reading input files from cache into Pandas data frames
+2017-02-13 16:58:53,181 - ERROR - [input_reader]	Cannot find cache for the input data. Generate the cache by running with cache disabled in the settings.
+2017-02-13 16:59:19,239 - INFO - [input_reader]	Read settings from settings.cfg
+2017-02-13 16:59:19,240 - INFO - [input_reader]	Reading input files into Pandas data frames
+2017-02-13 17:00:38,518 - INFO - [input_reader]	Read settings from settings.cfg
+2017-02-13 17:00:38,519 - INFO - [input_reader]	Reading input files into Pandas data frames
+2017-02-13 17:03:52,187 - INFO - [input_reader]	Caching input data
+2017-02-13 17:04:01,059 - INFO - [input_reader]	Done reading input data
+2017-02-13 17:04:02,830 - INFO - [main]	Obtaining all drive times only for hektars from which a Migros store is reachable
+2017-02-13 17:04:24,040 - INFO - [main]	Enriching with store information
+2017-02-13 17:04:53,413 - INFO - [main]	86194 stores appear in drivetimes, but have no associated information in stores_sm.csv
+2017-02-13 17:04:53,414 - INFO - [main]	Enriching with Haushalt information
+2017-02-13 17:05:34,100 - INFO - [main]	Computing LAT and RLAT
+2017-02-13 17:05:56,001 - INFO - [main]	Computing Marktanteil. Takes a while
+2017-02-13 17:23:06,477 - INFO - [main]	Computing local Umsatzpotential
+2017-02-13 17:23:07,709 - INFO - [main]	Serializing final data frame 
+2017-02-13 17:24:09,031 - INFO - [main]	Done
+2017-02-13 17:24:41,906 - INFO - [main]	Computing total Umsatz potential for relevant Migros stores
+2017-02-13 17:24:43,929 - INFO - [main]	Done
+2017-02-13 17:24:43,929 - INFO - [main]	Generating output csv
+2017-02-13 17:24:43,937 - INFO - [main]	Done
+2017-02-13 17:40:49,944 - INFO - [input_reader]	Read settings from settings.cfg
+2017-02-13 17:40:49,945 - INFO - [input_reader]	Reading input files from cache into Pandas data frames
+2017-02-13 17:40:57,314 - INFO - [main]	Obtaining all drive times only for hektars from which a Migros store is reachable
+2017-02-13 17:41:16,856 - INFO - [main]	Enriching with store information
+2017-02-13 17:41:43,003 - INFO - [main]	32 stores appear in drivetimes, but have no associated information in stores_sm.csv
+2017-02-13 17:41:43,004 - INFO - [main]	Enriching with Haushalt information
+2017-02-13 17:42:05,016 - INFO - [main]	Computing LAT and RLAT
+2017-02-13 17:42:18,867 - INFO - [main]	Computing Marktanteil. Takes a while
+2017-02-13 17:56:06,408 - INFO - [main]	Computing local Umsatzpotential
+2017-02-13 17:56:07,487 - INFO - [main]	Serializing final data frame 
+2017-02-13 17:56:51,793 - INFO - [main]	Done
+2017-02-13 17:57:08,890 - INFO - [main]	Computing total Umsatz potential for relevant Migros stores
+2017-02-13 17:57:10,613 - INFO - [main]	Done
+2017-02-13 17:57:10,613 - INFO - [main]	Generating output csv
+2017-02-13 17:57:10,621 - INFO - [main]	Done
+2017-03-07 17:02:37,262 - INFO - [input_reader]	Read settings from settings.cfg
+2017-03-07 17:02:37,263 - INFO - [input_reader]	Reading input files from cache into Pandas data frames
+2017-03-07 17:02:49,003 - INFO - [main]	Obtaining all drive times only for hektars from which a Migros store is reachable
+2017-03-07 17:03:11,315 - INFO - [main]	Enriching with store information
+2017-03-07 17:03:40,029 - INFO - [main]	32 stores appear in drivetimes, but have no associated information in stores_sm.csv
+2017-03-07 17:03:40,030 - INFO - [main]	Enriching with Haushalt information
+2017-03-07 17:04:03,988 - INFO - [main]	Computing LAT and RLAT
+2017-03-07 17:04:20,144 - INFO - [main]	Computing Marktanteil. Takes a while
+2017-03-07 17:19:48,171 - INFO - [main]	Computing local Umsatzpotential
+2017-03-07 17:19:49,311 - INFO - [main]	Serializing final data frame 
+2017-03-07 17:20:33,898 - INFO - [main]	Done
+2017-03-07 17:21:01,394 - INFO - [main]	Computing total Umsatz potential for relevant Migros stores
+2017-03-07 17:21:03,424 - INFO - [main]	Done
+2017-03-07 17:21:03,424 - INFO - [main]	Generating output csv
+2017-03-07 17:21:03,462 - INFO - [main]	Done
+2017-03-08 08:09:20,893 - INFO - [input_reader]	Read settings from settings.cfg
+2017-03-08 08:09:20,894 - INFO - [input_reader]	Reading input files from cache into Pandas data frames
+2017-03-08 08:32:04,236 - INFO - [input_reader]	Read settings from settings.cfg
+2017-03-08 08:32:04,236 - INFO - [input_reader]	Reading input files from cache into Pandas data frames
+2017-03-08 08:33:08,850 - INFO - [input_reader]	Read settings from settings.cfg
+2017-03-08 08:33:08,850 - INFO - [input_reader]	Reading input files from cache into Pandas data frames
+2017-03-08 09:32:02,880 - INFO - [input_reader]	Read settings from settings.cfg
+2017-03-08 09:32:02,881 - INFO - [input_reader]	Reading input files from cache into Pandas data frames
+2017-03-08 09:37:22,341 - INFO - [input_reader]	Read settings from settings.cfg
+2017-03-08 09:37:22,342 - INFO - [input_reader]	Reading input files from cache into Pandas data frames
