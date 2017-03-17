@@ -4,3 +4,16 @@
 2017-03-17 11:51:42,407 - INFO - [input_reader]	Done reading input data
 2017-03-17 11:51:42,408 - INFO - [main]	MAIN ALGO BEGINS
 2017-03-17 11:51:42,408 - INFO - [main]	Subsetting only the hektars from which a Migros store is reachable
+2017-03-17 11:54:16,942 - INFO - [main]	Obtaining all drive times only for hektars from which a Migros store is reachable
+2017-03-17 11:54:36,579 - INFO - [main]	Enriching with store information
+2017-03-17 11:55:03,251 - INFO - [main]	22 stores appear in drivetimes, but have no associated information in stores_sm.csv
+2017-03-17 11:55:03,252 - INFO - [main]	Enriching with Haushalt information
+2017-03-17 11:55:29,836 - INFO - [main]	Computing LAT and RLAT
+2017-03-17 11:55:42,040 - INFO - [main]	Computing Marktanteil. Takes a while
+2017-03-17 12:08:36,514 - INFO - [main]	Computing local Umsatzpotential
+2017-03-17 12:08:37,531 - INFO - [main]	Serializing final data frame 
+2017-03-17 12:09:19,076 - INFO - [main]	Done
+2017-03-17 12:09:33,714 - INFO - [main]	Computing total Umsatz potential for relevant Migros stores
+2017-03-17 12:09:36,833 - INFO - [main]	Done
+2017-03-17 12:09:36,834 - INFO - [main]	Generating output csv
+2017-03-17 12:09:36,851 - INFO - [main]	Done
