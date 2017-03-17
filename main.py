@@ -17,11 +17,15 @@ settingsFile = "settings.cfg"
 
 if __name__ == "__main__":
 
-    (stores_pd, stores_migros_pd, drivetimes_pd, drivetimes_migros_pd,
-     haushalt_pd) = get_input(settingsFile, logger)
+    (stores_pd, stores_migros_pd, drivetimes_pd, haushalt_pd) = get_input(settingsFile, logger)
 
+    logger.info("MAIN ALGO BEGINS")
     # get all relevant hektars, i.e. those from which a Migros store is reachable
-    relevant_hektars = set(drivetimes_migros_pd['hektar_id'])
+    # use a 'set' to easily remove duplicates
+
+
+    logger.info("Subsetting only the hektars from which a Migros store is reachable")
+    relevant_hektars = set(drivetimes_pd.loc[stores_migros_pd.ID]['hektar_id'])
 
     # get all drive times for the relevant hektars
     logger.info("Obtaining all drive times only for hektars from which a Migros store is reachable")
@@ -31,14 +35,18 @@ if __name__ == "__main__":
     # and do an inner join to detect missing stores in stores_pd
     logger.info("Enriching with store information")
     before = len(set(drivetimes_rel_hektars_pd.index))
-    drivetimes_rel_hektars_stores_pd = drivetimes_rel_hektars_pd.join(
-        stores_pd[['FORMAT', 'VERKAUFSFLAECHE', 'VERKAUFSFLAECHE_TOTAL', 'RELEVANZ']], how='inner')
+
+    drivetimes_rel_hektars_stores_pd = drivetimes_rel_hektars_pd.merge(
+        stores_pd[['ID', 'FORMAT', 'VERKAUFSFLAECHE', 'VERKAUFSFLAECHE_TOTAL', 'RELEVANZ']],
+        left_index=True, right_on='ID', how='inner')
+
     logger.info("%d stores appear in drivetimes, but have no associated information in stores_sm.csv",
                 before-len(set(drivetimes_rel_hektars_stores_pd.index)))
 
     # enrich the drive times of the relevant hektars with Haushalt information
     logger.info("Enriching with Haushalt information")
-    enriched_pd = drivetimes_rel_hektars_stores_pd.join(haushalt_pd['H14PTOT'], on='hektar_id')
+    enriched_pd = drivetimes_rel_hektars_stores_pd.merge(haushalt_pd[['H14PTOT']],
+                                                         left_on='hektar_id', right_index=True)
     # try to correct for missing HA info by assuming a default 1
     enriched_pd['H14PTOT_corrected'] = enriched_pd['H14PTOT'].fillna(1)
 
@@ -81,7 +89,7 @@ if __name__ == "__main__":
         migros_only_pd = enriched_pd[enriched_pd['FORMAT'].isin(list(set(stores_migros_pd['FORMAT'])))]
 
     logger.info("Computing total Umsatz potential for relevant Migros stores")
-    umsatz_potential_pd = migros_only_pd.groupby('index').agg({'LokalUP': lambda x: np.nansum(x),
+    umsatz_potential_pd = migros_only_pd.groupby('ID').agg({'LokalUP': lambda x: np.nansum(x),
                                                                'LokalUP2': lambda x: np.nansum(x),
                                                                'LokalUP_corrected': lambda x: np.nansum(x),
                                                                'LokalUP2_corrected': lambda x: np.nansum(x)})
