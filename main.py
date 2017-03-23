@@ -53,7 +53,12 @@ if __name__ == "__main__":
 
     # compute LAT and RLAT
     logger.info("Computing LAT and RLAT")
+
+
     enriched_pd['LAT'] = 12.0 * enriched_pd['RELEVANZ'] * enriched_pd['VERKAUFSFLAECHE_TOTAL']
+
+
+
     enriched_pd['LAT2'] = 12.0 * enriched_pd['RELEVANZ'] * enriched_pd['VERKAUFSFLAECHE']
     enriched_pd['RLAT'] = enriched_pd['LAT'] * np.power(10, -0.17 * np.fmax(enriched_pd['fahrzeit'] - 5, 0))
     enriched_pd['RLAT2'] = enriched_pd['LAT2'] * np.power(10, -0.17 * np.fmax(enriched_pd['fahrzeit'] - 5, 0))
