@@ -23,7 +23,6 @@ if __name__ == "__main__":
     # get all relevant hektars, i.e. those from which a Migros store is reachable
     # use a 'set' to easily remove duplicates
 
-
     logger.info("Subsetting only the hektars from which a Migros store is reachable")
     relevant_hektars = set(drivetimes_pd.loc[stores_migros_pd.ID]['hektar_id'])
 
@@ -50,14 +49,15 @@ if __name__ == "__main__":
     # try to correct for missing HA info by assuming a default 1
     enriched_pd['H14PTOT_corrected'] = enriched_pd['H14PTOT'].fillna(1)
 
-
     # compute LAT and RLAT
     logger.info("Computing LAT and RLAT")
 
-
-    enriched_pd['LAT'] = 12.0 * enriched_pd['RELEVANZ'] * enriched_pd['VERKAUFSFLAECHE_TOTAL']
-
-
+    enriched_pd['LAT'] = np.where(enriched_pd.VERKAUFSFLAECHE_TOTAL < 1000,
+                                      enriched_pd.RELEVANZ * enriched_pd.VERKAUFSFLAECHE_TOTAL * 0.06,
+                                      np.where((enriched_pd.VERKAUFSFLAECHE_TOTAL >= 1000) & (
+                                                enriched_pd.VERKAUFSFLAECHE_TOTAL < 2500),
+                            enriched_pd.RELEVANZ*(20 * (enriched_pd.VERKAUFSFLAECHE_TOTAL - 1000) / 1500 + 60),
+                            enriched_pd.RELEVANZ*(20 * (enriched_pd.VERKAUFSFLAECHE_TOTAL - 2500) / 3500 + 80)))
 
     enriched_pd['LAT2'] = 12.0 * enriched_pd['RELEVANZ'] * enriched_pd['VERKAUFSFLAECHE']
     enriched_pd['RLAT'] = enriched_pd['LAT'] * np.power(10, -0.17 * np.fmax(enriched_pd['fahrzeit'] - 5, 0))
