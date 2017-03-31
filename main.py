@@ -70,19 +70,63 @@ if __name__ == "__main__":
     logger.info("Removing duplicates ...")
     # remove the duplicates introduced after merging drivetimes and store information
     enriched_pd = enriched_pd[~enriched_pd.index.duplicated(keep='first')]
-    enriched_pd = enriched_pd.reset_index().set_index(keys=['hektar_id', 'type', 'OBJECTID', 'fahrzeit']).sort_index(
-        level=[0, 1, 3])
+    enriched_pd = enriched_pd.reset_index().set_index(keys=['hektar_id', 'type'])
+    logger.info("Saving intermediary results ")
+    enriched_pd.to_pickle(config["output"]["intermediary_pickle"])
 
     # pruning the irrelevant stores as defined in Step 4 of the model
     logger.info("Pruning irrelevant stores. Takes a while")
 
-    def prune(x):
-        x['diff1'] = x['RLAT'] - x['RLAT'].iloc[0]
-        x['diff2'] = x['RLAT'].iloc[1:len(x)] - x['RLAT'].shift(1)
-        x = x[(x['diff1'] >= 0) & ((x['diff2'] >= 0) | np.isnan(x['diff2']))]
-        return x
+    from multiprocessing import Pool, cpu_count
+    ncpus = int(config["parallel"]["cpu_count"])
 
-    enriched_pruned_pd = enriched_pd.groupby(level=[0, 1]).apply(prune)
+    def apply_parallel(dfGrouped, func):
+        with Pool(ncpus) as p:
+            ret_list = p.map(func, [group for name, group in dfGrouped])
+        return pd.concat(ret_list)
+
+    def prune(d):
+        def prune_fz(dd):
+            if len(dd) == 1:
+                return dd
+            else:
+                idx_to_return = dd['RLAT'] == np.max(dd['RLAT'])
+                return dd.loc[idx_to_return]
+    
+        d_sorted = d.sort_values(by='fahrzeit', ascending=True)
+        d_pruned = d_sorted.groupby(['fahrzeit']).apply(prune_fz)
+
+        tmp = [x for x in d_pruned.index.names]
+        if (tmp[0] == 'fahrzeit'):
+            tmp[0] = 'a'
+        d_pruned.index.names = tmp
+        d_pruned = d_pruned.reset_index().set_index(keys=['hektar_id', 'type'])
+    
+        for column_to_delete in ['a', 'level_1', 'index']:
+            if column_to_delete in d_pruned:
+                del d_pruned[column_to_delete]
+
+        while True:
+            diffs = np.diff(d_pruned['RLAT'])
+            return_idx = (diffs > 0)
+            return_idx = np.insert(return_idx, 0, True) # always take the first entry
+            d_pruned = d_pruned.loc[return_idx]
+            if len(d_pruned) == 1 or all(return_idx):
+                break
+    
+        return d_pruned
+
+    def prune2(d):
+        ret = d.reset_index().groupby('type').apply(prune)
+        ret.index.names = ['a', 'hektar_id', 'type']
+        ret = ret.reset_index()
+        del ret['a']
+        return ret
+    
+    groups = enriched_pd.groupby(level=[0])  # group by hektar_id
+    logger.info('%d groups after grouping by hektar_id', groups.ngroups)
+    enriched_pruned_pd = apply_parallel(groups, prune2)
+
     enriched_pruned_pd.to_pickle(config["output"]["output_pickle"])
     # now calculate Marktanteil
     logger.info("Computing Marktanteil.")
@@ -91,7 +135,8 @@ if __name__ == "__main__":
         x['Marktanteil'] = x['RLAT'] / np.nansum(x['RLAT'])
         return x
 
-    enriched_pruned_pd = enriched_pruned_pd.reset_index().groupby(by='hektar_id').apply(calc_MA)
+    # enriched_pruned_pd = enriched_pruned_pd.reset_index()
+    enriched_pruned_pd = enriched_pruned_pd.groupby(by='hektar_id').apply(calc_MA)
 
     logger.info("Computing local Umsatzpotential")
     enriched_pruned_pd['LokalUP'] = enriched_pruned_pd['Marktanteil'] * enriched_pruned_pd['H14PTOT'] * 7800
@@ -103,17 +148,13 @@ if __name__ == "__main__":
 
     logger.info("Done")
 
-    # get only the Migros stores
-    if len(list(stores_migros_pd['FORMAT'])) == 1:
-        migros_only_pd = enriched_pruned_pd[enriched_pruned_pd['FORMAT'] == stores_migros_pd['FORMAT']]
-    else:
-        migros_only_pd = enriched_pruned_pd[enriched_pruned_pd['FORMAT'].isin(list(set(stores_migros_pd['FORMAT'])))]
+    migros_only_pd = enriched_pruned_pd[enriched_pruned_pd['OBJECTID'].isin(stores_migros_pd.index.values)]
 
     logger.info("Computing total Umsatz potential for relevant Migros stores")
-    umsatz_potential_pd = migros_only_pd.groupby('ID').agg({'LokalUP': lambda x: np.nansum(x),
-                                                            'LokalUP_corrected': lambda x: np.nansum(x)
-                                                            })
-
+    umsatz_potential_pd = migros_only_pd.groupby('OBJECTID').agg({'ID': lambda x: x.iloc[0],
+                                                                  'LokalUP': lambda x: np.nansum(x),
+                                                                  'LokalUP_corrected': lambda x: np.nansum(x)
+                                                                 })
 
     umsatz_potential_pd = umsatz_potential_pd.rename(columns={'LokalUP': 'Umsatzpotential',
                                                               'LokalUP_corrected': 'Umsatzpotential_corrected'})

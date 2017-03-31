@@ -54,7 +54,6 @@ def get_input(settingsFile, logger):
         drivetimes_pd = pd.read_csv(drivetimes, sep=',', header=None, names=['filiale_id', 'fahrzeit', 'hektar_id'],
                                     index_col=[0, 1, 2], nrows=110299436)
 
-
         logger.info("Removing duplicate drive times from drivetimes_pd")
         before = len(drivetimes_pd)
         drivetimes_pd = drivetimes_pd[~drivetimes_pd.index.duplicated(keep='first')]
@@ -66,11 +65,12 @@ def get_input(settingsFile, logger):
         haushalt_pd = pd.read_csv(haushalt, sep=',', header=0, index_col=2, usecols=[0, 1, 2, 3])
 
         # Get all Migros stores used by MP Technology OR the single store if in single store mode
+
         stores_migros_pd = None
         if len(single_store) > 0:
             logger.info('Single store mode chosen - %s', single_store)
             stores_migros_pd = stores_pd[stores_pd['ID'] == single_store]
-            logger.info('Not caching imput data, because of single store mode')
+            logger.info('Not caching input data, because of single store mode')
         else:
             stores_migros_pd = stores_pd[stores_pd['FORMAT'].isin(['M', 'MM', 'MMM', 'FM'])]
             # sanity check: the number of stores must equal 591 - the number of stores
