@@ -15,11 +15,20 @@ def get_input(settingsFile, logger):
     stores_pd = None
     drivetimes_pd = None
     haushalt_pd = None
+    referenz_pd = None
+
 
     # do we read the data from cache? cache loads faster
     use_cache = config.getboolean('global', 'cache_enabled')
     cache_dir = config['cache_config']['cache_dir']
     single_store = config['global']['single_store']
+
+    refenz_resultate =  config['inputdata']['referenz_ergebnisse']
+
+    # read the reference results from file always, because it's small
+
+    referenz_pd = pd.read_csv(refenz_resultate, sep=';', header=0, index_col=0, encoding='latin-1')
+
 
     if use_cache:
         logger.info("Reading input files from cache into Pandas data frames")
@@ -50,6 +59,9 @@ def get_input(settingsFile, logger):
         # extract the store type from the its name, e.g. COOP, MIG, DENNER, etc.
         # needed to implement step 4 of the model
         stores_pd['type'] = stores_pd['ID'].str[3:6]
+        # stores_pd.loc[stores_pd['FORMAT'] == 'M', 'type'] = 'M'
+        stores_pd.loc[stores_pd['FORMAT'] == 'MM', 'type'] = 'MM'
+        # stores_pd.loc[stores_pd['FORMAT'] == 'MMM', 'type'] = 'MMM'
 
         drivetimes_pd = pd.read_csv(drivetimes, sep=',', header=None, names=['filiale_id', 'fahrzeit', 'hektar_id'],
                                     index_col=[0, 1, 2], nrows=110299436)
@@ -83,4 +95,4 @@ def get_input(settingsFile, logger):
             haushalt_pd.to_pickle(os.path.join(cache_dir, config['cache_config']['haushalt_cached']))
         logger.info("Done reading input data")
 
-    return (stores_pd, stores_migros_pd, drivetimes_pd, haushalt_pd)
+    return (stores_pd, stores_migros_pd, drivetimes_pd, haushalt_pd, referenz_pd)
