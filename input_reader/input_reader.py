@@ -60,7 +60,7 @@ def get_input(settingsFile, logger):
         # needed to implement step 4 of the model
         stores_pd['type'] = stores_pd['ID'].str[3:6]
         # stores_pd.loc[stores_pd['FORMAT'] == 'M', 'type'] = 'M'
-        stores_pd.loc[stores_pd['FORMAT'] == 'MM', 'type'] = 'MM'
+        # stores_pd.loc[stores_pd['FORMAT'] == 'MM', 'type'] = 'MM'
         # stores_pd.loc[stores_pd['FORMAT'] == 'MMM', 'type'] = 'MMM'
 
         drivetimes_pd = pd.read_csv(drivetimes, sep=',', header=None, names=['filiale_id', 'fahrzeit', 'hektar_id'],

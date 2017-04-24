@@ -108,6 +108,9 @@ if __name__ == "__main__":
     logger.info("Computing local Umsatzpotential")
     enriched_pruned_pd['LokalUP'] = enriched_pruned_pd['Marktanteil'] * enriched_pruned_pd['H14PTOT'] * 7800
     enriched_pruned_pd['LokalUP_corrected'] = enriched_pruned_pd['Marktanteil'] * enriched_pruned_pd['H14PTOT_corrected'] * 7800
+
+    # The 'Missing_HH_Hektare' column is a tuple (A, B) where A is the number of hektars for which HH info is missing
+    # and B is the total number of hektars from which the given store is rechable
     enriched_pruned_pd['Missing_HH_Hektare'] = np.isnan(enriched_pruned_pd['H14PTOT'])
 
     logger.info("Serializing final data frame ")
@@ -127,9 +130,20 @@ if __name__ == "__main__":
 
     umsatz_potential_pd = umsatz_potential_pd.rename(columns={'LokalUP': 'Umsatzpotential',
                                                               'LokalUP_corrected': 'Umsatzpotential_corrected'})
-
     logger.info("Done")
 
+    logger.info("Computing prediction errors")
+
+    umsatz_potential_pd = umsatz_potential_pd.merge(referenz_pd, left_index=True, right_index=True, how='inner')
+
+    umsatz_potential_pd['verhaeltnis_tU'] = umsatz_potential_pd['Umsatzpotential'] / \
+                                            umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
+
+    umsatz_potential_pd['verhaeltnis_MP1'] = umsatz_potential_pd['Umsatzpotential'] / \
+                                             umsatz_potential_pd['MP - CALCULATED_REVENUE 1']
+
+    umsatz_potential_pd['verhaeltnis_MP2'] = umsatz_potential_pd['Umsatzpotential'] / \
+                                             umsatz_potential_pd['MP - CALCULATED_REVENUE 2']
 
 
     logger.info("Generating output csv")
