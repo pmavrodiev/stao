@@ -64,8 +64,14 @@ if __name__ == "__main__":
                             enriched_pd.RELEVANZ*(20 * (enriched_pd.VERKAUFSFLAECHE_TOTAL - 1000) / 1500 + 60),
                             enriched_pd.RELEVANZ*(20 * (enriched_pd.VERKAUFSFLAECHE_TOTAL - 2500) / 3500 + 80)))
 
-    enriched_pd['RLAT'] = enriched_pd['LAT'] * np.power(10, -(np.fmin(enriched_pd['LAT']/60.0, 1.0)
-                                                             *(0.04-0.1)+0.1)*enriched_pd['fahrzeit'])
+    # starting values
+    a = config["calibration"]["a_start"]
+    b = config["calibration"]["b_start"]
+
+    enriched_pd['RLAT'] = enriched_pd['LAT'] * np.power(10, -(a - b*np.fmin(enriched_pd['LAT'], 60)) * enriched_pd['fahrzeit'])
+
+    # enriched_pd['RLAT'] = enriched_pd['LAT'] * np.power(10, -(np.fmin(enriched_pd['LAT']/60.0, 1.0)
+    #                                                      *(0.04-0.1)+0.1)*enriched_pd['fahrzeit'])
 
     logger.info("Reindexing ...")
     enriched_pd = enriched_pd.reset_index().set_index(keys=['hektar_id', 'type', 'OBJECTID'])
@@ -94,16 +100,46 @@ if __name__ == "__main__":
     else:
         enriched_pruned_pd = enriched_pd.reset_index()
 
+    """
+        enriched_pruned_pd has the following structure at this point:
+
+    hektar_id	type	OBJECTID	fahrzeit	ID	            FORMAT	VERKAUFSFLAECHE	VERKAUFSFLAECHE   RELEVANZ	H14PTOT	    H14PTOT	        LAT     RLAT
+                                                                                        _TOTAL	                                _corrected
+    ---------
+	49971200	MIG	        10	        8	SM_MIG_49997_11718	SPEZ	157.476	        157.476	           1.0	    NaN	        1.0	          9.44856	1.782190
+	49971201	MIG	        10	        8	SM_MIG_49997_11718	SPEZ	157.476	        157.476	           1.0	    NaN	        1.0	          9.44856	1.782190
+	49971204	MIG	        10	        8	SM_MIG_49997_11718	SPEZ	157.476	        157.476	           1.0	    NaN	        1.0	          9.44856	1.782190
+	49971206	MIG	        10	        8	SM_MIG_49997_11718	SPEZ	157.476	        157.476	           1.0	    2.0	        2.0	          9.44856	1.782190
+	49971207	MIG	        10	        9	SM_MIG_49997_11718	SPEZ	157.476	        157.476	           1.0	    NaN	        1.0	          9.44856	1.446781
+    """
+
+    #### MAIN CALIBRATION LOOP BEGINS HERE
+
+
+    # compute the total sum of all RLATs for each hektar
+    enriched_pruned_pd['sum_RLATS'] = enriched_pruned_pd.groupby('hektar_id')[["RLAT"]].transform(lambda x: np.sum(x))
+
+    # compute the change in RLAT w.r.t. the parameters 'a' and 'b' for each hektar
+    enriched_pruned_pd['dRLAT_da'] = -1.0 * enriched_pruned_pd['fahrzeit'] * np.log(10) * enriched_pruned_pd['RLAT']
+    enriched_pruned_pd['dRLAT_db'] = enriched_pruned_pd['fahrzeit'] * np.log(10) * enriched_pruned_pd['RLAT'] * \
+                                     np.where(enriched_pruned_pd.LAT <= 60, enriched_pruned_pd.LAT, 1.0)
+
+    # compute each term of the inner sum (the sum over the hektars)
+    enriched_pruned_pd['inner_sum_terms_a'] = (enriched_pruned_pd['sum_RLATS'] + enriched_pruned_pd['RLAT']) * \
+                                            enriched_pruned_pd['H14PTOT'] * enriched_pruned_pd['dRLAT_da'] / \
+                                            np.power(enriched_pruned_pd['sum_RLATS'] , 2)
+
+    enriched_pruned_pd['inner_sum_terms_b'] = (enriched_pruned_pd['sum_RLATS'] + enriched_pruned_pd['RLAT']) * \
+                                            enriched_pruned_pd['H14PTOT'] * enriched_pruned_pd['dRLAT_db'] / \
+                                            np.power(enriched_pruned_pd['sum_RLATS'] , 2)
+    # now sum-up all inner terms over all hektars, i.e. group by Filiale!!!
+    enriched_pruned_pd['sum_terms_a'] = enriched_pruned_pd.groupby('OBJECTID')[["inner_sum_terms_a"]].transform(lambda x: np.nansum(x))
+    enriched_pruned_pd['sum_terms_b'] = enriched_pruned_pd.groupby('OBJECTID')[["inner_sum_terms_b"]].transform(lambda x: np.nansum(x))
+
 
     # now calculate Marktanteil
     logger.info("Computing Marktanteil.")
-
-    def calc_MA(x):
-        x['Marktanteil'] = x['RLAT'] / np.nansum(x['RLAT'])
-        return x
-
-    # enriched_pruned_pd = enriched_pruned_pd.reset_index()
-    enriched_pruned_pd = enriched_pruned_pd.groupby(by='hektar_id').apply(calc_MA)
+    enriched_pruned_pd['Marktanteil'] = enriched_pruned_pd['RLAT'] / enriched_pruned_pd['sum_RLATS']
 
     logger.info("Computing local Umsatzpotential")
     enriched_pruned_pd['LokalUP'] = enriched_pruned_pd['Marktanteil'] * enriched_pruned_pd['H14PTOT'] * 7800
@@ -123,6 +159,8 @@ if __name__ == "__main__":
 
     logger.info("Computing total Umsatz potential for relevant Migros stores")
     umsatz_potential_pd = migros_only_pd.groupby('OBJECTID').agg({'ID': lambda x: x.iloc[0],
+                                                                  'sum_terms_a': lambda x: x.iloc[0],
+                                                                  'sum_terms_b': lambda x: x.iloc[0],
                                                                   'LokalUP': lambda x: np.nansum(x),
                                                                   'LokalUP_corrected': lambda x: np.nansum(x),
                                                                   'Missing_HH_Hektare': lambda x: (np.sum(x), len(x))
@@ -135,6 +173,19 @@ if __name__ == "__main__":
     logger.info("Computing prediction errors")
 
     umsatz_potential_pd = umsatz_potential_pd.merge(referenz_pd, left_index=True, right_index=True, how='inner')
+
+    umsatz_potential_pd['dE_dai'] = -2.0 * (umsatz_potential_pd['Umsatzpotential'] -
+                                            umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']) * \
+                                    umsatz_potential_pd['sum_terms_a']
+
+    umsatz_potential_pd['dE_dbi'] = -2.0 * (umsatz_potential_pd['Umsatzpotential'] -
+                                            umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']) * \
+                                    umsatz_potential_pd['sum_terms_b']
+
+    dE_da = umsatz_potential_pd.dE_dai.sum()
+    dE_db = umsatz_potential_pd.dE_dbi.sum()
+
+
 
     umsatz_potential_pd['verhaeltnis_tU'] = umsatz_potential_pd['Umsatzpotential'] / \
                                             umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']

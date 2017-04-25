@@ -1,2 +1,27 @@
-2017-04-24 13:09:23,849 - INFO - [input_reader]	Read settings from settings.cfg
-2017-04-24 13:09:23,852 - INFO - [input_reader]	Reading input files into Pandas data frames
+2017-04-25 14:49:23,248 - INFO - [input_reader]	Read settings from settings.cfg
+2017-04-25 14:49:23,251 - INFO - [input_reader]	Reading input files into Pandas data frames
+2017-04-25 14:50:35,371 - INFO - [input_reader]	Removing duplicate drive times from drivetimes_pd
+2017-04-25 14:51:18,832 - INFO - [input_reader]	Removed 369841 duplicates entries
+2017-04-25 14:51:19,002 - INFO - [input_reader]	Caching input data
+2017-04-25 14:51:27,494 - INFO - [input_reader]	Done reading input data
+2017-04-25 14:51:27,494 - INFO - [main]	MAIN ALGO BEGINS
+2017-04-25 14:51:27,494 - INFO - [main]	Subsetting only the hektars from which a Migros store is reachable
+2017-04-25 14:53:56,962 - INFO - [main]	Obtaining all drive times only for hektars from which a Migros store is reachable
+2017-04-25 14:54:18,424 - INFO - [main]	Enriching with store information
+2017-04-25 14:54:51,498 - INFO - [main]	22 stores appear in drivetimes, but have no associated information in stores_sm.csv
+2017-04-25 14:54:51,499 - INFO - [main]	Enriching with Haushalt information
+2017-04-25 14:55:25,648 - INFO - [main]	Computing LAT and RLAT
+2017-04-25 14:55:38,995 - INFO - [main]	Reindexing ...
+2017-04-25 14:56:44,250 - INFO - [main]	Removing duplicates ...
+2017-04-25 14:58:29,649 - INFO - [main]	Pruning irrelevant stores. Takes a while ...
+2017-04-25 14:58:34,027 - INFO - [main]	390219 groups after grouping by hektar_id
+2017-04-25 17:24:21,413 - INFO - [main]	DONE
+2017-04-25 17:26:46,600 - INFO - [main]	Computing Marktanteil.
+2017-04-25 17:26:46,611 - INFO - [main]	Computing local Umsatzpotential
+2017-04-25 17:26:46,643 - INFO - [main]	Serializing final data frame 
+2017-04-25 17:26:48,829 - INFO - [main]	Done
+2017-04-25 17:26:49,785 - INFO - [main]	Computing total Umsatz potential for relevant Migros stores
+2017-04-25 17:26:50,091 - INFO - [main]	Done
+2017-04-25 17:26:50,092 - INFO - [main]	Computing prediction errors
+2017-04-25 17:26:50,095 - INFO - [main]	Generating output csv
+2017-04-25 17:26:50,110 - INFO - [main]	Done
