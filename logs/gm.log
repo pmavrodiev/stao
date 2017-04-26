@@ -1,27 +1,234 @@
-2017-04-25 14:49:23,248 - INFO - [input_reader]	Read settings from settings.cfg
-2017-04-25 14:49:23,251 - INFO - [input_reader]	Reading input files into Pandas data frames
-2017-04-25 14:50:35,371 - INFO - [input_reader]	Removing duplicate drive times from drivetimes_pd
-2017-04-25 14:51:18,832 - INFO - [input_reader]	Removed 369841 duplicates entries
-2017-04-25 14:51:19,002 - INFO - [input_reader]	Caching input data
-2017-04-25 14:51:27,494 - INFO - [input_reader]	Done reading input data
-2017-04-25 14:51:27,494 - INFO - [main]	MAIN ALGO BEGINS
-2017-04-25 14:51:27,494 - INFO - [main]	Subsetting only the hektars from which a Migros store is reachable
-2017-04-25 14:53:56,962 - INFO - [main]	Obtaining all drive times only for hektars from which a Migros store is reachable
-2017-04-25 14:54:18,424 - INFO - [main]	Enriching with store information
-2017-04-25 14:54:51,498 - INFO - [main]	22 stores appear in drivetimes, but have no associated information in stores_sm.csv
-2017-04-25 14:54:51,499 - INFO - [main]	Enriching with Haushalt information
-2017-04-25 14:55:25,648 - INFO - [main]	Computing LAT and RLAT
-2017-04-25 14:55:38,995 - INFO - [main]	Reindexing ...
-2017-04-25 14:56:44,250 - INFO - [main]	Removing duplicates ...
-2017-04-25 14:58:29,649 - INFO - [main]	Pruning irrelevant stores. Takes a while ...
-2017-04-25 14:58:34,027 - INFO - [main]	390219 groups after grouping by hektar_id
-2017-04-25 17:24:21,413 - INFO - [main]	DONE
-2017-04-25 17:26:46,600 - INFO - [main]	Computing Marktanteil.
-2017-04-25 17:26:46,611 - INFO - [main]	Computing local Umsatzpotential
-2017-04-25 17:26:46,643 - INFO - [main]	Serializing final data frame 
-2017-04-25 17:26:48,829 - INFO - [main]	Done
-2017-04-25 17:26:49,785 - INFO - [main]	Computing total Umsatz potential for relevant Migros stores
-2017-04-25 17:26:50,091 - INFO - [main]	Done
-2017-04-25 17:26:50,092 - INFO - [main]	Computing prediction errors
-2017-04-25 17:26:50,095 - INFO - [main]	Generating output csv
-2017-04-25 17:26:50,110 - INFO - [main]	Done
+2017-04-26 15:46:22,964 - INFO - [input_reader]	Read settings from settings.cfg
+2017-04-26 15:46:22,970 - INFO - [input_reader]	Reading input files from cache into Pandas data frames
+2017-04-26 15:46:27,984 - INFO - [main]	Loading pruned data from cache
+2017-04-26 15:46:28,826 - INFO - [main]	BEGINNING CALIBRATION
+2017-04-26 15:46:28,827 - INFO - [main]	Parameters: a/b = 0.100000 / 0.001000
+2017-04-26 15:52:59,668 - INFO - [main]	Computing prediction errors
+2017-04-26 15:52:59,670 - INFO - [main]	TOTAL LINEAR SQUARE ERROR after 0 iterations: 42754539590433584.000000
+2017-04-26 15:52:59,671 - INFO - [main]	TOTAL RATIO SQUARE ERROR after 0 iterations: 10359.991012
+2017-04-26 15:52:59,671 - INFO - [main]	TOTAL LOG-RATIO SQUARE ERROR after 0 iterations: 466.091575
+2017-04-26 15:52:59,676 - INFO - [main]		GRADIENT LINEAR SQUARE ERROR after 0 iterations -5983529513640.822266 (da) , -1244860900575543.750000 (db)
+2017-04-26 15:52:59,676 - INFO - [main]		GRADIENT RATIO SQUARE ERROR after 0 iterations 4.047116 (da), 410.013326 (db)
+2017-04-26 15:52:59,676 - INFO - [main]		GRADIENT LOG-RATIO SQUARE ERROR after 0 iterations -0.191985 (da), 0.754696 (db)
+2017-04-26 15:52:59,677 - INFO - [main]	Parameters: a/b = 1.100000 / 0.001000
+2017-04-26 16:00:16,990 - INFO - [main]	Computing prediction errors
+2017-04-26 16:00:16,992 - INFO - [main]	TOTAL LINEAR SQUARE ERROR after 1 iterations: 101982518966982976.000000
+2017-04-26 16:00:16,993 - INFO - [main]	TOTAL RATIO SQUARE ERROR after 1 iterations: 2438.458750
+2017-04-26 16:00:16,993 - INFO - [main]	TOTAL LOG-RATIO SQUARE ERROR after 1 iterations: 729.976825
+2017-04-26 16:00:16,999 - INFO - [main]		GRADIENT LINEAR SQUARE ERROR after 1 iterations 4465549140143.638672 (da) , 478824678822575.000000 (db)
+2017-04-26 16:00:17,000 - INFO - [main]		GRADIENT RATIO SQUARE ERROR after 1 iterations -0.304130 (da), 63.040160 (db)
+2017-04-26 16:00:17,000 - INFO - [main]		GRADIENT LOG-RATIO SQUARE ERROR after 1 iterations 0.075031 (da), 3.411854 (db)
+2017-04-26 16:00:17,000 - INFO - [main]	Parameters: a/b = 0.100000 / 0.001000
+2017-04-26 16:07:20,544 - INFO - [main]	Computing prediction errors
+2017-04-26 16:07:20,546 - INFO - [main]	TOTAL LINEAR SQUARE ERROR after 2 iterations: 42754539590433576.000000
+2017-04-26 16:07:20,547 - INFO - [main]	TOTAL RATIO SQUARE ERROR after 2 iterations: 10359.991012
+2017-04-26 16:07:20,547 - INFO - [main]	TOTAL LOG-RATIO SQUARE ERROR after 2 iterations: 466.091575
+2017-04-26 16:07:20,552 - INFO - [main]		GRADIENT LINEAR SQUARE ERROR after 2 iterations -5983529513640.811523 (da) , -1244860900575542.750000 (db)
+2017-04-26 16:07:20,553 - INFO - [main]		GRADIENT RATIO SQUARE ERROR after 2 iterations 4.047116 (da), 410.013326 (db)
+2017-04-26 16:07:20,553 - INFO - [main]		GRADIENT LOG-RATIO SQUARE ERROR after 2 iterations -0.191985 (da), 0.754696 (db)
+2017-04-26 16:07:20,553 - INFO - [main]	Parameters: a/b = 1.100000 / 0.001000
+2017-04-26 16:14:11,539 - INFO - [main]	Computing prediction errors
+2017-04-26 16:14:11,541 - INFO - [main]	TOTAL LINEAR SQUARE ERROR after 3 iterations: 101982518966982976.000000
+2017-04-26 16:14:11,541 - INFO - [main]	TOTAL RATIO SQUARE ERROR after 3 iterations: 2438.458750
+2017-04-26 16:14:11,541 - INFO - [main]	TOTAL LOG-RATIO SQUARE ERROR after 3 iterations: 729.976825
+2017-04-26 16:14:11,548 - INFO - [main]		GRADIENT LINEAR SQUARE ERROR after 3 iterations 4465549140143.638672 (da) , 478824678822575.000000 (db)
+2017-04-26 16:14:11,548 - INFO - [main]		GRADIENT RATIO SQUARE ERROR after 3 iterations -0.304130 (da), 63.040160 (db)
+2017-04-26 16:14:11,548 - INFO - [main]		GRADIENT LOG-RATIO SQUARE ERROR after 3 iterations 0.075031 (da), 3.411854 (db)
+2017-04-26 16:14:11,548 - INFO - [main]	Parameters: a/b = 0.100000 / 0.001000
+2017-04-26 16:21:00,717 - INFO - [main]	Computing prediction errors
+2017-04-26 16:21:00,720 - INFO - [main]	TOTAL LINEAR SQUARE ERROR after 4 iterations: 42754539590433576.000000
+2017-04-26 16:21:00,720 - INFO - [main]	TOTAL RATIO SQUARE ERROR after 4 iterations: 10359.991012
+2017-04-26 16:21:00,720 - INFO - [main]	TOTAL LOG-RATIO SQUARE ERROR after 4 iterations: 466.091575
+2017-04-26 16:21:00,726 - INFO - [main]		GRADIENT LINEAR SQUARE ERROR after 4 iterations -5983529513640.811523 (da) , -1244860900575542.750000 (db)
+2017-04-26 16:21:00,726 - INFO - [main]		GRADIENT RATIO SQUARE ERROR after 4 iterations 4.047116 (da), 410.013326 (db)
+2017-04-26 16:21:00,726 - INFO - [main]		GRADIENT LOG-RATIO SQUARE ERROR after 4 iterations -0.191985 (da), 0.754696 (db)
+2017-04-26 16:21:00,726 - INFO - [main]	Parameters: a/b = 1.100000 / 0.001000
+
+
+
+
+
+
+2017-04-26 16:23:38,165 - INFO - [input_reader]	Read settings from settings.cfg
+2017-04-26 16:23:38,171 - INFO - [input_reader]	Reading input files from cache into Pandas data frames
+2017-04-26 16:23:43,306 - INFO - [main]	Loading pruned data from cache
+2017-04-26 16:23:44,143 - INFO - [main]	BEGINNING CALIBRATION
+2017-04-26 16:23:44,143 - INFO - [main]	Parameters: a/b = 0.100000 / 0.001000
+2017-04-26 16:30:20,497 - INFO - [main]	Computing prediction errors
+2017-04-26 16:30:20,500 - INFO - [main]	TOTAL LINEAR SQUARE ERROR after 0 iterations: 42754539590433584.000000
+2017-04-26 16:30:20,500 - INFO - [main]	TOTAL RATIO SQUARE ERROR after 0 iterations: 10359.991012
+2017-04-26 16:30:20,500 - INFO - [main]	TOTAL LOG-RATIO SQUARE ERROR after 0 iterations: 466.091575
+2017-04-26 16:30:20,506 - INFO - [main]		GRADIENT LINEAR SQUARE ERROR after 0 iterations -5983529513640.822266 (da) , -1244860900575543.750000 (db)
+2017-04-26 16:30:20,506 - INFO - [main]		GRADIENT RATIO SQUARE ERROR after 0 iterations 4.047116 (da), 410.013326 (db)
+2017-04-26 16:30:20,506 - INFO - [main]		GRADIENT LOG-RATIO SQUARE ERROR after 0 iterations -0.191985 (da), 0.754696 (db)
+2017-04-26 16:30:20,506 - INFO - [main]	Parameters: a/b = 0.200000 / 0.001000
+2017-04-26 16:36:55,071 - INFO - [main]	Computing prediction errors
+2017-04-26 16:36:55,073 - INFO - [main]	TOTAL LINEAR SQUARE ERROR after 1 iterations: 44014225162567672.000000
+2017-04-26 16:36:55,074 - INFO - [main]	TOTAL RATIO SQUARE ERROR after 1 iterations: 11670.649472
+2017-04-26 16:36:55,074 - INFO - [main]	TOTAL LOG-RATIO SQUARE ERROR after 1 iterations: 383.020021
+2017-04-26 16:36:55,079 - INFO - [main]		GRADIENT LINEAR SQUARE ERROR after 1 iterations 7961456563672.008789 (da) , -6708992189010.689453 (db)
+2017-04-26 16:36:55,080 - INFO - [main]		GRADIENT RATIO SQUARE ERROR after 1 iterations 0.112393 (da), 602.923433 (db)
+2017-04-26 16:36:55,080 - INFO - [main]		GRADIENT LOG-RATIO SQUARE ERROR after 1 iterations -0.049899 (da), 1.161204 (db)
+2017-04-26 16:36:55,080 - INFO - [main]	Parameters: a/b = 0.100000 / 0.001000
+2017-04-26 16:43:27,921 - INFO - [main]	Computing prediction errors
+2017-04-26 16:43:27,923 - INFO - [main]	TOTAL LINEAR SQUARE ERROR after 2 iterations: 42754539590433584.000000
+2017-04-26 16:43:27,923 - INFO - [main]	TOTAL RATIO SQUARE ERROR after 2 iterations: 10359.991012
+2017-04-26 16:43:27,923 - INFO - [main]	TOTAL LOG-RATIO SQUARE ERROR after 2 iterations: 466.091575
+2017-04-26 16:43:27,929 - INFO - [main]		GRADIENT LINEAR SQUARE ERROR after 2 iterations -5983529513640.822266 (da) , -1244860900575543.750000 (db)
+2017-04-26 16:43:27,929 - INFO - [main]		GRADIENT RATIO SQUARE ERROR after 2 iterations 4.047116 (da), 410.013326 (db)
+2017-04-26 16:43:27,929 - INFO - [main]		GRADIENT LOG-RATIO SQUARE ERROR after 2 iterations -0.191985 (da), 0.754696 (db)
+2017-04-26 16:43:27,929 - INFO - [main]	Parameters: a/b = 0.200000 / 0.001000
+2017-04-26 16:50:00,182 - INFO - [main]	Computing prediction errors
+2017-04-26 16:50:00,184 - INFO - [main]	TOTAL LINEAR SQUARE ERROR after 3 iterations: 44014225162567672.000000
+2017-04-26 16:50:00,185 - INFO - [main]	TOTAL RATIO SQUARE ERROR after 3 iterations: 11670.649472
+2017-04-26 16:50:00,185 - INFO - [main]	TOTAL LOG-RATIO SQUARE ERROR after 3 iterations: 383.020021
+2017-04-26 16:50:00,191 - INFO - [main]		GRADIENT LINEAR SQUARE ERROR after 3 iterations 7961456563672.008789 (da) , -6708992189010.689453 (db)
+2017-04-26 16:50:00,191 - INFO - [main]		GRADIENT RATIO SQUARE ERROR after 3 iterations 0.112393 (da), 602.923433 (db)
+2017-04-26 16:50:00,191 - INFO - [main]		GRADIENT LOG-RATIO SQUARE ERROR after 3 iterations -0.049899 (da), 1.161204 (db)
+2017-04-26 16:50:00,191 - INFO - [main]	Parameters: a/b = 0.100000 / 0.001000
+
+
+2017-04-26 16:52:18,631 - INFO - [input_reader]	Read settings from settings.cfg
+2017-04-26 16:52:18,636 - INFO - [input_reader]	Reading input files from cache into Pandas data frames
+2017-04-26 16:52:23,769 - INFO - [main]	Loading pruned data from cache
+2017-04-26 16:52:24,571 - INFO - [main]	BEGINNING CALIBRATION
+2017-04-26 16:52:24,571 - INFO - [main]	Parameters: a/b = 0.100000 / 0.001000
+2017-04-26 16:58:44,863 - INFO - [main]	Computing prediction errors
+2017-04-26 16:58:44,865 - INFO - [main]	TOTAL LINEAR SQUARE ERROR after 0 iterations: 42754539590433584.000000
+2017-04-26 16:58:44,866 - INFO - [main]	TOTAL RATIO SQUARE ERROR after 0 iterations: 10359.991012
+2017-04-26 16:58:44,866 - INFO - [main]	TOTAL LOG-RATIO SQUARE ERROR after 0 iterations: 466.091575
+2017-04-26 16:58:44,871 - INFO - [main]		GRADIENT LINEAR SQUARE ERROR after 0 iterations -5983529513640.822266 (da) , -1244860900575543.750000 (db)
+2017-04-26 16:58:44,871 - INFO - [main]		GRADIENT RATIO SQUARE ERROR after 0 iterations 4.047116 (da), 410.013326 (db)
+2017-04-26 16:58:44,871 - INFO - [main]		GRADIENT LOG-RATIO SQUARE ERROR after 0 iterations -0.191985 (da), 0.754696 (db)
+2017-04-26 16:58:44,871 - INFO - [main]	Parameters: a/b = 0.110000 / 0.001000
+2017-04-26 17:05:00,948 - INFO - [main]	Computing prediction errors
+2017-04-26 17:05:00,950 - INFO - [main]	TOTAL LINEAR SQUARE ERROR after 1 iterations: 42344265973694152.000000
+2017-04-26 17:05:00,950 - INFO - [main]	TOTAL RATIO SQUARE ERROR after 1 iterations: 10647.476951
+2017-04-26 17:05:00,950 - INFO - [main]	TOTAL LOG-RATIO SQUARE ERROR after 1 iterations: 452.092203
+2017-04-26 17:05:00,956 - INFO - [main]		GRADIENT LINEAR SQUARE ERROR after 1 iterations -4503073286333.821289 (da) , -1057751079375795.875000 (db)
+2017-04-26 17:05:00,956 - INFO - [main]		GRADIENT RATIO SQUARE ERROR after 1 iterations 3.347273 (da), 455.412057 (db)
+2017-04-26 17:05:00,956 - INFO - [main]		GRADIENT LOG-RATIO SQUARE ERROR after 1 iterations -0.167633 (da), 0.660010 (db)
+2017-04-26 17:05:00,956 - INFO - [main]	Parameters: a/b = 0.120000 / 0.001000
+2017-04-26 17:11:39,096 - INFO - [main]	Computing prediction errors
+2017-04-26 17:11:39,099 - INFO - [main]	TOTAL LINEAR SQUARE ERROR after 2 iterations: 42055749513334832.000000
+2017-04-26 17:11:39,099 - INFO - [main]	TOTAL RATIO SQUARE ERROR after 2 iterations: 10885.317780
+2017-04-26 17:11:39,099 - INFO - [main]	TOTAL LOG-RATIO SQUARE ERROR after 2 iterations: 439.848205
+2017-04-26 17:11:39,105 - INFO - [main]		GRADIENT LINEAR SQUARE ERROR after 2 iterations -2879844142272.997559 (da) , -886202888944795.750000 (db)
+2017-04-26 17:11:39,105 - INFO - [main]		GRADIENT RATIO SQUARE ERROR after 2 iterations 2.768836 (da), 491.147056 (db)
+2017-04-26 17:11:39,105 - INFO - [main]		GRADIENT LOG-RATIO SQUARE ERROR after 2 iterations -0.146848 (da), 0.635873 (db)
+2017-04-26 17:11:39,105 - INFO - [main]	Parameters: a/b = 0.130000 / 0.001000
+2017-04-26 17:18:28,613 - INFO - [main]	Computing prediction errors
+2017-04-26 17:18:28,615 - INFO - [main]	TOTAL LINEAR SQUARE ERROR after 3 iterations: 41896193612098176.000000
+2017-04-26 17:18:28,615 - INFO - [main]	TOTAL RATIO SQUARE ERROR after 3 iterations: 11081.808697
+2017-04-26 17:18:28,615 - INFO - [main]	TOTAL LOG-RATIO SQUARE ERROR after 3 iterations: 429.109042
+2017-04-26 17:18:28,621 - INFO - [main]		GRADIENT LINEAR SQUARE ERROR after 3 iterations -1210261016446.871826 (da) , -730592781404952.000000 (db)
+2017-04-26 17:18:28,621 - INFO - [main]		GRADIENT RATIO SQUARE ERROR after 3 iterations 2.282655 (da), 519.310504 (db)
+2017-04-26 17:18:28,621 - INFO - [main]		GRADIENT LOG-RATIO SQUARE ERROR after 3 iterations -0.128946 (da), 0.655983 (db)
+2017-04-26 17:18:28,621 - INFO - [main]	Parameters: a/b = 0.140000 / 0.001000
+2017-04-26 17:25:10,367 - INFO - [main]	Computing prediction errors
+2017-04-26 17:25:10,370 - INFO - [main]	TOTAL LINEAR SQUARE ERROR after 4 iterations: 41866276152074664.000000
+2017-04-26 17:25:10,370 - INFO - [main]	TOTAL RATIO SQUARE ERROR after 4 iterations: 11243.203807
+2017-04-26 17:25:10,370 - INFO - [main]	TOTAL LOG-RATIO SQUARE ERROR after 4 iterations: 419.672190
+2017-04-26 17:25:10,376 - INFO - [main]		GRADIENT LINEAR SQUARE ERROR after 4 iterations 434130715149.647705 (da) , -590265639904480.875000 (db)
+2017-04-26 17:25:10,376 - INFO - [main]		GRADIENT RATIO SQUARE ERROR after 4 iterations 1.865582 (da), 541.556474 (db)
+2017-04-26 17:25:10,376 - INFO - [main]		GRADIENT LOG-RATIO SQUARE ERROR after 4 iterations -0.113373 (da), 0.703730 (db)
+2017-04-26 17:25:10,376 - INFO - [main]	Parameters: a/b = 0.130000 / 0.001000
+2017-04-26 17:31:51,310 - INFO - [main]	Computing prediction errors
+2017-04-26 17:31:51,313 - INFO - [main]	TOTAL LINEAR SQUARE ERROR after 5 iterations: 41896193612098176.000000
+2017-04-26 17:31:51,313 - INFO - [main]	TOTAL RATIO SQUARE ERROR after 5 iterations: 11081.808697
+2017-04-26 17:31:51,313 - INFO - [main]	TOTAL LOG-RATIO SQUARE ERROR after 5 iterations: 429.109042
+2017-04-26 17:31:51,319 - INFO - [main]		GRADIENT LINEAR SQUARE ERROR after 5 iterations -1210261016446.871826 (da) , -730592781404952.000000 (db)
+2017-04-26 17:31:51,319 - INFO - [main]		GRADIENT RATIO SQUARE ERROR after 5 iterations 2.282655 (da), 519.310504 (db)
+2017-04-26 17:31:51,319 - INFO - [main]		GRADIENT LOG-RATIO SQUARE ERROR after 5 iterations -0.128946 (da), 0.655983 (db)
+2017-04-26 17:31:51,319 - INFO - [main]	Parameters: a/b = 0.140000 / 0.001000
+2017-04-26 17:38:32,911 - INFO - [main]	Computing prediction errors
+2017-04-26 17:38:32,913 - INFO - [main]	TOTAL LINEAR SQUARE ERROR after 6 iterations: 41866276152074664.000000
+2017-04-26 17:38:32,913 - INFO - [main]	TOTAL RATIO SQUARE ERROR after 6 iterations: 11243.203807
+2017-04-26 17:38:32,914 - INFO - [main]	TOTAL LOG-RATIO SQUARE ERROR after 6 iterations: 419.672190
+2017-04-26 17:38:32,919 - INFO - [main]		GRADIENT LINEAR SQUARE ERROR after 6 iterations 434130715149.647705 (da) , -590265639904480.875000 (db)
+2017-04-26 17:38:32,919 - INFO - [main]		GRADIENT RATIO SQUARE ERROR after 6 iterations 1.865582 (da), 541.556474 (db)
+2017-04-26 17:38:32,919 - INFO - [main]		GRADIENT LOG-RATIO SQUARE ERROR after 6 iterations -0.113373 (da), 0.703730 (db)
+2017-04-26 17:38:32,920 - INFO - [main]	Parameters: a/b = 0.130000 / 0.001000
+
+
+
+
+
+2017-04-26 17:57:43,760 - INFO - [input_reader]	Read settings from settings.cfg
+2017-04-26 17:57:43,765 - INFO - [input_reader]	Reading input files from cache into Pandas data frames
+2017-04-26 17:57:48,893 - INFO - [main]	Loading pruned data from cache
+2017-04-26 17:57:49,712 - INFO - [main]	BEGINNING CALIBRATION
+2017-04-26 17:57:49,713 - INFO - [main]	Parameters: a/b = 0.100000 / 0.001000
+2017-04-26 18:04:04,194 - INFO - [main]	Computing prediction errors
+2017-04-26 18:04:04,196 - INFO - [main]	TOTAL LINEAR SQUARE ERROR after 0 iterations: 42754539590433584.000000
+2017-04-26 18:04:04,196 - INFO - [main]	TOTAL RATIO SQUARE ERROR after 0 iterations: 10359.991012
+2017-04-26 18:04:04,199 - INFO - [main]		GRADIENT LINEAR SQUARE ERROR after 0 iterations -5983529513640.822266 (da) , -1244860900575543.750000 (db)
+2017-04-26 18:04:04,199 - INFO - [main]		GRADIENT RATIO SQUARE ERROR after 0 iterations 4.047116 (da), 410.013326 (db)
+2017-04-26 18:04:04,200 - INFO - [main]	Parameters: a/b = 0.059529 / 0.001000
+2017-04-26 18:10:23,164 - INFO - [main]	Computing prediction errors
+2017-04-26 18:10:23,165 - INFO - [main]	TOTAL LINEAR SQUARE ERROR after 1 iterations: 45215774003343408.000000
+2017-04-26 18:10:23,165 - INFO - [main]	TOTAL RATIO SQUARE ERROR after 1 iterations: 8429.626938
+2017-04-26 18:10:23,169 - INFO - [main]		GRADIENT LINEAR SQUARE ERROR after 1 iterations -8671824634095.183594 (da) , -2014641007027251.000000 (db)
+2017-04-26 18:10:23,169 - INFO - [main]		GRADIENT RATIO SQUARE ERROR after 1 iterations 8.731420 (da), 77.801260 (db)
+2017-04-26 18:10:23,169 - INFO - [main]	Parameters: a/b = -0.027785 / 0.001000
+2017-04-26 18:17:01,833 - INFO - [main]	Computing prediction errors
+2017-04-26 18:17:01,835 - INFO - [main]	TOTAL LINEAR SQUARE ERROR after 2 iterations: 61515123971320832.000000
+2017-04-26 18:17:01,835 - INFO - [main]	TOTAL RATIO SQUARE ERROR after 2 iterations: 1006.738856
+2017-04-26 18:17:01,839 - INFO - [main]		GRADIENT LINEAR SQUARE ERROR after 2 iterations -49786756308804.320312 (da) , 1132458974546560.750000 (db)
+2017-04-26 18:17:01,839 - INFO - [main]		GRADIENT RATIO SQUARE ERROR after 2 iterations 5.073103 (da), -208.603826 (db)
+2017-04-26 18:17:01,839 - INFO - [main]	Parameters: a/b = -0.078516 / 0.001000
+2017-04-26 18:23:40,579 - INFO - [main]	Computing prediction errors
+2017-04-26 18:23:40,581 - INFO - [main]	TOTAL LINEAR SQUARE ERROR after 3 iterations: 86218882131816928.000000
+2017-04-26 18:23:40,581 - INFO - [main]	TOTAL RATIO SQUARE ERROR after 3 iterations: 330.518282
+2017-04-26 18:23:40,585 - INFO - [main]		GRADIENT LINEAR SQUARE ERROR after 3 iterations -71418885445029.875000 (da) , 2349927793631243.500000 (db)
+2017-04-26 18:23:40,585 - INFO - [main]		GRADIENT RATIO SQUARE ERROR after 3 iterations 0.102836 (da), -7.534641 (db)
+2017-04-26 18:23:40,585 - INFO - [main]	Parameters: a/b = -0.079545 / 0.001000
+2017-04-26 18:30:26,315 - INFO - [main]	Computing prediction errors
+2017-04-26 18:30:26,317 - INFO - [main]	TOTAL LINEAR SQUARE ERROR after 4 iterations: 86791943303999632.000000
+2017-04-26 18:30:26,317 - INFO - [main]	TOTAL RATIO SQUARE ERROR after 4 iterations: 329.770004
+2017-04-26 18:30:26,320 - INFO - [main]		GRADIENT LINEAR SQUARE ERROR after 4 iterations -71464202534998.375000 (da) , 2357822902497634.000000 (db)
+2017-04-26 18:30:26,321 - INFO - [main]		GRADIENT RATIO SQUARE ERROR after 4 iterations 0.083959 (da), -6.739091 (db)
+2017-04-26 18:30:26,321 - INFO - [main]	Parameters: a/b = -0.080384 / 0.001000
+2017-04-26 18:37:02,014 - INFO - [main]	Computing prediction errors
+2017-04-26 18:37:02,015 - INFO - [main]	TOTAL LINEAR SQUARE ERROR after 5 iterations: 87260016624021104.000000
+2017-04-26 18:37:02,016 - INFO - [main]	TOTAL RATIO SQUARE ERROR after 5 iterations: 329.267994
+2017-04-26 18:37:02,019 - INFO - [main]		GRADIENT LINEAR SQUARE ERROR after 5 iterations -71483222193255.609375 (da) , 2363873261951185.500000 (db)
+2017-04-26 18:37:02,019 - INFO - [main]		GRADIENT RATIO SQUARE ERROR after 5 iterations 0.069494 (da), -6.128985 (db)
+2017-04-26 18:37:02,019 - INFO - [main]	Parameters: a/b = -0.081079 / 0.001000
+2017-04-26 18:43:33,270 - INFO - [main]	Computing prediction errors
+2017-04-26 18:43:33,271 - INFO - [main]	TOTAL LINEAR SQUARE ERROR after 6 iterations: 87647507442992064.000000
+2017-04-26 18:43:33,272 - INFO - [main]	TOTAL RATIO SQUARE ERROR after 6 iterations: 328.922336
+2017-04-26 18:43:33,275 - INFO - [main]		GRADIENT LINEAR SQUARE ERROR after 6 iterations -71486930430815.765625 (da) , 2368619193137228.500000 (db)
+2017-04-26 18:43:33,275 - INFO - [main]		GRADIENT RATIO SQUARE ERROR after 6 iterations 0.058134 (da), -5.649458 (db)
+2017-04-26 18:43:33,275 - INFO - [main]	Parameters: a/b = -0.081661 / 0.001000
+2017-04-26 18:50:04,766 - INFO - [main]	Computing prediction errors
+2017-04-26 18:50:04,768 - INFO - [main]	TOTAL LINEAR SQUARE ERROR after 7 iterations: 87971650862462544.000000
+2017-04-26 18:50:04,768 - INFO - [main]	TOTAL RATIO SQUARE ERROR after 7 iterations: 328.679490
+2017-04-26 18:50:04,772 - INFO - [main]		GRADIENT LINEAR SQUARE ERROR after 7 iterations -71481784629292.921875 (da) , 2372411059637718.500000 (db)
+2017-04-26 18:50:04,772 - INFO - [main]		GRADIENT RATIO SQUARE ERROR after 7 iterations 0.049039 (da), -5.265300 (db)
+2017-04-26 18:50:04,772 - INFO - [main]	Parameters: a/b = -0.082151 / 0.001000
+2017-04-26 18:56:41,446 - INFO - [main]	Computing prediction errors
+2017-04-26 18:56:41,448 - INFO - [main]	TOTAL LINEAR SQUARE ERROR after 8 iterations: 88245056611260160.000000
+2017-04-26 18:56:41,448 - INFO - [main]	TOTAL RATIO SQUARE ERROR after 8 iterations: 328.506127
+2017-04-26 18:56:41,452 - INFO - [main]		GRADIENT LINEAR SQUARE ERROR after 8 iterations -71471682715537.968750 (da) , 2375485932758079.500000 (db)
+2017-04-26 18:56:41,452 - INFO - [main]		GRADIENT RATIO SQUARE ERROR after 8 iterations 0.041648 (da), -4.952847 (db)
+2017-04-26 18:56:41,452 - INFO - [main]	Parameters: a/b = -0.082567 / 0.001000
+2017-04-26 19:04:02,391 - INFO - [main]	Computing prediction errors
+2017-04-26 19:04:02,393 - INFO - [main]	TOTAL LINEAR SQUARE ERROR after 9 iterations: 88477213688862688.000000
+2017-04-26 19:04:02,393 - INFO - [main]	TOTAL RATIO SQUARE ERROR after 9 iterations: 328.380762
+2017-04-26 19:04:02,397 - INFO - [main]		GRADIENT LINEAR SQUARE ERROR after 9 iterations -71459016256199.921875 (da) , 2378009862945508.500000 (db)
+2017-04-26 19:04:02,398 - INFO - [main]		GRADIENT RATIO SQUARE ERROR after 9 iterations 0.035565 (da), -4.695585 (db)
+2017-04-26 19:04:02,398 - INFO - [main]	Parameters: a/b = -0.082923 / 0.001000
+2017-04-26 19:11:28,284 - INFO - [main]	Computing prediction errors
+2017-04-26 19:11:28,286 - INFO - [main]	TOTAL LINEAR SQUARE ERROR after 10 iterations: 88675427893697920.000000
+2017-04-26 19:11:28,287 - INFO - [main]	TOTAL RATIO SQUARE ERROR after 10 iterations: 328.289144
+2017-04-26 19:11:28,291 - INFO - [main]		GRADIENT LINEAR SQUARE ERROR after 10 iterations -71445262358680.828125 (da) , 2380102536661614.500000 (db)
+2017-04-26 19:11:28,291 - INFO - [main]		GRADIENT RATIO SQUARE ERROR after 10 iterations 0.030509 (da), -4.481629 (db)
+2017-04-26 19:11:28,291 - INFO - [main]	Parameters: a/b = -0.083228 / 0.001000
+2017-04-26 19:18:53,591 - INFO - [main]	Computing prediction errors
+2017-04-26 19:18:53,593 - INFO - [main]	TOTAL LINEAR SQUARE ERROR after 11 iterations: 88845431378854048.000000
+2017-04-26 19:18:53,593 - INFO - [main]	TOTAL RATIO SQUARE ERROR after 11 iterations: 328.221601
+2017-04-26 19:18:53,597 - INFO - [main]		GRADIENT LINEAR SQUARE ERROR after 11 iterations -71431329827242.609375 (da) , 2381852333900914.500000 (db)
+2017-04-26 19:18:53,597 - INFO - [main]		GRADIENT RATIO SQUARE ERROR after 11 iterations 0.026272 (da), -4.302207 (db)
+2017-04-26 19:18:53,597 - INFO - [main]	Convergence criteria reached
+2017-04-26 19:18:53,597 - INFO - [main]	DONE CALIBRATION

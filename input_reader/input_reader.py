@@ -23,11 +23,13 @@ def get_input(settingsFile, logger):
     cache_dir = config['cache_config']['cache_dir']
     single_store = config['global']['single_store']
 
-    refenz_resultate =  config['inputdata']['referenz_ergebnisse']
+    refenz_resultate = config['inputdata']['referenz_ergebnisse']
 
     # read the reference results from file always, because it's small
-
     referenz_pd = pd.read_csv(refenz_resultate, sep=';', header=0, index_col=0, encoding='latin-1')
+    # convert all 0s to NaNs, so that the stores can be later ignored
+    referenz_pd[referenz_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE'] == 0] = np.nan
+
 
 
     if use_cache:
@@ -82,17 +84,17 @@ def get_input(settingsFile, logger):
         if len(single_store) > 0:
             logger.info('Single store mode chosen - %s', single_store)
             stores_migros_pd = stores_pd[stores_pd['ID'] == single_store]
-            logger.info('Not caching input data, because of single store mode')
         else:
             stores_migros_pd = stores_pd[stores_pd['FORMAT'].isin(['M', 'MM', 'MMM', 'FM'])]
             # sanity check: the number of stores must equal 591 - the number of stores
             # in "STAO Vergleich V1 and V2.xlsx". It does.
-            logger.info("Caching input data")
-            stores_pd.to_pickle(os.path.join(cache_dir, config['cache_config']['stores_cm_cached']))
-            stores_migros_pd.to_pickle(os.path.join(cache_dir, config['cache_config']['stores_cm_migros_only_cached']))
-            drivetimes_pd.to_pickle(os.path.join(cache_dir,
-                                                 config['cache_config']['drivetimes_cached']))
-            haushalt_pd.to_pickle(os.path.join(cache_dir, config['cache_config']['haushalt_cached']))
+
+        logger.info("Caching input data")
+        stores_pd.to_pickle(os.path.join(cache_dir, config['cache_config']['stores_cm_cached']))
+        stores_migros_pd.to_pickle(os.path.join(cache_dir, config['cache_config']['stores_cm_migros_only_cached']))
+        drivetimes_pd.to_pickle(os.path.join(cache_dir,
+                                             config['cache_config']['drivetimes_cached']))
+        haushalt_pd.to_pickle(os.path.join(cache_dir, config['cache_config']['haushalt_cached']))
         logger.info("Done reading input data")
 
     return (stores_pd, stores_migros_pd, drivetimes_pd, haushalt_pd, referenz_pd)
