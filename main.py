@@ -125,9 +125,9 @@ if __name__ == "__main__":
 
     for t in range(int(config["calibration"]["T"])):
         logger.info("Parameters: a/b = %f / %f", a_next, b_next )
-        if t > 0:
-            # recompute the RLATS with the new parameters
-            enriched_pruned_pd['RLAT'] = enriched_pruned_pd['LAT'] * np.power(10, -(a_next - b_next * np.fmin(enriched_pruned_pd['LAT'], 60)) *
+        
+        # calculate the RLAT with the new parameters
+        enriched_pruned_pd['RLAT'] = enriched_pruned_pd['LAT'] * np.power(10, -(a_next - b_next * np.fmin(enriched_pruned_pd['LAT'], 60)) *
                                                                               enriched_pruned_pd['fahrzeit'])
 
         # compute the total sum of all RLATs for each hektar
@@ -180,13 +180,15 @@ if __name__ == "__main__":
         umsatz_potential_pd = umsatz_potential_pd.merge(referenz_pd, left_index=True, right_index=True, how='inner')
 
         logger.info("Computing prediction errors")
-        # liner square error
+        # LINEAR SQUARE ERROR
         umsatz_potential_pd['E_lsq_i'] = np.power(umsatz_potential_pd['Umsatzpotential'] -
-                                                umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE'], 2)
-        # ratio square error: -1 to make it an optimization problem with a minimum at 0
-        umsatz_potential_pd['E_rsq_i'] = np.power(umsatz_potential_pd['Umsatzpotential']/umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE'] - 1, 2)
+                                                umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE'], 2) / \
+                                         umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
+        # RATIO SQUARE ERROR: -1 to make it an optimization problem with a minimum at 0
+        umsatz_potential_pd['E_rsq_i'] = np.power(umsatz_potential_pd['Umsatzpotential'] /
+                                                  umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE'] - 1, 2)
 
-        logger.info("TOTAL LINEAR SQUARE ERROR after %d iterations: %f", t, umsatz_potential_pd.E_lsq_i.sum())
+        logger.info("TOTAL LINEAR SQUARE ERROR after %d iterations: %f", t, np.sqrt(umsatz_potential_pd.E_lsq_i.sum()))
         logger.info("TOTAL RATIO SQUARE ERROR after %d iterations: %f", t, umsatz_potential_pd.E_rsq_i.sum())
 
         error[t % 10] = umsatz_potential_pd.E_lsq_i.sum()
@@ -198,21 +200,25 @@ if __name__ == "__main__":
         # gradient linear square error
         umsatz_potential_pd['dE_lsq_i_da'] = 2.0 * (umsatz_potential_pd['Umsatzpotential'] -
                                                 umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']) * \
-                                        umsatz_potential_pd['sum_terms_a']
+                                        umsatz_potential_pd['sum_terms_a'] / \
+                                             umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
         umsatz_potential_pd['dE_lsq_i_db'] = 2.0 * (umsatz_potential_pd['Umsatzpotential'] -
                                                    umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']) * \
-                                            umsatz_potential_pd['sum_terms_b']
+                                            umsatz_potential_pd['sum_terms_b'] / \
+                                             umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
         # gradient ratio square error
         umsatz_potential_pd['dE_rsq_i_da'] = 2.0 * (
         umsatz_potential_pd['Umsatzpotential'] / umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE'] - 1) * \
-                                         umsatz_potential_pd['sum_terms_a'] / umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
+                                         umsatz_potential_pd['sum_terms_a'] / \
+                                             umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
         umsatz_potential_pd['dE_rsq_i_db'] = 2.0 * (
         umsatz_potential_pd['Umsatzpotential'] / umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE'] - 1) * \
-                                         umsatz_potential_pd['sum_terms_b'] / umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
+                                         umsatz_potential_pd['sum_terms_b'] / \
+                                             umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
 
         # total gradients
-        dE_lsq_da = umsatz_potential_pd.dE_lsq_i_da.sum()
-        dE_lsq_db = umsatz_potential_pd.dE_lsq_i_db.sum()
+        dE_lsq_da = umsatz_potential_pd.dE_lsq_i_da.sum() / (2.0 * np.sqrt(umsatz_potential_pd.E_lsq_i.sum()))
+        dE_lsq_db = umsatz_potential_pd.dE_lsq_i_db.sum() / (2.0 * np.sqrt(umsatz_potential_pd.E_lsq_i.sum()))
         #
         dE_rsq_da = umsatz_potential_pd.dE_rsq_i_da.sum()
         dE_rsq_db = umsatz_potential_pd.dE_rsq_i_db.sum()
@@ -221,7 +227,22 @@ if __name__ == "__main__":
         logger.info("\tGRADIENT RATIO SQUARE ERROR after %d iterations %f (da), %f (db)", t, dE_rsq_da, dE_rsq_db)
 
         # update the parameters, but limit learning rate
-        a_next -= dE_rsq_da*0.01
+        a_next -= np.sign(dE_lsq_da) * np.fmin(np.abs(dE_lsq_da), 0.01)
+        # a_next -= dE_rsq_da*0.01
+        # b_next = np.fmax(0, b_next - np.sign(dE_lsq_db) * np.fmin(np.abs(dE_lsq_db), 0.001))
+
+        if config.getboolean('calibration','direct_output'):
+            umsatz_potential_pd['verhaeltnis_tU'] = umsatz_potential_pd['Umsatzpotential'] / \
+                                                    umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
+
+            umsatz_potential_pd['verhaeltnis_MP2'] = umsatz_potential_pd['Umsatzpotential'] / \
+                                                     umsatz_potential_pd['MP - CALCULATED_REVENUE 2']
+
+            logger.info("Generating output csv")
+            columns_to_output = ['OBJECTID', 'ID', 'Umsatzpotential', 'Umsatzpotential_corrected',
+                                 'Tatsechlicher Umsatz - FOOD_AND_FRISCHE', 'verhaeltnis_tU', 'verhaeltnis_MP2']
+            umsatz_potential_pd.to_csv(config["output"]["output_csv"])
+            break                    
 
         # a_next -= np.sign(dE_lsq_da) * np.fmin(np.abs(dE_lsq_da), 0.01)
         # b_next = np.fmax(0, b_next - np.sign(dE_lsq_db) * np.fmin(np.abs(dE_lsq_db), 0.001))
@@ -230,7 +251,3 @@ if __name__ == "__main__":
             break
 
     logger.info("DONE CALIBRATION")
-
-
-29363708.884545
-29363399.1566136
