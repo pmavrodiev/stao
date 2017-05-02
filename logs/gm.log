@@ -680,3 +680,76 @@
 2017-04-28 00:27:55,387 - INFO - [main]		GRADIENT RATIO SQUARE ERROR after 0 iterations 6.160253 (da), 361.873695 (db)
 2017-04-28 00:27:55,388 - INFO - [main]	Generating output csv
 2017-04-28 00:27:55,412 - INFO - [main]	DONE CALIBRATION
+2017-05-02 11:59:14,073 - INFO - [input_reader]	Read settings from settings.cfg
+2017-05-02 11:59:14,079 - INFO - [input_reader]	Reading input files into Pandas data frames
+2017-05-02 12:08:45,818 - INFO - [input_reader]	Read settings from settings.cfg
+2017-05-02 12:08:45,823 - INFO - [input_reader]	Reading input files into Pandas data frames
+2017-05-02 12:09:56,901 - INFO - [input_reader]	Removing duplicate drive times from drivetimes_pd
+2017-05-02 12:10:40,982 - INFO - [input_reader]	Removed 369841 duplicates entries
+2017-05-02 12:10:41,151 - INFO - [input_reader]	Caching input data
+2017-05-02 12:10:49,945 - INFO - [input_reader]	Done reading input data
+2017-05-02 12:10:49,945 - INFO - [main]	MAIN ALGO BEGINS
+2017-05-02 12:10:49,945 - INFO - [main]	Subsetting only the hektars from which a Migros store is reachable
+2017-05-02 13:50:58,664 - INFO - [input_reader]	Read settings from settings.cfg
+2017-05-02 13:50:58,672 - INFO - [input_reader]	Reading input files into Pandas data frames
+2017-05-02 13:52:23,076 - INFO - [input_reader]	Removing duplicate drive times from drivetimes_pd
+2017-05-02 13:53:16,434 - INFO - [input_reader]	Removed 369841 duplicates entries
+2017-05-02 13:53:16,607 - INFO - [input_reader]	Caching input data
+2017-05-02 13:53:24,868 - INFO - [input_reader]	Done reading input data
+2017-05-02 14:00:15,133 - INFO - [input_reader]	Read settings from settings.cfg
+2017-05-02 14:00:15,139 - INFO - [input_reader]	Reading input files into Pandas data frames
+
+
+2017-05-02 14:01:45,833 - INFO - [input_reader]	Read settings from settings.cfg
+2017-05-02 14:01:45,838 - INFO - [input_reader]	Reading input files into Pandas data frames
+2017-05-02 14:02:56,142 - INFO - [input_reader]	Removing duplicate drive times from drivetimes_pd
+2017-05-02 14:03:40,440 - INFO - [input_reader]	Removed 369841 duplicates entries
+2017-05-02 14:03:40,608 - INFO - [input_reader]	Caching input data
+2017-05-02 14:03:48,799 - INFO - [input_reader]	Done reading input data
+2017-05-02 14:03:48,800 - INFO - [main]	MAIN ALGO BEGINS
+2017-05-02 14:03:48,800 - INFO - [main]	Subsetting only the hektars from which a Migros store is reachable
+2017-05-02 14:06:23,353 - INFO - [main]	Obtaining all drive times only for hektars from which a Migros store is reachable
+2017-05-02 14:06:43,034 - INFO - [main]	Enriching with store information
+2017-05-02 14:07:10,312 - INFO - [main]	22 stores appear in drivetimes, but have no associated information in stores_sm.csv
+2017-05-02 14:07:10,312 - INFO - [main]	Enriching with Haushalt information
+2017-05-02 14:07:33,592 - INFO - [main]	Computing LAT and RLAT
+2017-05-02 14:07:43,309 - INFO - [main]	Reindexing ...
+2017-05-02 14:08:28,455 - INFO - [main]	Removing duplicates ...
+2017-05-02 14:09:48,135 - INFO - [main]	Pruning irrelevant stores. Takes a while ...
+2017-05-02 14:09:52,939 - INFO - [main]	390219 groups after grouping by hektar_id
+2017-05-02 15:21:43,148 - INFO - [main]	DONE
+2017-05-02 15:21:45,009 - INFO - [main]	BEGINNING CALIBRATION
+2017-05-02 15:21:45,009 - INFO - [main]	Parameters: a/b = 0.100000 / 0.001000
+2017-05-02 15:28:24,837 - INFO - [main]	Computing prediction errors
+2017-05-02 15:28:24,838 - INFO - [main]	TOTAL LINEAR SQUARE ERROR after 0 iterations: 78886.952489
+2017-05-02 15:28:24,839 - INFO - [main]	TOTAL RATIO SQUARE ERROR after 0 iterations: 45526.474414
+2017-05-02 15:28:24,842 - INFO - [main]		GRADIENT LINEAR SQUARE ERROR after 0 iterations -80.951987 (da) , 732.415755 (db)
+2017-05-02 15:28:24,842 - INFO - [main]		GRADIENT RATIO SQUARE ERROR after 0 iterations 24.884844 (da), 1757.858443 (db)
+2017-05-02 15:28:24,843 - INFO - [main]	Generating output csv
+2017-05-02 15:28:24,872 - INFO - [main]	DONE CALIBRATION
+
+
+
+2017-05-02 16:18:40,772 - INFO - [input_reader]	Read settings from settings.cfg
+2017-05-02 16:18:40,777 - INFO - [input_reader]	Reading input files into Pandas data frames
+2017-05-02 16:19:57,772 - INFO - [input_reader]	Removing duplicate drive times from drivetimes_pd
+2017-05-02 16:20:46,830 - INFO - [input_reader]	Removed 369841 duplicates entries
+2017-05-02 16:20:47,002 - INFO - [input_reader]	Caching input data
+2017-05-02 16:20:57,541 - INFO - [input_reader]	Done reading input data
+2017-05-02 16:20:57,541 - INFO - [main]	MAIN ALGO BEGINS
+2017-05-02 16:20:57,542 - INFO - [main]	Subsetting only the hektars from which a Migros store is reachable
+2017-05-02 16:30:21,119 - INFO - [main]	Obtaining all drive times only for hektars from which a Migros store is reachable
+2017-05-02 16:30:44,020 - INFO - [main]	Enriching with store information
+2017-05-02 16:31:14,335 - INFO - [main]	22 stores appear in drivetimes, but have no associated information in stores_sm.csv
+2017-05-02 16:31:14,336 - INFO - [main]	Enriching with Haushalt information
+2017-05-02 16:31:47,151 - INFO - [main]	Computing LAT and RLAT
+2017-05-02 16:32:00,296 - INFO - [main]	Reindexing ...
+2017-05-02 16:32:49,195 - INFO - [main]	Removing duplicates ...
+2017-05-02 16:34:23,827 - INFO - [main]	Pruning irrelevant stores. Takes a while ...
+2017-05-02 16:34:33,317 - INFO - [main]	390219 groups after grouping by hektar_id
+2017-05-02 16:51:30,112 - INFO - [input_reader]	Read settings from settings.cfg
+2017-05-02 16:51:30,123 - INFO - [input_reader]	Reading input files into Pandas data frames
+2017-05-02 16:53:54,658 - INFO - [input_reader]	Removing duplicate drive times from drivetimes_pd
+2017-05-02 16:54:57,239 - INFO - [input_reader]	Removed 369841 duplicates entries
+2017-05-02 16:54:57,609 - INFO - [input_reader]	Caching input data
+2017-05-02 16:55:11,293 - INFO - [input_reader]	Done reading input data

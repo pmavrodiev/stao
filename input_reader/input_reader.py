@@ -61,9 +61,16 @@ def get_input(settingsFile, logger):
         # extract the store type from the its name, e.g. COOP, MIG, DENNER, etc.
         # needed to implement step 4 of the model
         stores_pd['type'] = stores_pd['ID'].str[3:6]
-        # stores_pd.loc[stores_pd['FORMAT'] == 'M', 'type'] = 'M'
-        # stores_pd.loc[stores_pd['FORMAT'] == 'MM', 'type'] = 'MM'
-        # stores_pd.loc[stores_pd['FORMAT'] == 'MMM', 'type'] = 'MMM'
+        # M, MM, MMM, DMP, SPEZ, VOI zusammen
+        # stores_pd.loc[stores_pd['FORMAT'].isin(['M', 'MM', 'MMM', 'DMP', 'SPEZ', 'VOI']), 'type'] = 'Migros'
+        # Migrolino, Alnatura und FM separat
+        stores_pd.loc[stores_pd['FORMAT'] == 'ALNA', 'type'] = 'ALNA'
+        stores_pd.loc[stores_pd['FORMAT'] == 'migrolino', 'type'] = 'migrolino'
+        stores_pd.loc[stores_pd['FORMAT'] == 'FM', 'type'] = 'FM'
+
+        # choose the right Verkaufsflaeche for Frische und Food
+        stores_pd['vfl'] = np.where(pd.isnull(stores_pd['VERKAUFSFLAECHE_SABRINA']), stores_pd['VERKAUFSFLAECHE'],
+                                    stores_pd['VERKAUFSFLAECHE_SABRINA'])
 
         drivetimes_pd = pd.read_csv(drivetimes, sep=',', header=None, names=['filiale_id', 'fahrzeit', 'hektar_id'],
                                     index_col=[0, 1, 2], nrows=110299436)

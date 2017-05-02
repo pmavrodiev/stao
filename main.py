@@ -49,7 +49,7 @@ if __name__ == "__main__":
         before = len(set(drivetimes_rel_hektars_pd.index))
 
         drivetimes_rel_hektars_stores_pd = drivetimes_rel_hektars_pd.merge(
-            stores_pd[['ID', 'FORMAT', 'VERKAUFSFLAECHE', 'VERKAUFSFLAECHE_TOTAL', 'RELEVANZ', 'type']],
+            stores_pd[['ID', 'FORMAT', 'vfl', 'RELEVANZ', 'type']],
             left_index=True, right_on='ID', how='inner')
 
         logger.info("%d stores appear in drivetimes, but have no associated information in stores_sm.csv",
@@ -66,12 +66,12 @@ if __name__ == "__main__":
         # compute LAT and RLAT
         logger.info("Computing LAT and RLAT")
 
-        enriched_pd['LAT'] = np.where(enriched_pd.VERKAUFSFLAECHE_TOTAL < 1000,
-                                          enriched_pd.RELEVANZ * enriched_pd.VERKAUFSFLAECHE_TOTAL * 0.06,
-                                          np.where((enriched_pd.VERKAUFSFLAECHE_TOTAL >= 1000) & (
-                                                    enriched_pd.VERKAUFSFLAECHE_TOTAL < 2500),
-                                enriched_pd.RELEVANZ*(20 * (enriched_pd.VERKAUFSFLAECHE_TOTAL - 1000) / 1500 + 60),
-                                enriched_pd.RELEVANZ*(20 * (enriched_pd.VERKAUFSFLAECHE_TOTAL - 2500) / 3500 + 80)))
+        enriched_pd['LAT'] = np.where(enriched_pd.vfl < 1000,
+                                          enriched_pd.RELEVANZ * enriched_pd.vfl * 0.06,
+                                          np.where((enriched_pd.vfl >= 1000) & (
+                                                    enriched_pd.vfl < 2500),
+                                enriched_pd.RELEVANZ*(20 * (enriched_pd.vfl - 1000) / 1500 + 60),
+                                enriched_pd.RELEVANZ*(20 * (enriched_pd.vfl - 2500) / 3500 + 80)))
 
         enriched_pd['RLAT'] = enriched_pd['LAT'] * np.power(10, -(a - b*np.fmin(enriched_pd['LAT'], 60)) * enriched_pd['fahrzeit'])
 
@@ -106,14 +106,14 @@ if __name__ == "__main__":
         """
             enriched_pruned_pd has the following structure at this point:
 
-        hektar_id	type	OBJECTID	fahrzeit	ID	            FORMAT	VERKAUFSFLAECHE	VERKAUFSFLAECHE   RELEVANZ	H14PTOT	    H14PTOT	        LAT     RLAT
-                                                                                        _TOTAL	                                _corrected
+        hektar_id	type	OBJECTID	fahrzeit	ID	            FORMAT		vfl   RELEVANZ	H14PTOT	    H14PTOT	        LAT     RLAT
+                                                                                        	                _corrected
         ---------
-        49971200	MIG	        10	        8	SM_MIG_49997_11718	SPEZ	157.476	        157.476	           1.0	    NaN	        1.0	          9.44856	1.782190
-        49971201	MIG	        10	        8	SM_MIG_49997_11718	SPEZ	157.476	        157.476	           1.0	    NaN	        1.0	          9.44856	1.782190
-        49971204	MIG	        10	        8	SM_MIG_49997_11718	SPEZ	157.476	        157.476	           1.0	    NaN	        1.0	          9.44856	1.782190
-        49971206	MIG	        10	        8	SM_MIG_49997_11718	SPEZ	157.476	        157.476	           1.0	    2.0	        2.0	          9.44856	1.782190
-        49971207	MIG	        10	        9	SM_MIG_49997_11718	SPEZ	157.476	        157.476	           1.0	    NaN	        1.0	          9.44856	1.446781
+        49971200	MIG	        10	        8	SM_MIG_49997_11718	SPEZ	   157.476	  1.0	    NaN	        1.0	       9.44856	1.782190
+        49971201	MIG	        10	        8	SM_MIG_49997_11718	SPEZ	   157.476	  1.0	    NaN	        1.0	       9.44856	1.782190
+        49971204	MIG	        10	        8	SM_MIG_49997_11718	SPEZ	   157.476	  1.0	    NaN	        1.0	       9.44856	1.782190
+        49971206	MIG	        10	        8	SM_MIG_49997_11718	SPEZ	   157.476	  1.0	    2.0	        2.0	       9.44856	1.782190
+        49971207	MIG	        10	        9	SM_MIG_49997_11718	SPEZ	   157.476	  1.0	    NaN	        1.0	       9.44856	1.446781
         """
 
     # ##### MAIN CALIBRATION LOOP BEGINS HERE #####
