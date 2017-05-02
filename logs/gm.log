@@ -753,3 +753,13 @@
 2017-05-02 16:54:57,239 - INFO - [input_reader]	Removed 369841 duplicates entries
 2017-05-02 16:54:57,609 - INFO - [input_reader]	Caching input data
 2017-05-02 16:55:11,293 - INFO - [input_reader]	Done reading input data
+2017-05-02 17:39:28,778 - INFO - [main]	DONE
+2017-05-02 17:39:31,104 - INFO - [main]	BEGINNING CALIBRATION
+2017-05-02 17:39:31,104 - INFO - [main]	Parameters: a/b = 0.100000 / 0.001000
+2017-05-02 17:47:28,600 - INFO - [main]	Computing prediction errors
+2017-05-02 17:47:28,603 - INFO - [main]	TOTAL LINEAR SQUARE ERROR after 0 iterations: 78886.952489
+2017-05-02 17:47:28,603 - INFO - [main]	TOTAL RATIO SQUARE ERROR after 0 iterations: 45526.474414
+2017-05-02 17:47:28,608 - INFO - [main]		GRADIENT LINEAR SQUARE ERROR after 0 iterations -80.951987 (da) , 732.415755 (db)
+2017-05-02 17:47:28,608 - INFO - [main]		GRADIENT RATIO SQUARE ERROR after 0 iterations 24.884844 (da), 1757.858443 (db)
+2017-05-02 17:47:28,609 - INFO - [main]	Generating output csv
+2017-05-02 17:47:28,656 - INFO - [main]	DONE CALIBRATION
