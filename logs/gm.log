@@ -763,3 +763,223 @@
 2017-05-02 17:47:28,608 - INFO - [main]		GRADIENT RATIO SQUARE ERROR after 0 iterations 24.884844 (da), 1757.858443 (db)
 2017-05-02 17:47:28,609 - INFO - [main]	Generating output csv
 2017-05-02 17:47:28,656 - INFO - [main]	DONE CALIBRATION
+2017-05-03 12:38:05,142 - INFO - [input_reader]	Read settings from settings.cfg
+2017-05-03 12:38:05,148 - INFO - [input_reader]	Reading input files into Pandas data frames
+2017-05-03 12:39:31,890 - INFO - [input_reader]	Read settings from settings.cfg
+2017-05-03 12:39:31,895 - INFO - [input_reader]	Reading input files into Pandas data frames
+2017-05-03 12:40:44,456 - INFO - [input_reader]	Removing duplicate drive times from drivetimes_pd
+2017-05-03 12:41:28,737 - INFO - [input_reader]	Removed 369841 duplicates entries
+2017-05-03 12:41:28,923 - INFO - [input_reader]	Caching input data
+2017-05-03 12:41:37,048 - INFO - [input_reader]	Done reading input data
+2017-05-03 12:41:37,048 - INFO - [main]	Subsetting only the hektars from which a Migros store is reachable
+2017-05-03 12:44:10,773 - INFO - [main]	Obtaining all drive times only for hektars from which a Migros store is reachable
+2017-05-03 12:44:30,265 - INFO - [main]	Enriching with store information
+2017-05-03 12:44:57,751 - INFO - [main]	22 stores appear in drivetimes, but have no associated information in stores_sm.csv
+2017-05-03 12:44:57,751 - INFO - [main]	Enriching with Haushalt information
+2017-05-03 12:45:21,229 - INFO - [main]	Computing LAT
+2017-05-03 12:45:24,146 - INFO - [main]	Reindexing ...
+2017-05-03 12:45:58,347 - INFO - [main]	Removing duplicates ...
+2017-05-03 12:47:09,509 - INFO - [main]	Loading pruned data from cache
+2017-05-03 12:49:16,830 - INFO - [main]	Generating output csv
+2017-05-03 12:58:32,220 - INFO - [input_reader]	Read settings from settings.cfg
+2017-05-03 12:58:32,226 - INFO - [input_reader]	Reading input files from cache into Pandas data frames
+2017-05-03 12:58:36,995 - INFO - [main]	Subsetting only the hektars from which a Migros store is reachable
+2017-05-03 13:01:06,207 - INFO - [main]	Obtaining all drive times only for hektars from which a Migros store is reachable
+2017-05-03 13:01:25,652 - INFO - [main]	Enriching with store information
+2017-05-03 13:01:52,380 - INFO - [main]	22 stores appear in drivetimes, but have no associated information in stores_sm.csv
+2017-05-03 13:01:52,380 - INFO - [main]	Enriching with Haushalt information
+2017-05-03 13:02:15,504 - INFO - [main]	Computing LAT
+2017-05-03 13:02:18,276 - INFO - [main]	Reindexing ...
+2017-05-03 13:02:51,841 - INFO - [main]	Removing duplicates ...
+2017-05-03 13:04:01,202 - INFO - [main]	Computing RLAT
+2017-05-03 13:04:08,037 - INFO - [brain]	Pruning irrelevant stores. Takes a while ...
+2017-05-03 13:04:16,895 - INFO - [brain]	390219 groups after grouping by hektar_id
+
+
+
+2017-05-03 13:45:51,190 - INFO - [input_reader]	Read settings from settings.cfg
+2017-05-03 13:45:51,198 - INFO - [input_reader]	Reading input files from cache into Pandas data frames
+2017-05-03 13:45:59,752 - INFO - [main]	Subsetting only the hektars from which a Migros store is reachable
+2017-05-03 13:49:03,685 - INFO - [main]	Obtaining all drive times only for hektars from which a Migros store is reachable
+2017-05-03 13:49:26,473 - INFO - [main]	Enriching with store information
+2017-05-03 13:49:57,192 - INFO - [main]	22 stores appear in drivetimes, but have no associated information in stores_sm.csv
+2017-05-03 13:49:57,193 - INFO - [main]	Enriching with Haushalt information
+2017-05-03 13:50:39,002 - INFO - [main]	Computing LAT
+2017-05-03 13:50:42,373 - INFO - [main]	Reindexing ...
+2017-05-03 13:51:45,735 - INFO - [main]	Removing duplicates ...
+2017-05-03 13:54:08,412 - INFO - [main]	Computing RLAT
+2017-05-03 13:54:20,628 - INFO - [brain]	Pruning irrelevant stores. Takes a while ...
+2017-05-03 13:54:38,118 - INFO - [brain]	390219 groups after grouping by hektar_id
+2017-05-03 15:05:12,566 - INFO - [brain]	DONE
+2017-05-03 15:05:12,575 - INFO - [main]	BEGINNING CALIBRATION
+2017-05-03 15:05:12,575 - INFO - [main]	Parameters: a/b = 0.010000 / -0.000500
+2017-05-03 15:12:57,495 - INFO - [main]	Generating output csv
+2017-05-03 15:12:57,518 - INFO - [main]	Computing prediction errors
+2017-05-03 15:12:57,520 - INFO - [main]	TOTAL LINEAR SQUARE ERROR after 0 iterations: 45844.033940
+2017-05-03 15:12:57,521 - INFO - [main]	TOTAL RATIO SQUARE ERROR after 0 iterations: 8980.912115
+2017-05-03 15:12:57,525 - INFO - [main]		GRADIENT LINEAR SQUARE ERROR after 0 iterations -0.511717 (da) , 204.207408 (db)
+2017-05-03 15:12:57,525 - INFO - [main]		GRADIENT RATIO SQUARE ERROR after 0 iterations 7.845023 (da), 246.485835 (db)
+2017-05-03 15:12:57,525 - INFO - [main]	DONE CALIBRATION
+
+
+
+
+2017-05-03 16:28:14,058 - INFO - [input_reader]	Read settings from settings.cfg
+2017-05-03 16:28:14,065 - INFO - [input_reader]	Reading input files from cache into Pandas data frames
+2017-05-03 16:28:22,011 - INFO - [main]	Subsetting only the hektars from which a Migros store is reachable
+2017-05-03 16:31:15,698 - INFO - [main]	Obtaining all drive times only for hektars from which a Migros store is reachable
+2017-05-03 16:31:38,705 - INFO - [main]	Enriching with store information
+2017-05-03 16:32:08,986 - INFO - [main]	22 stores appear in drivetimes, but have no associated information in stores_sm.csv
+2017-05-03 16:32:08,987 - INFO - [main]	Enriching with Haushalt information
+2017-05-03 16:33:02,638 - INFO - [main]	Computing LAT
+2017-05-03 16:33:09,651 - INFO - [main]	Reindexing ...
+2017-05-03 16:34:20,926 - INFO - [main]	Removing duplicates ...
+2017-05-03 16:36:37,891 - INFO - [main]	Will do parameter sweep. This will take a while, better run over night
+2017-05-03 16:36:37,891 - INFO - [main]	Parameters: a/b = -0.100000 / -0.010000
+2017-05-03 16:36:37,892 - INFO - [main]	Computing RLAT
+2017-05-03 16:42:42,581 - INFO - [main]	Computing prediction errors
+2017-05-03 16:42:42,584 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 94809.358947
+2017-05-03 16:42:42,584 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 1035.369221
+2017-05-03 16:42:42,585 - INFO - [main]	Generating output csv
+2017-05-03 16:42:42,614 - INFO - [main]	Parameters: a/b = -0.100000 / 0.000000
+2017-05-03 16:42:42,615 - INFO - [main]	Computing RLAT
+2017-05-03 16:48:24,046 - INFO - [main]	Computing prediction errors
+2017-05-03 16:48:24,049 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 162718.070481
+2017-05-03 16:48:24,049 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 2647687.870462
+2017-05-03 16:48:24,049 - INFO - [main]	Generating output csv
+2017-05-03 16:48:24,072 - INFO - [main]	Parameters: a/b = -0.100000 / 0.001000
+2017-05-03 16:48:24,072 - INFO - [main]	Computing RLAT
+2017-05-03 16:54:04,503 - INFO - [main]	Computing prediction errors
+2017-05-03 16:54:04,506 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 182631.755632
+2017-05-03 16:54:04,506 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 2332682.038642
+2017-05-03 16:54:04,506 - INFO - [main]	Generating output csv
+2017-05-03 16:54:04,550 - INFO - [main]	Parameters: a/b = -0.100000 / 0.010000
+2017-05-03 16:54:04,550 - INFO - [main]	Computing RLAT
+2017-05-03 16:59:22,618 - INFO - [main]	Computing prediction errors
+2017-05-03 16:59:22,621 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 188595.990919
+2017-05-03 16:59:22,621 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 3326.523403
+2017-05-03 16:59:22,621 - INFO - [main]	Generating output csv
+2017-05-03 16:59:22,665 - INFO - [main]	Parameters: a/b = 0.000000 / -0.010000
+2017-05-03 16:59:22,666 - INFO - [main]	Computing RLAT
+2017-05-03 17:04:35,908 - INFO - [main]	Computing prediction errors
+2017-05-03 17:04:35,911 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 92672.577443
+2017-05-03 17:04:35,912 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 30251.938199
+2017-05-03 17:04:35,912 - INFO - [main]	Generating output csv
+2017-05-03 17:04:35,956 - INFO - [main]	Parameters: a/b = 0.000000 / 0.000000
+2017-05-03 17:04:35,956 - INFO - [main]	Computing RLAT
+2017-05-03 17:09:50,949 - INFO - [main]	Computing prediction errors
+2017-05-03 17:09:50,951 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 163104.225355
+2017-05-03 17:09:50,952 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 3116586.893131
+2017-05-03 17:09:50,952 - INFO - [main]	Generating output csv
+2017-05-03 17:09:50,996 - INFO - [main]	Parameters: a/b = 0.000000 / 0.001000
+2017-05-03 17:09:50,996 - INFO - [main]	Computing RLAT
+2017-05-03 17:14:49,347 - INFO - [main]	Computing prediction errors
+2017-05-03 17:14:49,350 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 173069.706280
+2017-05-03 17:14:49,351 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 2882621.772578
+2017-05-03 17:14:49,351 - INFO - [main]	Generating output csv
+2017-05-03 17:14:49,396 - INFO - [main]	Parameters: a/b = 0.000000 / 0.010000
+2017-05-03 17:14:49,396 - INFO - [main]	Computing RLAT
+2017-05-03 17:19:52,482 - INFO - [main]	Computing prediction errors
+2017-05-03 17:19:52,485 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 187790.062540
+2017-05-03 17:19:52,486 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 3294.750081
+2017-05-03 17:19:52,486 - INFO - [main]	Generating output csv
+2017-05-03 17:19:52,526 - INFO - [main]	Parameters: a/b = 0.050000 / -0.010000
+2017-05-03 17:19:52,526 - INFO - [main]	Computing RLAT
+2017-05-03 17:24:51,621 - INFO - [main]	Computing prediction errors
+2017-05-03 17:24:51,624 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 92680.000263
+2017-05-03 17:24:51,624 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 63149.428908
+2017-05-03 17:24:51,624 - INFO - [main]	Generating output csv
+2017-05-03 17:24:51,672 - INFO - [main]	Parameters: a/b = 0.050000 / 0.000000
+2017-05-03 17:24:51,673 - INFO - [main]	Computing RLAT
+2017-05-03 17:29:56,432 - INFO - [main]	Computing prediction errors
+2017-05-03 17:29:56,435 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 172345.278047
+2017-05-03 17:29:56,435 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 3524058.609611
+2017-05-03 17:29:56,435 - INFO - [main]	Generating output csv
+2017-05-03 17:29:56,482 - INFO - [main]	Parameters: a/b = 0.050000 / 0.001000
+2017-05-03 17:29:56,483 - INFO - [main]	Computing RLAT
+2017-05-03 17:35:03,811 - INFO - [main]	Computing prediction errors
+2017-05-03 17:35:03,814 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 172333.408084
+2017-05-03 17:35:03,814 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 3303576.842398
+2017-05-03 17:35:03,814 - INFO - [main]	Generating output csv
+2017-05-03 17:35:03,859 - INFO - [main]	Parameters: a/b = 0.050000 / 0.010000
+2017-05-03 17:35:03,859 - INFO - [main]	Computing RLAT
+2017-05-03 17:40:03,637 - INFO - [main]	Computing prediction errors
+2017-05-03 17:40:03,640 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 187160.230160
+2017-05-03 17:40:03,641 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 3270.370925
+2017-05-03 17:40:03,641 - INFO - [main]	Generating output csv
+2017-05-03 17:40:03,678 - INFO - [main]	Parameters: a/b = 0.100000 / -0.010000
+2017-05-03 17:40:03,679 - INFO - [main]	Computing RLAT
+2017-05-03 17:45:06,360 - INFO - [main]	Computing prediction errors
+2017-05-03 17:45:06,362 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 90936.406400
+2017-05-03 17:45:06,363 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 77205.101682
+2017-05-03 17:45:06,363 - INFO - [main]	Generating output csv
+2017-05-03 17:45:06,410 - INFO - [main]	Parameters: a/b = 0.100000 / 0.000000
+2017-05-03 17:45:06,410 - INFO - [main]	Computing RLAT
+2017-05-03 17:49:59,062 - INFO - [main]	Computing prediction errors
+2017-05-03 17:49:59,065 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 174534.130258
+2017-05-03 17:49:59,065 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 3634208.068861
+2017-05-03 17:49:59,065 - INFO - [main]	Generating output csv
+2017-05-03 17:49:59,103 - INFO - [main]	Parameters: a/b = 0.100000 / 0.001000
+2017-05-03 17:49:59,103 - INFO - [main]	Computing RLAT
+2017-05-03 17:55:06,518 - INFO - [main]	Computing prediction errors
+2017-05-03 17:55:06,520 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 182743.217588
+2017-05-03 17:55:06,520 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 3909850.877337
+2017-05-03 17:55:06,520 - INFO - [main]	Generating output csv
+2017-05-03 17:55:06,555 - INFO - [main]	Parameters: a/b = 0.100000 / 0.010000
+2017-05-03 17:55:06,555 - INFO - [main]	Computing RLAT
+2017-05-03 17:59:54,570 - INFO - [main]	Computing prediction errors
+2017-05-03 17:59:54,573 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 186365.340638
+2017-05-03 17:59:54,573 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 3240.774786
+2017-05-03 17:59:54,573 - INFO - [main]	Generating output csv
+2017-05-03 17:59:54,614 - INFO - [main]	Parameters: a/b = 0.140000 / -0.010000
+2017-05-03 17:59:54,614 - INFO - [main]	Computing RLAT
+2017-05-03 18:04:37,221 - INFO - [main]	Computing prediction errors
+2017-05-03 18:04:37,223 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 89370.215183
+2017-05-03 18:04:37,223 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 79871.907627
+2017-05-03 18:04:37,223 - INFO - [main]	Generating output csv
+2017-05-03 18:04:37,264 - INFO - [main]	Parameters: a/b = 0.140000 / 0.000000
+2017-05-03 18:04:37,264 - INFO - [main]	Computing RLAT
+2017-05-03 18:08:59,405 - INFO - [main]	Computing prediction errors
+2017-05-03 18:08:59,408 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 169549.432901
+2017-05-03 18:08:59,408 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 3419555.354893
+2017-05-03 18:08:59,408 - INFO - [main]	Generating output csv
+2017-05-03 18:08:59,449 - INFO - [main]	Parameters: a/b = 0.140000 / 0.001000
+2017-05-03 18:08:59,449 - INFO - [main]	Computing RLAT
+2017-05-03 18:13:10,206 - INFO - [main]	Computing prediction errors
+2017-05-03 18:13:10,208 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 185421.021831
+2017-05-03 18:13:10,209 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 4103224.810575
+2017-05-03 18:13:10,209 - INFO - [main]	Generating output csv
+2017-05-03 18:13:10,245 - INFO - [main]	Parameters: a/b = 0.140000 / 0.010000
+2017-05-03 18:13:10,245 - INFO - [main]	Computing RLAT
+2017-05-03 18:17:08,726 - INFO - [main]	Computing prediction errors
+2017-05-03 18:17:08,728 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 185597.309392
+2017-05-03 18:17:08,728 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 3213.201875
+2017-05-03 18:17:08,728 - INFO - [main]	Generating output csv
+2017-05-03 18:17:08,774 - INFO - [main]	Parameters: a/b = 1.000000 / -0.010000
+2017-05-03 18:17:08,774 - INFO - [main]	Computing RLAT
+2017-05-03 18:21:09,822 - INFO - [main]	Computing prediction errors
+2017-05-03 18:21:09,824 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 80986.086547
+2017-05-03 18:21:09,825 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 20712.290165
+2017-05-03 18:21:09,825 - INFO - [main]	Generating output csv
+2017-05-03 18:21:09,865 - INFO - [main]	Parameters: a/b = 1.000000 / 0.000000
+2017-05-03 18:21:09,865 - INFO - [main]	Computing RLAT
+2017-05-03 18:25:09,142 - INFO - [main]	Computing prediction errors
+2017-05-03 18:25:09,145 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 72712.946610
+2017-05-03 18:25:09,145 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 178908.082865
+2017-05-03 18:25:09,145 - INFO - [main]	Generating output csv
+2017-05-03 18:25:09,189 - INFO - [main]	Parameters: a/b = 1.000000 / 0.001000
+2017-05-03 18:25:09,189 - INFO - [main]	Computing RLAT
+2017-05-03 18:29:03,938 - INFO - [main]	Computing prediction errors
+2017-05-03 18:29:03,940 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 73763.008661
+2017-05-03 18:29:03,940 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 225029.327784
+2017-05-03 18:29:03,940 - INFO - [main]	Generating output csv
+2017-05-03 18:29:03,983 - INFO - [main]	Parameters: a/b = 1.000000 / 0.010000
+2017-05-03 18:29:03,983 - INFO - [main]	Computing RLAT
+2017-05-03 18:32:56,167 - INFO - [main]	Computing prediction errors
+2017-05-03 18:32:56,169 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 113089.113998
+2017-05-03 18:32:56,170 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 1091852.997491
+2017-05-03 18:32:56,170 - INFO - [main]	Generating output csv
+
+
+
+

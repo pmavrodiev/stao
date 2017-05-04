@@ -12,12 +12,6 @@ def get_input(settingsFile, logger):
     config.read(settingsFile)
     logger.info("Read settings from settings.cfg")
 
-    stores_pd = None
-    drivetimes_pd = None
-    haushalt_pd = None
-    referenz_pd = None
-
-
     # do we read the data from cache? cache loads faster
     use_cache = config.getboolean('global', 'cache_enabled')
     cache_dir = config['cache_config']['cache_dir']
@@ -29,8 +23,6 @@ def get_input(settingsFile, logger):
     referenz_pd = pd.read_csv(refenz_resultate, sep=';', header=0, index_col=0, encoding='latin-1')
     # convert all 0s to NaNs, so that the stores can be later ignored
     referenz_pd[referenz_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE'] == 0] = np.nan
-
-
 
     if use_cache:
         logger.info("Reading input files from cache into Pandas data frames")
@@ -64,13 +56,14 @@ def get_input(settingsFile, logger):
         # M, MM, MMM, DMP, SPEZ, VOI zusammen
         # stores_pd.loc[stores_pd['FORMAT'].isin(['M', 'MM', 'MMM', 'DMP', 'SPEZ', 'VOI']), 'type'] = 'Migros'
         # Migrolino, Alnatura und FM separat
-        stores_pd.loc[stores_pd['FORMAT'] == 'ALNA', 'type'] = 'ALNA'
-        stores_pd.loc[stores_pd['FORMAT'] == 'migrolino', 'type'] = 'migrolino'
-        stores_pd.loc[stores_pd['FORMAT'] == 'FM', 'type'] = 'FM'
+        # stores_pd.loc[stores_pd['FORMAT'] == 'ALNA', 'type'] = 'ALNA'
+        # stores_pd.loc[stores_pd['FORMAT'] == 'migrolino', 'type'] = 'migrolino'
+        # stores_pd.loc[stores_pd['FORMAT'] == 'FM', 'type'] = 'FM'
 
         # choose the right Verkaufsflaeche for Frische und Food
-        stores_pd['vfl'] = np.where(pd.isnull(stores_pd['VERKAUFSFLAECHE_SABRINA']), stores_pd['VERKAUFSFLAECHE'],
-                                    stores_pd['VERKAUFSFLAECHE_SABRINA'])
+        # stores_pd['vfl'] = np.where(pd.isnull(stores_pd['VERKAUFSFLAECHE_SABRINA']), stores_pd['VERKAUFSFLAECHE'],
+        #                             stores_pd['VERKAUFSFLAECHE_SABRINA'])
+        stores_pd['vfl'] = stores_pd['VERKAUFSFLAECHE_TOTAL']
 
         drivetimes_pd = pd.read_csv(drivetimes, sep=',', header=None, names=['filiale_id', 'fahrzeit', 'hektar_id'],
                                     index_col=[0, 1, 2], nrows=110299436)
