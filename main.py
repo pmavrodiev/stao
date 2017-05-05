@@ -133,8 +133,10 @@ if __name__ == "__main__":
             logger.info("Computing RLAT")
             enriched_pd['RLAT'] = enriched_pd['LAT'] * np.power(10,
                                                                 -(a - b * np.fmin(enriched_pd['LAT'], 60)) *
-                                                                enriched_pd[
-                                                                    'fahrzeit'])
+                                                                enriched_pd['fahrzeit'])
+            # TEMPORARY - exclude all stores with VFL > 4000
+            # enriched_pd['RLAT'] = np.where(enriched_pd.vfl > 2000, 0, enriched_pd.vfl)
+
             # logger.info("Saving intermediary results ")
             # enriched_pd.to_pickle(config["output"]["intermediary_pickle"])
 

@@ -983,3 +983,284 @@
 
 
 
+2017-05-04 12:27:30,653 - INFO - [input_reader]	Read settings from settings.cfg
+2017-05-04 12:27:30,659 - INFO - [input_reader]	Reading input files from cache into Pandas data frames
+
+
+2017-05-04 12:43:09,547 - INFO - [input_reader]	Read settings from settings.cfg
+2017-05-04 12:43:09,553 - INFO - [input_reader]	Reading input files from cache into Pandas data frames
+2017-05-04 12:43:14,553 - INFO - [main]	Subsetting only the hektars from which a Migros store is reachable
+2017-05-04 12:45:49,412 - INFO - [main]	Obtaining all drive times only for hektars from which a Migros store is reachable
+2017-05-04 12:46:09,118 - INFO - [main]	Enriching with store information
+2017-05-04 12:46:36,528 - INFO - [main]	22 stores appear in drivetimes, but have no associated information in stores_sm.csv
+2017-05-04 12:46:36,529 - INFO - [main]	Enriching with Haushalt information
+2017-05-04 12:46:59,915 - INFO - [main]	Computing LAT
+2017-05-04 12:47:02,756 - INFO - [main]	Reindexing ...
+2017-05-04 12:47:37,389 - INFO - [main]	Removing duplicates ...
+2017-05-04 12:48:48,515 - INFO - [main]	Computing RLAT
+2017-05-04 12:48:56,414 - INFO - [brain]	Pruning irrelevant stores. Takes a while ...
+2017-05-04 12:49:05,527 - INFO - [brain]	390219 groups after grouping by hektar_id
+2017-05-04 13:40:15,881 - INFO - [brain]	DONE
+2017-05-04 13:40:17,848 - INFO - [main]	Computing sum RLATs
+2017-05-04 13:42:43,229 - INFO - [main]	Generating output csv
+
+
+
+
+
+2017-05-04 15:05:43,382 - INFO - [input_reader]	Read settings from settings.cfg
+2017-05-04 15:05:43,387 - INFO - [input_reader]	Reading input files from cache into Pandas data frames
+2017-05-04 15:05:48,310 - INFO - [main]	Subsetting only the hektars from which a Migros store is reachable
+2017-05-04 15:08:23,734 - INFO - [main]	Obtaining all drive times only for hektars from which a Migros store is reachable
+2017-05-04 15:08:43,425 - INFO - [main]	Enriching with store information
+2017-05-04 15:09:10,499 - INFO - [main]	22 stores appear in drivetimes, but have no associated information in stores_sm.csv
+2017-05-04 15:09:10,499 - INFO - [main]	Enriching with Haushalt information
+2017-05-04 15:09:34,162 - INFO - [main]	Computing LAT
+2017-05-04 15:09:36,933 - INFO - [main]	Reindexing ...
+2017-05-04 15:10:10,944 - INFO - [main]	Removing duplicates ...
+2017-05-04 15:11:22,346 - INFO - [main]	Computing RLAT
+2017-05-04 15:11:30,176 - INFO - [brain]	Pruning irrelevant stores. Takes a while ...
+2017-05-04 15:11:38,958 - INFO - [brain]	390219 groups after grouping by hektar_id
+2017-05-04 16:03:03,309 - INFO - [brain]	DONE
+2017-05-04 16:03:05,261 - INFO - [main]	Computing sum RLATs
+2017-05-04 16:05:32,573 - INFO - [main]	Generating output csv
+
+
+2017-05-04 17:19:33,970 - INFO - [input_reader]	Read settings from settings.cfg
+2017-05-04 17:19:33,977 - INFO - [input_reader]	Reading input files into Pandas data frames
+2017-05-04 17:32:53,568 - INFO - [input_reader]	Read settings from settings.cfg
+2017-05-04 17:32:53,574 - INFO - [input_reader]	Reading input files into Pandas data frames
+2017-05-04 17:34:19,867 - INFO - [input_reader]	Removing duplicate drive times from drivetimes_pd
+2017-05-04 17:35:08,158 - INFO - [input_reader]	Removed 369841 duplicates entries
+2017-05-04 17:35:08,360 - INFO - [input_reader]	Single store mode chosen - SM_MIG_69960_24035
+2017-05-04 17:35:08,363 - INFO - [input_reader]	Caching input data
+2017-05-04 17:35:17,791 - INFO - [input_reader]	Done reading input data
+2017-05-04 17:35:17,792 - INFO - [main]	Subsetting only the hektars from which a Migros store is reachable
+2017-05-04 17:35:25,488 - INFO - [main]	Obtaining all drive times only for hektars from which a Migros store is reachable
+2017-05-04 17:35:46,409 - INFO - [main]	Enriching with store information
+2017-05-04 17:35:52,778 - INFO - [main]	5 stores appear in drivetimes, but have no associated information in stores_sm.csv
+2017-05-04 17:35:52,778 - INFO - [main]	Enriching with Haushalt information
+2017-05-04 17:35:58,489 - INFO - [main]	Computing LAT
+2017-05-04 17:36:00,047 - INFO - [main]	Reindexing ...
+2017-05-04 17:36:07,159 - INFO - [main]	Removing duplicates ...
+2017-05-04 17:36:19,990 - INFO - [main]	Computing RLAT
+2017-05-04 17:36:21,542 - INFO - [brain]	Pruning irrelevant stores. Takes a while ...
+2017-05-04 17:36:23,205 - INFO - [brain]	34203 groups after grouping by hektar_id
+2017-05-04 17:41:40,007 - INFO - [brain]	DONE
+2017-05-04 17:41:41,679 - INFO - [main]	Computing sum RLATs
+2017-05-04 17:41:57,455 - INFO - [main]	Generating output csv
+
+
+
+2017-05-04 17:48:14,516 - INFO - [input_reader]	Read settings from settings.cfg
+2017-05-04 17:48:14,526 - INFO - [input_reader]	Reading input files into Pandas data frames
+2017-05-04 17:50:07,097 - INFO - [input_reader]	Removing duplicate drive times from drivetimes_pd
+2017-05-04 17:50:57,741 - INFO - [input_reader]	Removed 369841 duplicates entries
+2017-05-04 17:50:57,975 - INFO - [input_reader]	Caching input data
+2017-05-04 17:51:10,671 - INFO - [input_reader]	Done reading input data
+2017-05-04 17:51:10,671 - INFO - [main]	Subsetting only the hektars from which a Migros store is reachable
+2017-05-04 17:53:55,485 - INFO - [main]	Obtaining all drive times only for hektars from which a Migros store is reachable
+2017-05-04 17:54:18,468 - INFO - [main]	Enriching with store information
+2017-05-04 17:54:48,687 - INFO - [main]	22 stores appear in drivetimes, but have no associated information in stores_sm.csv
+2017-05-04 17:54:48,687 - INFO - [main]	Enriching with Haushalt information
+2017-05-04 17:55:25,099 - INFO - [main]	Computing LAT
+2017-05-04 17:55:28,468 - INFO - [main]	Reindexing ...
+2017-05-04 17:56:10,353 - INFO - [main]	Removing duplicates ...
+2017-05-04 17:57:31,396 - INFO - [main]	Will do parameter sweep. This will take a while, better run over night
+2017-05-04 17:57:31,396 - INFO - [main]	Parameters: a/b = -0.100000 / -0.010000
+2017-05-04 17:57:31,396 - INFO - [main]	Computing RLAT
+2017-05-04 17:57:39,070 - INFO - [brain]	Pruning irrelevant stores. Takes a while ...
+2017-05-04 17:57:50,597 - INFO - [brain]	390219 groups after grouping by hektar_id
+2017-05-04 19:01:09,610 - INFO - [brain]	DONE
+2017-05-04 19:01:09,618 - INFO - [main]	Computing sum RLATs
+2017-05-04 19:03:52,362 - INFO - [main]	Computing prediction errors
+2017-05-04 19:03:52,364 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 108251.605323
+2017-05-04 19:03:52,365 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 27702.193769
+2017-05-04 19:03:52,365 - INFO - [main]	Generating output csv
+2017-05-04 19:03:52,387 - INFO - [main]	Parameters: a/b = -0.100000 / 0.001000
+2017-05-04 19:03:52,387 - INFO - [main]	Computing RLAT
+2017-05-04 19:04:00,598 - INFO - [brain]	Pruning irrelevant stores. Takes a while ...
+2017-05-04 19:04:29,626 - INFO - [brain]	390219 groups after grouping by hektar_id
+2017-05-04 20:06:54,370 - INFO - [brain]	DONE
+2017-05-04 20:06:55,187 - INFO - [main]	Computing sum RLATs
+2017-05-04 20:09:42,636 - INFO - [main]	Computing prediction errors
+2017-05-04 20:09:42,639 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 135699.674262
+2017-05-04 20:09:42,639 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 1238.491159
+2017-05-04 20:09:42,640 - INFO - [main]	Generating output csv
+2017-05-04 20:09:42,676 - INFO - [main]	Parameters: a/b = -0.100000 / 0.010000
+2017-05-04 20:09:42,676 - INFO - [main]	Computing RLAT
+2017-05-04 20:09:50,749 - INFO - [brain]	Pruning irrelevant stores. Takes a while ...
+2017-05-04 20:09:58,372 - INFO - [brain]	390219 groups after grouping by hektar_id
+2017-05-04 21:09:55,654 - INFO - [brain]	DONE
+2017-05-04 21:09:56,758 - INFO - [main]	Computing sum RLATs
+2017-05-04 21:12:42,966 - INFO - [main]	Computing prediction errors
+2017-05-04 21:12:42,969 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 138950.019913
+2017-05-04 21:12:42,972 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 1206.511126
+2017-05-04 21:12:42,972 - INFO - [main]	Generating output csv
+2017-05-04 21:12:43,015 - INFO - [main]	Parameters: a/b = 0.000000 / -0.010000
+2017-05-04 21:12:43,016 - INFO - [main]	Computing RLAT
+2017-05-04 21:12:51,104 - INFO - [brain]	Pruning irrelevant stores. Takes a while ...
+2017-05-04 21:13:03,393 - INFO - [brain]	390219 groups after grouping by hektar_id
+2017-05-04 22:13:43,536 - INFO - [brain]	DONE
+2017-05-04 22:13:44,736 - INFO - [main]	Computing sum RLATs
+2017-05-04 22:16:20,673 - INFO - [main]	Computing prediction errors
+2017-05-04 22:16:20,676 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 82501.076463
+2017-05-04 22:16:20,676 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 7822.346324
+2017-05-04 22:16:20,676 - INFO - [main]	Generating output csv
+2017-05-04 22:16:20,697 - INFO - [main]	Parameters: a/b = 0.000000 / 0.001000
+2017-05-04 22:16:20,697 - INFO - [main]	Computing RLAT
+2017-05-04 22:16:28,698 - INFO - [brain]	Pruning irrelevant stores. Takes a while ...
+2017-05-04 22:16:35,635 - INFO - [brain]	390219 groups after grouping by hektar_id
+2017-05-04 23:08:47,928 - INFO - [brain]	DONE
+2017-05-04 23:08:48,288 - INFO - [main]	Computing sum RLATs
+2017-05-04 23:11:22,792 - INFO - [main]	Computing prediction errors
+2017-05-04 23:11:22,795 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 128604.106367
+2017-05-04 23:11:22,795 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 1113.109687
+2017-05-04 23:11:22,795 - INFO - [main]	Generating output csv
+2017-05-04 23:11:22,811 - INFO - [main]	Parameters: a/b = 0.000000 / 0.010000
+2017-05-04 23:11:22,812 - INFO - [main]	Computing RLAT
+2017-05-04 23:11:29,751 - INFO - [brain]	Pruning irrelevant stores. Takes a while ...
+2017-05-04 23:11:34,185 - INFO - [brain]	390219 groups after grouping by hektar_id
+2017-05-05 00:02:25,408 - INFO - [brain]	DONE
+2017-05-05 00:02:26,306 - INFO - [main]	Computing sum RLATs
+2017-05-05 00:04:57,058 - INFO - [main]	Computing prediction errors
+2017-05-05 00:04:57,061 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 139700.965219
+2017-05-05 00:04:57,061 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 1229.536929
+2017-05-05 00:04:57,061 - INFO - [main]	Generating output csv
+2017-05-05 00:04:57,078 - INFO - [main]	Parameters: a/b = 0.050000 / -0.010000
+2017-05-05 00:04:57,078 - INFO - [main]	Computing RLAT
+2017-05-05 00:05:04,116 - INFO - [brain]	Pruning irrelevant stores. Takes a while ...
+2017-05-05 00:05:08,431 - INFO - [brain]	390219 groups after grouping by hektar_id
+2017-05-05 00:59:01,280 - INFO - [brain]	DONE
+2017-05-05 00:59:02,382 - INFO - [main]	Computing sum RLATs
+2017-05-05 01:01:29,992 - INFO - [main]	Computing prediction errors
+2017-05-05 01:01:29,994 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 79834.996117
+2017-05-05 01:01:29,994 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 3758.390065
+2017-05-05 01:01:29,994 - INFO - [main]	Generating output csv
+2017-05-05 01:01:30,010 - INFO - [main]	Parameters: a/b = 0.050000 / 0.001000
+2017-05-05 01:01:30,010 - INFO - [main]	Computing RLAT
+2017-05-05 01:01:36,999 - INFO - [brain]	Pruning irrelevant stores. Takes a while ...
+2017-05-05 01:01:41,520 - INFO - [brain]	390219 groups after grouping by hektar_id
+2017-05-05 01:55:06,182 - INFO - [brain]	DONE
+2017-05-05 01:55:06,598 - INFO - [main]	Computing sum RLATs
+2017-05-05 01:57:31,447 - INFO - [main]	Computing prediction errors
+2017-05-05 01:57:31,450 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 138517.393693
+2017-05-05 01:57:31,450 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 3945.384246
+2017-05-05 01:57:31,450 - INFO - [main]	Generating output csv
+2017-05-05 01:57:31,467 - INFO - [main]	Parameters: a/b = 0.050000 / 0.010000
+2017-05-05 01:57:31,467 - INFO - [main]	Computing RLAT
+2017-05-05 01:57:38,481 - INFO - [brain]	Pruning irrelevant stores. Takes a while ...
+2017-05-05 01:57:43,050 - INFO - [brain]	390219 groups after grouping by hektar_id
+2017-05-05 02:48:15,412 - INFO - [brain]	DONE
+2017-05-05 02:48:15,829 - INFO - [main]	Computing sum RLATs
+2017-05-05 02:50:55,399 - INFO - [main]	Computing prediction errors
+2017-05-05 02:50:55,402 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 140250.481298
+2017-05-05 02:50:55,402 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 1245.038949
+2017-05-05 02:50:55,402 - INFO - [main]	Generating output csv
+2017-05-05 02:50:55,419 - INFO - [main]	Parameters: a/b = 0.100000 / -0.010000
+2017-05-05 02:50:55,419 - INFO - [main]	Computing RLAT
+2017-05-05 02:51:02,515 - INFO - [brain]	Pruning irrelevant stores. Takes a while ...
+2017-05-05 02:51:07,036 - INFO - [brain]	390219 groups after grouping by hektar_id
+2017-05-05 03:43:40,586 - INFO - [brain]	DONE
+2017-05-05 03:43:41,617 - INFO - [main]	Computing sum RLATs
+2017-05-05 03:45:59,150 - INFO - [main]	Computing prediction errors
+2017-05-05 03:45:59,152 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 79331.399099
+2017-05-05 03:45:59,152 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 2980.207242
+2017-05-05 03:45:59,152 - INFO - [main]	Generating output csv
+2017-05-05 03:45:59,168 - INFO - [main]	Parameters: a/b = 0.100000 / 0.001000
+2017-05-05 03:45:59,168 - INFO - [main]	Computing RLAT
+2017-05-05 03:46:06,236 - INFO - [brain]	Pruning irrelevant stores. Takes a while ...
+2017-05-05 03:46:10,662 - INFO - [brain]	390219 groups after grouping by hektar_id
+2017-05-05 04:39:49,440 - INFO - [brain]	DONE
+2017-05-05 04:39:49,867 - INFO - [main]	Computing sum RLATs
+2017-05-05 04:42:14,181 - INFO - [main]	Computing prediction errors
+2017-05-05 04:42:14,183 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 61673.776057
+2017-05-05 04:42:14,183 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 48144.038376
+2017-05-05 04:42:14,183 - INFO - [main]	Generating output csv
+2017-05-05 04:42:14,200 - INFO - [main]	Parameters: a/b = 0.100000 / 0.010000
+2017-05-05 04:42:14,200 - INFO - [main]	Computing RLAT
+2017-05-05 04:42:21,236 - INFO - [brain]	Pruning irrelevant stores. Takes a while ...
+2017-05-05 04:42:25,642 - INFO - [brain]	390219 groups after grouping by hektar_id
+2017-05-05 05:33:05,033 - INFO - [brain]	DONE
+2017-05-05 05:33:05,386 - INFO - [main]	Computing sum RLATs
+2017-05-05 05:35:38,871 - INFO - [main]	Computing prediction errors
+2017-05-05 05:35:38,873 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 140990.711871
+2017-05-05 05:35:38,873 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 1264.412491
+2017-05-05 05:35:38,874 - INFO - [main]	Generating output csv
+2017-05-05 05:35:38,891 - INFO - [main]	Parameters: a/b = 0.140000 / -0.010000
+2017-05-05 05:35:38,891 - INFO - [main]	Computing RLAT
+2017-05-05 05:35:45,867 - INFO - [brain]	Pruning irrelevant stores. Takes a while ...
+2017-05-05 05:35:50,266 - INFO - [brain]	390219 groups after grouping by hektar_id
+2017-05-05 06:28:31,381 - INFO - [brain]	DONE
+2017-05-05 06:28:32,372 - INFO - [main]	Computing sum RLATs
+2017-05-05 06:31:01,492 - INFO - [main]	Computing prediction errors
+2017-05-05 06:31:01,494 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 78990.204392
+2017-05-05 06:31:01,494 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 2501.917621
+2017-05-05 06:31:01,494 - INFO - [main]	Generating output csv
+2017-05-05 06:31:01,510 - INFO - [main]	Parameters: a/b = 0.140000 / 0.001000
+2017-05-05 06:31:01,511 - INFO - [main]	Computing RLAT
+2017-05-05 06:31:08,528 - INFO - [brain]	Pruning irrelevant stores. Takes a while ...
+2017-05-05 06:31:12,960 - INFO - [brain]	390219 groups after grouping by hektar_id
+2017-05-05 07:25:37,407 - INFO - [brain]	DONE
+2017-05-05 07:25:37,840 - INFO - [main]	Computing sum RLATs
+2017-05-05 07:28:07,893 - INFO - [main]	Computing prediction errors
+2017-05-05 07:28:07,895 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 51488.954599
+2017-05-05 07:28:07,895 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 4243.301068
+2017-05-05 07:28:07,895 - INFO - [main]	Generating output csv
+2017-05-05 07:28:07,911 - INFO - [main]	Parameters: a/b = 0.140000 / 0.010000
+2017-05-05 07:28:07,912 - INFO - [main]	Computing RLAT
+2017-05-05 07:28:14,896 - INFO - [brain]	Pruning irrelevant stores. Takes a while ...
+2017-05-05 07:28:19,355 - INFO - [brain]	390219 groups after grouping by hektar_id
+2017-05-05 08:21:32,515 - INFO - [brain]	DONE
+2017-05-05 08:21:32,911 - INFO - [main]	Computing sum RLATs
+2017-05-05 08:24:09,459 - INFO - [main]	Computing prediction errors
+2017-05-05 08:24:09,462 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 141732.416870
+2017-05-05 08:24:09,462 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 1282.936882
+2017-05-05 08:24:09,462 - INFO - [main]	Generating output csv
+2017-05-05 08:24:09,479 - INFO - [main]	Parameters: a/b = 1.000000 / -0.010000
+2017-05-05 08:24:09,479 - INFO - [main]	Computing RLAT
+2017-05-05 08:24:16,488 - INFO - [brain]	Pruning irrelevant stores. Takes a while ...
+2017-05-05 08:24:21,016 - INFO - [brain]	390219 groups after grouping by hektar_id
+2017-05-05 09:16:38,763 - INFO - [brain]	DONE
+2017-05-05 09:16:39,598 - INFO - [main]	Computing sum RLATs
+2017-05-05 09:19:03,033 - INFO - [main]	Computing prediction errors
+2017-05-05 09:19:03,035 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 81341.693512
+2017-05-05 09:19:03,035 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 1980.458986
+2017-05-05 09:19:03,035 - INFO - [main]	Generating output csv
+2017-05-05 09:19:03,052 - INFO - [main]	Parameters: a/b = 1.000000 / 0.001000
+2017-05-05 09:19:03,052 - INFO - [main]	Computing RLAT
+2017-05-05 09:19:10,099 - INFO - [brain]	Pruning irrelevant stores. Takes a while ...
+2017-05-05 09:19:14,509 - INFO - [brain]	390219 groups after grouping by hektar_id
+2017-05-05 10:10:46,640 - INFO - [brain]	DONE
+2017-05-05 10:10:47,013 - INFO - [main]	Computing sum RLATs
+2017-05-05 10:13:07,306 - INFO - [main]	Computing prediction errors
+2017-05-05 10:13:07,308 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 59904.481167
+2017-05-05 10:13:07,308 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 1053.476820
+2017-05-05 10:13:07,308 - INFO - [main]	Generating output csv
+2017-05-05 10:13:07,324 - INFO - [main]	Parameters: a/b = 1.000000 / 0.010000
+2017-05-05 10:13:07,324 - INFO - [main]	Computing RLAT
+2017-05-05 10:13:14,418 - INFO - [brain]	Pruning irrelevant stores. Takes a while ...
+2017-05-05 10:13:18,983 - INFO - [brain]	390219 groups after grouping by hektar_id
+2017-05-05 11:05:55,178 - INFO - [brain]	DONE
+2017-05-05 11:05:55,588 - INFO - [main]	Computing sum RLATs
+2017-05-05 11:08:24,150 - INFO - [main]	Computing prediction errors
+2017-05-05 11:08:24,153 - INFO - [main]	TOTAL LINEAR SQUARE ERROR: 62370.446767
+2017-05-05 11:08:24,153 - INFO - [main]	TOTAL RATIO SQUARE ERROR: 516.265523
+2017-05-05 11:08:24,153 - INFO - [main]	Generating output csv
+
+
+
+
+2017-05-05 14:10:21,962 - INFO - [input_reader]	Read settings from settings.cfg
+2017-05-05 14:10:21,968 - INFO - [input_reader]	Reading input files from cache into Pandas data frames
+2017-05-05 14:10:26,905 - INFO - [main]	Subsetting only the hektars from which a Migros store is reachable
+2017-05-05 14:12:57,562 - INFO - [main]	Obtaining all drive times only for hektars from which a Migros store is reachable
+2017-05-05 14:13:17,199 - INFO - [main]	Enriching with store information
+2017-05-05 14:13:44,886 - INFO - [main]	22 stores appear in drivetimes, but have no associated information in stores_sm.csv
+2017-05-05 14:13:44,887 - INFO - [main]	Enriching with Haushalt information
+2017-05-05 14:14:08,391 - INFO - [main]	Computing LAT
+2017-05-05 14:14:11,218 - INFO - [main]	Reindexing ...
+2017-05-05 14:14:45,262 - INFO - [main]	Removing duplicates ...
+2017-05-05 14:15:55,003 - INFO - [main]	Computing RLAT
+2017-05-05 14:16:01,899 - INFO - [brain]	Pruning irrelevant stores. Takes a while ...
+2017-05-05 14:16:10,819 - INFO - [brain]	390219 groups after grouping by hektar_id

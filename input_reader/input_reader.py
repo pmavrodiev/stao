@@ -80,7 +80,6 @@ def get_input(settingsFile, logger):
 
         # Get all Migros stores used by MP Technology OR the single store if in single store mode
 
-        stores_migros_pd = None
         if len(single_store) > 0:
             logger.info('Single store mode chosen - %s', single_store)
             stores_migros_pd = stores_pd[stores_pd['ID'] == single_store]

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+# this class is not currently used and is therefore not under version control
 
 class Filiale:
     def __init__(self, x, y, name, hektar_information, logger):
