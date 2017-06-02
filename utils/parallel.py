@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 
 """
-    Hektars are distributed across threads (apply_parallel). Each thread then does locally:
+    Hektars are distributed across processes (apply_parallel). Each process then does locally:
         1. Grouping by store type (group_by_store_type)
         2. Prune each resulting group of store types (prune)
 

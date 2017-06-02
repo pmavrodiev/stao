@@ -1264,3 +1264,155 @@
 2017-05-05 14:15:55,003 - INFO - [main]	Computing RLAT
 2017-05-05 14:16:01,899 - INFO - [brain]	Pruning irrelevant stores. Takes a while ...
 2017-05-05 14:16:10,819 - INFO - [brain]	390219 groups after grouping by hektar_id
+2017-05-05 15:07:55,175 - INFO - [brain]	DONE
+2017-05-05 15:07:56,918 - INFO - [main]	Computing sum RLATs
+2017-05-05 15:10:13,868 - INFO - [main]	Generating output csv
+2017-05-05 17:08:57,279 - INFO - [input_reader]	Read settings from settings.cfg
+2017-05-05 17:08:57,284 - INFO - [input_reader]	Reading input files into Pandas data frames
+2017-05-05 17:10:10,666 - INFO - [input_reader]	Removing duplicate drive times from drivetimes_pd
+2017-05-05 17:10:53,620 - INFO - [input_reader]	Removed 369841 duplicates entries
+2017-05-05 17:10:53,807 - INFO - [input_reader]	Caching input data
+2017-05-05 17:11:01,876 - INFO - [input_reader]	Done reading input data
+2017-05-05 17:11:01,876 - INFO - [main]	Subsetting only the hektars from which a Migros store is reachable
+2017-05-05 17:13:35,136 - INFO - [main]	Obtaining all drive times only for hektars from which a Migros store is reachable
+2017-05-05 17:13:54,803 - INFO - [main]	Enriching with store information
+2017-05-05 17:14:21,924 - INFO - [main]	22 stores appear in drivetimes, but have no associated information in stores_sm.csv
+2017-05-05 17:14:21,925 - INFO - [main]	Enriching with Haushalt information
+2017-05-05 17:14:45,640 - INFO - [main]	Computing LAT
+2017-05-05 17:14:48,476 - INFO - [main]	Reindexing ...
+2017-05-05 17:15:22,306 - INFO - [main]	Removing duplicates ...
+2017-05-05 17:16:31,981 - INFO - [main]	Computing RLAT
+2017-05-05 17:16:38,989 - INFO - [brain]	Pruning irrelevant stores. Takes a while ...
+2017-05-05 17:16:48,921 - INFO - [brain]	390219 groups after grouping by hektar_id
+2017-05-05 18:08:41,154 - INFO - [brain]	DONE
+2017-05-05 18:08:42,781 - INFO - [main]	Computing sum RLATs
+2017-05-05 18:10:56,876 - INFO - [main]	Generating output csv
+
+
+2017-05-05 18:32:14,814 - INFO - [input_reader]	Read settings from settings.cfg
+2017-05-05 18:32:14,820 - INFO - [input_reader]	Reading input files from cache into Pandas data frames
+2017-05-05 18:32:19,744 - INFO - [main]	Subsetting only the hektars from which a Migros store is reachable
+2017-05-05 18:34:49,904 - INFO - [main]	Obtaining all drive times only for hektars from which a Migros store is reachable
+2017-05-05 18:35:09,441 - INFO - [main]	Enriching with store information
+2017-05-05 18:35:36,545 - INFO - [main]	22 stores appear in drivetimes, but have no associated information in stores_sm.csv
+2017-05-05 18:35:36,546 - INFO - [main]	Enriching with Haushalt information
+2017-05-05 18:35:59,990 - INFO - [main]	Computing LAT
+2017-05-05 18:36:02,798 - INFO - [main]	Reindexing ...
+2017-05-05 18:36:36,539 - INFO - [main]	Removing duplicates ...
+2017-05-05 18:37:45,527 - INFO - [main]	Computing RLAT
+2017-05-05 18:37:53,331 - INFO - [main]	TEMPORARY STEP: Filtering stores by VFL
+2017-05-05 18:37:54,351 - INFO - [brain]	Pruning irrelevant stores. Takes a while ...
+2017-05-05 18:38:03,158 - INFO - [brain]	390219 groups after grouping by hektar_id
+2017-05-05 19:28:46,654 - INFO - [brain]	DONE
+2017-05-05 19:28:48,730 - INFO - [main]	Computing sum RLATs
+2017-05-05 19:31:06,794 - INFO - [main]	Generating output csv
+
+
+
+2017-06-02 18:13:41,898 - INFO - [input_reader]	Read settings from settings.cfg
+2017-06-02 18:13:41,903 - INFO - [input_reader]	Reading input files into Pandas data frames
+2017-06-02 18:15:02,665 - INFO - [input_reader]	Removing duplicate drive times from drivetimes_pd
+2017-06-02 18:15:47,260 - INFO - [input_reader]	Removed 369841 duplicates entries
+2017-06-02 18:15:47,577 - INFO - [input_reader]	Single store mode chosen - SM_MIG_57790_18646
+2017-06-02 18:15:47,582 - INFO - [input_reader]	Caching input data
+2017-06-02 18:15:56,614 - INFO - [input_reader]	Done caching input data
+2017-06-02 18:15:56,614 - INFO - [input_reader]	Done reading input data
+2017-06-02 18:15:56,614 - INFO - [main]	Subsetting only the hektars from which a Migros store is reachable
+2017-06-02 18:16:04,300 - INFO - [main]	Obtaining all drive times only for hektars from which a Migros store is reachable
+2017-06-02 18:16:22,068 - INFO - [main]	Enriching with store information
+2017-06-02 18:16:24,442 - INFO - [main]	3 stores appear in drivetimes, but have no associated information in stores_sm.csv
+2017-06-02 18:16:24,443 - INFO - [main]	Enriching with Haushalt information
+2017-06-02 18:16:26,154 - INFO - [main]	Computing LAT
+2017-06-02 18:16:26,764 - INFO - [main]	Reindexing ...
+2017-06-02 18:16:29,469 - INFO - [main]	Removing duplicates ...
+2017-06-02 18:16:34,224 - INFO - [main]	Computing RLAT
+2017-06-02 18:16:34,820 - INFO - [main]	TEMPORARY STEP: Filtering stores by VFL
+2017-06-02 18:16:34,901 - INFO - [brain]	Pruning irrelevant stores. Takes a while ...
+2017-06-02 18:16:35,517 - INFO - [brain]	29388 groups after grouping by hektar_id
+2017-06-02 18:19:17,049 - INFO - [brain]	DONE
+2017-06-02 18:19:17,222 - INFO - [main]	Computing sum RLATs
+2017-06-02 18:19:27,871 - INFO - [main]	Generating output csv
+2017-06-02 18:23:38,945 - INFO - [input_reader]	Read settings from settings.cfg
+
+2017-06-02 18:23:38,951 - INFO - [input_reader]	Reading input files into Pandas data frames
+2017-06-02 18:24:15,129 - INFO - [input_reader]	Read settings from settings.cfg
+2017-06-02 18:24:15,135 - INFO - [input_reader]	Reading input files into Pandas data frames
+2017-06-02 18:25:36,103 - INFO - [input_reader]	Removing duplicate drive times from drivetimes_pd
+2017-06-02 18:26:20,845 - INFO - [input_reader]	Removed 369841 duplicates entries
+2017-06-02 18:26:21,158 - INFO - [input_reader]	Single store mode chosen - SM_MIG_57790_18646
+2017-06-02 18:26:21,161 - INFO - [input_reader]	Caching input data
+2017-06-02 18:26:30,516 - INFO - [input_reader]	Done caching input data
+2017-06-02 18:26:30,516 - INFO - [input_reader]	Done reading input data
+2017-06-02 18:26:30,516 - INFO - [main]	Subsetting only the hektars from which a Migros store is reachable
+2017-06-02 18:26:38,244 - INFO - [main]	Obtaining all drive times only for hektars from which a Migros store is reachable
+2017-06-02 18:26:55,876 - INFO - [main]	Enriching with store information
+2017-06-02 18:26:58,242 - INFO - [main]	3 stores appear in drivetimes, but have no associated information in stores_sm.csv
+2017-06-02 18:26:58,243 - INFO - [main]	Enriching with Haushalt information
+2017-06-02 18:26:59,982 - INFO - [main]	Computing LAT
+2017-06-02 18:27:00,285 - INFO - [main]	Reindexing ...
+2017-06-02 18:27:02,883 - INFO - [main]	Removing duplicates ...
+2017-06-02 18:27:07,428 - INFO - [main]	Computing RLAT
+2017-06-02 18:27:08,018 - INFO - [main]	TEMPORARY STEP: Filtering stores by VFL
+2017-06-02 18:27:08,095 - INFO - [brain]	Pruning irrelevant stores. Takes a while ...
+2017-06-02 18:27:08,657 - INFO - [brain]	29388 groups after grouping by hektar_id
+2017-06-02 18:29:49,108 - INFO - [brain]	DONE
+2017-06-02 18:29:49,283 - INFO - [main]	Computing sum RLATs
+2017-06-02 18:29:59,676 - INFO - [main]	Generating output csv
+2017-06-02 18:31:28,175 - INFO - [input_reader]	Read settings from settings.cfg
+2017-06-02 18:31:28,181 - INFO - [input_reader]	Reading input files into Pandas data frames
+2017-06-02 18:32:49,019 - INFO - [input_reader]	Removing duplicate drive times from drivetimes_pd
+2017-06-02 18:33:33,349 - INFO - [input_reader]	Removed 369841 duplicates entries
+2017-06-02 18:33:33,649 - INFO - [input_reader]	Single store mode chosen - SM_MIG_57790_18646
+2017-06-02 18:33:33,651 - INFO - [input_reader]	Caching input data
+2017-06-02 18:33:42,914 - INFO - [input_reader]	Done caching input data
+2017-06-02 18:33:42,915 - INFO - [input_reader]	Done reading input data
+2017-06-02 18:33:42,915 - INFO - [main]	Subsetting only the hektars from which a Migros store is reachable
+2017-06-02 18:33:50,542 - INFO - [main]	Obtaining all drive times only for hektars from which a Migros store is reachable
+2017-06-02 18:34:08,030 - INFO - [main]	Enriching with store information
+2017-06-02 18:34:10,383 - INFO - [main]	3 stores appear in drivetimes, but have no associated information in stores_sm.csv
+2017-06-02 18:34:10,383 - INFO - [main]	Enriching with Haushalt information
+2017-06-02 18:34:12,088 - INFO - [main]	Computing LAT
+2017-06-02 18:34:12,537 - INFO - [main]	Reindexing ...
+2017-06-02 18:34:15,170 - INFO - [main]	Removing duplicates ...
+2017-06-02 18:34:19,731 - INFO - [main]	Computing RLAT
+2017-06-02 18:34:20,325 - INFO - [brain]	Pruning irrelevant stores. Takes a while ...
+2017-06-02 18:34:20,910 - INFO - [brain]	29388 groups after grouping by hektar_id
+2017-06-02 18:36:59,176 - INFO - [brain]	DONE
+2017-06-02 18:36:59,316 - INFO - [main]	Computing sum RLATs
+2017-06-02 18:37:09,893 - INFO - [main]	Generating output csv
+2017-06-02 18:37:44,304 - INFO - [input_reader]	Read settings from settings.cfg
+2017-06-02 18:37:44,310 - INFO - [input_reader]	Reading input files into Pandas data frames
+2017-06-02 18:39:06,262 - INFO - [input_reader]	Removing duplicate drive times from drivetimes_pd
+2017-06-02 18:39:51,713 - INFO - [input_reader]	Removed 369841 duplicates entries
+2017-06-02 18:39:52,018 - INFO - [input_reader]	Single store mode chosen - SM_MIG_57790_18646
+2017-06-02 18:39:52,021 - INFO - [input_reader]	Caching input data
+2017-06-02 18:40:01,451 - INFO - [input_reader]	Done caching input data
+2017-06-02 18:40:01,451 - INFO - [input_reader]	Done reading input data
+2017-06-02 18:40:01,451 - INFO - [main]	Subsetting only the hektars from which a Migros store is reachable
+2017-06-02 18:40:09,124 - INFO - [main]	Obtaining all drive times only for hektars from which a Migros store is reachable
+2017-06-02 18:40:26,869 - INFO - [main]	Enriching with store information
+2017-06-02 18:40:29,247 - INFO - [main]	3 stores appear in drivetimes, but have no associated information in stores_sm.csv
+2017-06-02 18:40:29,247 - INFO - [main]	Enriching with Haushalt information
+2017-06-02 18:40:30,981 - INFO - [main]	Computing LAT
+2017-06-02 18:40:31,327 - INFO - [main]	Reindexing ...
+2017-06-02 18:40:33,999 - INFO - [main]	Removing duplicates ...
+2017-06-02 18:40:38,785 - INFO - [main]	Computing RLAT
+2017-06-02 18:40:39,376 - INFO - [brain]	Pruning irrelevant stores. Takes a while ...
+2017-06-02 18:40:39,967 - INFO - [brain]	29388 groups after grouping by hektar_id
+2017-06-02 18:43:18,449 - INFO - [brain]	DONE
+2017-06-02 18:43:18,587 - INFO - [main]	Computing sum RLATs
+2017-06-02 18:43:29,251 - INFO - [main]	Generating output csv
+
+
+2017-06-02 18:45:54,619 - INFO - [input_reader]	Read settings from settings.cfg
+2017-06-02 18:45:54,624 - INFO - [input_reader]	Reading input files into Pandas data frames
+2017-06-02 18:47:16,126 - INFO - [input_reader]	Removing duplicate drive times from drivetimes_pd
+2017-06-02 18:48:00,936 - INFO - [input_reader]	Removed 369841 duplicates entries
+2017-06-02 18:48:01,238 - INFO - [input_reader]	Caching input data
+2017-06-02 18:48:10,635 - INFO - [input_reader]	Done caching input data
+2017-06-02 18:48:10,636 - INFO - [input_reader]	Done reading input data
+2017-06-02 18:48:10,636 - INFO - [main]	Subsetting only the hektars from which a Migros store is reachable
+2017-06-02 18:50:46,814 - INFO - [main]	Obtaining all drive times only for hektars from which a Migros store is reachable
+2017-06-02 18:51:08,212 - INFO - [main]	Enriching with store information
+2017-06-02 18:51:37,996 - INFO - [main]	22 stores appear in drivetimes, but have no associated information in stores_sm.csv
+2017-06-02 18:51:37,996 - INFO - [main]	Enriching with Haushalt information

@@ -23,20 +23,15 @@ if __name__ == "__main__":
     config.read(settingsFile)
 
     # first check if we are doing a parameter sweep over a and b
-    a_sweep = None
-    a = None
-    b_sweep = None
-    b = None
-    param_sweep = False
-
-    if config.has_option('calibration', 'a_array') and config.has_option('calibration', 'b_array'):
-        a_sweep = json.loads(config.get('calibration', 'a_array'))
-        b_sweep = json.loads(config.get('calibration', 'b_array'))
+    param_sweep = False # by default False
+    if config.has_option('parameter_sweep', 'a_array') and config.has_option('parameter_sweep', 'b_array'):
+        a_sweep = json.loads(config.get('parameter_sweep', 'a_array'))
+        b_sweep = json.loads(config.get('parameter_sweep', 'b_array'))
         param_sweep = True
     ####
+
     # read-in the data
-    (stores_pd, stores_migros_pd,
-     drivetimes_pd, haushalt_pd, referenz_pd) = get_input(settingsFile, logger)
+    (stores_pd, stores_migros_pd, drivetimes_pd, haushalt_pd, referenz_pd) = get_input(settingsFile, logger)
 
     # get all relevant hektars, i.e. those from which a Migros store is reachable
     # use a 'set' to easily remove duplicates
@@ -61,11 +56,11 @@ if __name__ == "__main__":
 
     # enrich the drive times of the relevant hektars with Haushalt information
     logger.info("Enriching with Haushalt information")
-    enriched_pd = drivetimes_rel_hektars_stores_pd.merge(haushalt_pd[['H14PTOT']],
+    enriched_pd = drivetimes_rel_hektars_stores_pd.merge(haushalt_pd[['Tot_Haushaltausgaben']],
                                                          left_on='hektar_id', right_index=True,
                                                          how='left')
-    # try to correct for missing HA info by assuming a default 1
-    enriched_pd['H14PTOT_corrected'] = enriched_pd['H14PTOT'].fillna(1)
+    # try to correct for missing HA info by assuming a default of 1 household / person
+    enriched_pd['Tot_Haushaltausgaben_corrected'] = enriched_pd['Tot_Haushaltausgaben'].fillna(7800 / 2.5)
 
     # compute LAT
     logger.info("Computing LAT")
@@ -128,13 +123,13 @@ if __name__ == "__main__":
         # starting values for calibration
         a = float(config["calibration"]["a_start"])
         b = float(config["calibration"]["b_start"])
-        if not config.getboolean('global', 'use_pruned_cache'):
-            # Execute the pruning step
+        if not config.getboolean('calibration', 'use_pruned_cache'):
             logger.info("Computing RLAT")
             enriched_pd['RLAT'] = enriched_pd['LAT'] * np.power(10,
                                                                 -(a - b * np.fmin(enriched_pd['LAT'], 60)) *
                                                                 enriched_pd['fahrzeit'])
             # TEMPORARY - exclude all stores with VFL > 4000
+            # logger.info("TEMPORARY STEP: Filtering stores by VFL")
             # enriched_pd['RLAT'] = np.where(enriched_pd.vfl > 2000, 0, enriched_pd.vfl)
 
             # logger.info("Saving intermediary results ")

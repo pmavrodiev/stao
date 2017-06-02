@@ -13,7 +13,13 @@
 
       If False the input data will be read from the files specified in
       the [inputdata] section. Once read, the data will be cached into
-      the pickled objects specified in [cache_config]
+      the pickled objects specified in [cache_config] if [cache_input_data] is True
+
+ - **cache_input_data**
+
+      If True will cache the input data into the pickled objects specified
+      in [cache_config]. This option has obviously no effect if [cache_enabled] is True,
+      since all data would be read from the cache anyway.
 
  - **single_store**
 
@@ -97,4 +103,34 @@
     The Umsatz predictions are written into [output][output_csv]
 
 #### [parameter_sweep]
+
+ This section defines the (a,b) parameter space to explore. Whether pruning is carried out
+ for each parameter combination is given by [global][prune].
+
+ [calibration][use_pruned_cache] is ignored.
+
+ - **a_array** and **b_array**
+
+    A Python list with the parameter space for *a* and *b*
+
+#### [inputdata]
+
+ Location of the raw input files
+
+ - **stores_cm**
+ - **drivetimes**
+ - **haushalt**
+
+#### [cache_config]
+
+ Defines the location where the cached raw input files will be saved.
+ The cached files are stored as pickled pandas objects.
+
+ - **cache_dir**
+ - **stores_cm_cached**
+ - **stores_cm_migros_only_cached**
+ - **drivetimes_cached**
+ - **haushalt_cached**
+
+#### [output]
 

@@ -37,10 +37,11 @@ def calc_gradient(enriched_pruned_pd):
     enriched_pruned_pd['sum_RLATS'] = enriched_pruned_pd.groupby('hektar_id')[["RLAT"]].transform(
         lambda x: np.sum(x))
 
-    # compute the change in RLAT w.r.t. the parameters 'a' and 'b' for each hektar
+    # Compute the change in RLAT w.r.t. the parameters 'a' and 'b' for each hektar
+    # This is Eq.8 in Gravitationsmodell.pdf
     enriched_pruned_pd['dRLAT_da'] = -1.0 * enriched_pruned_pd['fahrzeit'] * np.log(10) * enriched_pruned_pd['RLAT']
     enriched_pruned_pd['dRLAT_db'] = enriched_pruned_pd['fahrzeit'] * np.log(10) * enriched_pruned_pd['RLAT'] * \
-                                     np.where(enriched_pruned_pd.LAT <= 60, enriched_pruned_pd.LAT, 1.0)
+                                     np.where(enriched_pruned_pd.LAT <= 60, enriched_pruned_pd.LAT, 60)
     # compute the derivative of total sum of all RLATs for each hektar
     enriched_pruned_pd['dS_RLATda'] = enriched_pruned_pd.groupby('hektar_id')[['dRLAT_da']].transform(
         lambda x: np.sum(x))
@@ -49,14 +50,15 @@ def calc_gradient(enriched_pruned_pd):
     # compute each term of the inner sum (the sum over the hektars)
     enriched_pruned_pd['inner_sum_terms_a'] = (enriched_pruned_pd['dRLAT_da'] * enriched_pruned_pd['sum_RLATS'] -
                                                enriched_pruned_pd['RLAT'] * enriched_pruned_pd['dS_RLATda']) * \
-                                              enriched_pruned_pd['H14PTOT'] / np.power(enriched_pruned_pd['sum_RLATS'],
+                                              enriched_pruned_pd['Tot_Haushaltausgaben'] / np.power(enriched_pruned_pd['sum_RLATS'],
                                                                                        2)
 
     enriched_pruned_pd['inner_sum_terms_b'] = (enriched_pruned_pd['dRLAT_db'] * enriched_pruned_pd['sum_RLATS'] -
                                                enriched_pruned_pd['RLAT'] * enriched_pruned_pd['dS_RLATdb']) * \
-                                              enriched_pruned_pd['H14PTOT'] / np.power(enriched_pruned_pd['sum_RLATS'],
+                                              enriched_pruned_pd['Tot_Haushaltausgaben'] / np.power(enriched_pruned_pd['sum_RLATS'],
                                                                                        2)
     # now sum-up all inner terms over all hektars, i.e. group by Filiale!!!
+    # this is Eq. 7 in Gravitationsmodell.pdf
     enriched_pruned_pd['sum_terms_a'] = enriched_pruned_pd.groupby('OBJECTID')[["inner_sum_terms_a"]].transform(
         lambda x: np.nansum(x))
     enriched_pruned_pd['sum_terms_b'] = enriched_pruned_pd.groupby('OBJECTID')[["inner_sum_terms_b"]].transform(
@@ -73,9 +75,11 @@ def gen_umsatz_prognose(enriched_pruned_pd, stores_migros_pd, referenz_pd, logge
     enriched_pruned_pd['Marktanteil'] = enriched_pruned_pd['RLAT'] / enriched_pruned_pd['sum_RLATS']
 
     logger.debug("Computing local Umsatzpotential")
-    enriched_pruned_pd['LokalUP'] = enriched_pruned_pd['Marktanteil'] * enriched_pruned_pd['H14PTOT'] * 7800
-    enriched_pruned_pd['LokalUP_corrected'] = enriched_pruned_pd['Marktanteil'] * enriched_pruned_pd[
-        'H14PTOT_corrected'] * 7800
+    enriched_pruned_pd['LokalUP'] = enriched_pruned_pd['Marktanteil'] * enriched_pruned_pd['Tot_Haushaltausgaben']
+    enriched_pruned_pd['LokalUP_corrected'] = enriched_pruned_pd['Marktanteil'] * enriched_pruned_pd['Tot_Haushaltausgaben_corrected']
+    # enriched_pruned_pd['LokalUP'] = enriched_pruned_pd['Marktanteil'] * enriched_pruned_pd['H14PTOT'] * 7800
+    # enriched_pruned_pd['LokalUP_corrected'] = enriched_pruned_pd['Marktanteil'] * enriched_pruned_pd[
+    #     'H14PTOT_corrected'] * 7800
 
     migros_only_pd = enriched_pruned_pd[enriched_pruned_pd['OBJECTID'].isin(stores_migros_pd.index.values)]
 
