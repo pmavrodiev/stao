@@ -51,7 +51,7 @@ def get_input(settingsFile, logger):
         haushalt = config['inputdata']['haushalt']
 
         stores_pd = pd.read_csv(stores, sep=';', header=0, index_col=0, encoding='latin-1')
-
+        # stores_pd['RELEVANZ'] = 1
         # extract the store type from the its name, e.g. COOP, MIG, DENNER, etc.
         # needed to implement step 4 of the model
         stores_pd['type'] = stores_pd['ID'].str[3:6]
@@ -80,7 +80,7 @@ def get_input(settingsFile, logger):
         # only get the first 4 columns - X_COORD, Y_COORD, RELI. H14PTOT
         haushalt_pd = pd.read_csv(haushalt, sep=',', header=0, index_col=2)
         haushalt_pd['Tot_Haushaltausgaben'] = (haushalt_pd['H14P01'] + 2*haushalt_pd['H14P02'] + 3*haushalt_pd['H14P03'] \
-                                             + 4*haushalt_pd['H14P04'] + 5*haushalt_pd['H14P05'] + 6*haushalt_pd['H14P06'])*(7800 / 2.25)
+                                              + 4*haushalt_pd['H14P04'] + 5*haushalt_pd['H14P05'] + 6*haushalt_pd['H14P06'])*(7800 / 2.25)
         # haushalt_pd['Tot_Haushaltausgaben'] = haushalt_pd['H14PTOT'] * 7800
 
 
