@@ -1,34 +1,49 @@
 # -*- coding: utf-8 -*-
 
 import configparser
-
 import logging
-
-import numpy as np
-import pandas as pd
+import sys
 
 from input_reader.input_reader import get_input
 from simple_logging.custom_logging import setup_custom_logger
 
-from models.model_MBI import model_MBI
+# from models.model_MBI import model_MBI
+# from models.model_Huff import model_Huff
 
+from optparse import OptionParser
+import importlib
 
 # logger einrichten
 LOGGING_LEVEL = logging.INFO
 logger = setup_custom_logger('GM_LOGGER', LOGGING_LEVEL, flog="logs/gm.log")
 
-settingsFile = "settings.cfg"
-
 if __name__ == "__main__":
 
+    # Define command-line arguments
+    parser = OptionParser()
+    parser.add_option("-m", "--model", dest="model",
+                      help = "The model to use. This should be a package in the models/ directory. The __init__.py"
+                             " of the package should create an instance of the model, named 'model'")
+    parser.add_option("-c", "--config", dest="config",
+                      help="A filename with the settings for the specified model")
+
+    (options, args) = parser.parse_args()
+
+    if not options.model or not options.config:
+        parser.print_help()
+        sys.exit(1)
+
     config = configparser.ConfigParser()
-    config.read(settingsFile)
+    config.read(options.config)
+
+    # load the chosen model
+    m = importlib.import_module("models." + options.model)
 
     ##########################
     #### READ-IN AND PREPARE THE DATA ####
     ##########################
     # read-in the data
-    (stores_pd, stores_migros_pd, drivetimes_pd, haushalt_pd, referenz_pd) = get_input(settingsFile, logger)
+    (stores_pd, stores_migros_pd, drivetimes_pd, haushalt_pd, referenz_pd) = get_input(options.config, logger)
 
     # get all relevant hektars, i.e. those from which a Migros store is reachable
     # use a 'set' to easily remove duplicates
@@ -63,10 +78,4 @@ if __name__ == "__main__":
     ##########################
     ##########################
 
-    ##########################
-    #### MODEL MBI        ####
-    ##########################
-
-    model = model_MBI.model_MBI()
-    model.entry(enriched_pd, config, logger, stores_migros_pd, referenz_pd)
-
+    m.model.entry(enriched_pd, config, logger, stores_migros_pd, referenz_pd)

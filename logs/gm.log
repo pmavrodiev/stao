@@ -1574,3 +1574,164 @@
 2017-06-06 16:56:00,341 - INFO - [model_MBI]	Computing RLAT
 2017-06-06 16:56:07,193 - INFO - [model_MBI]	Pruning irrelevant stores. Takes a while ...
 2017-06-06 16:56:16,178 - INFO - [model_MBI]	390219 groups after grouping by hektar_id
+2017-06-06 18:00:15,024 - INFO - [model_MBI]	DONE
+2017-06-06 18:00:16,750 - INFO - [model_MBI]	Computing sum RLATs
+2017-06-06 18:02:41,120 - INFO - [model_MBI]	Generating output csv
+2017-06-07 10:11:32,014 - INFO - [input_reader]	Read settings from settings.cfg
+2017-06-07 10:11:32,021 - INFO - [input_reader]	Reading input files from cache into Pandas data frames
+
+
+2017-06-07 13:29:31,228 - INFO - [input_reader]	Read settings from settings.cfg
+2017-06-07 13:29:31,233 - INFO - [input_reader]	Reading input files from cache into Pandas data frames
+2017-06-07 13:29:36,313 - INFO - [main]	Subsetting only the hektars from which a Migros store is reachable
+2017-06-07 13:32:11,366 - INFO - [main]	Obtaining all drive times only for hektars from which a Migros store is reachable
+2017-06-07 13:32:31,038 - INFO - [main]	Enriching with store information
+2017-06-07 13:32:58,119 - INFO - [main]	22 stores appear in drivetimes, but have no associated information in stores_sm.csv
+2017-06-07 13:32:58,120 - INFO - [main]	Enriching with Haushalt information
+2017-06-07 13:33:21,446 - INFO - [model_Huff]	Initialized model Model_Huff
+2017-06-07 13:33:21,447 - INFO - [model_Huff]	Reindexing ...
+2017-06-07 13:33:53,699 - INFO - [model_Huff]	Removing duplicates ...
+2017-06-07 13:38:58,961 - INFO - [input_reader]	Read settings from settings.cfg
+2017-06-07 13:38:58,966 - INFO - [input_reader]	Reading input files from cache into Pandas data frames
+2017-06-07 13:39:04,079 - INFO - [main]	Subsetting only the hektars from which a Migros store is reachable
+2017-06-07 13:39:37,025 - INFO - [input_reader]	Read settings from settings.cfg
+2017-06-07 13:39:37,030 - INFO - [input_reader]	Reading input files from cache into Pandas data frames
+2017-06-07 13:39:42,089 - INFO - [main]	Subsetting only the hektars from which a Migros store is reachable
+2017-06-07 13:42:17,067 - INFO - [main]	Obtaining all drive times only for hektars from which a Migros store is reachable
+2017-06-07 13:42:36,738 - INFO - [main]	Enriching with store information
+2017-06-07 13:43:03,867 - INFO - [main]	22 stores appear in drivetimes, but have no associated information in stores_sm.csv
+2017-06-07 13:43:03,868 - INFO - [main]	Enriching with Haushalt information
+2017-06-07 13:43:28,909 - INFO - [model_Huff]	Initialized model Model_Huff
+2017-06-07 13:43:28,909 - INFO - [model_Huff]	Reindexing ...
+2017-06-07 13:44:01,572 - INFO - [model_Huff]	Removing duplicates ...
+2017-06-07 13:44:51,609 - INFO - [model_Huff]	Computing local market share. This takes a while ...
+2017-06-07 13:48:54,052 - INFO - [model_Huff]	Done
+2017-06-07 13:48:54,052 - INFO - [model_Huff]	Generating Umsatz predictions ...
+
+
+2017-06-07 13:53:11,261 - INFO - [input_reader]	Read settings from settings.cfg
+2017-06-07 13:53:11,266 - INFO - [input_reader]	Reading input files from cache into Pandas data frames
+2017-06-07 13:53:16,365 - INFO - [main]	Subsetting only the hektars from which a Migros store is reachable
+2017-06-07 13:55:44,916 - INFO - [main]	Obtaining all drive times only for hektars from which a Migros store is reachable
+2017-06-07 13:56:04,249 - INFO - [main]	Enriching with store information
+2017-06-07 13:56:30,947 - INFO - [main]	22 stores appear in drivetimes, but have no associated information in stores_sm.csv
+2017-06-07 13:56:30,948 - INFO - [main]	Enriching with Haushalt information
+2017-06-07 13:56:53,658 - INFO - [model_Huff]	Initialized model Model_Huff
+2017-06-07 13:56:53,658 - INFO - [model_Huff]	Reindexing ...
+2017-06-07 13:57:25,755 - INFO - [model_Huff]	Removing duplicates ...
+2017-06-07 13:58:15,653 - INFO - [model_Huff]	Computing local market share. This takes a while ...
+2017-06-07 14:02:21,825 - INFO - [model_Huff]	Done
+2017-06-07 14:02:21,825 - INFO - [model_Huff]	Generating Umsatz predictions ... 
+2017-06-07 14:02:39,289 - INFO - [model_Huff]	Exporting Umsatz predictions to csv
+
+2017-06-07 14:33:09,138 - INFO - [input_reader]	Read settings from settings.cfg
+2017-06-07 14:33:09,143 - INFO - [input_reader]	Reading input files from cache into Pandas data frames
+2017-06-07 14:33:14,232 - INFO - [main]	Subsetting only the hektars from which a Migros store is reachable
+2017-06-07 14:35:48,880 - INFO - [main]	Obtaining all drive times only for hektars from which a Migros store is reachable
+2017-06-07 14:36:08,636 - INFO - [main]	Enriching with store information
+2017-06-07 14:36:35,749 - INFO - [main]	22 stores appear in drivetimes, but have no associated information in stores_sm.csv
+2017-06-07 14:36:35,749 - INFO - [main]	Enriching with Haushalt information
+2017-06-07 14:36:59,124 - INFO - [model_Huff]	Initialized model Model_Huff
+2017-06-07 14:36:59,125 - INFO - [model_Huff]	Reindexing ...
+2017-06-07 14:37:31,376 - INFO - [model_Huff]	Removing duplicates ...
+2017-06-07 14:38:20,077 - INFO - [model_Huff]	Computing local market share. This takes a while ...
+2017-06-07 14:42:18,582 - INFO - [model_Huff]	Done
+2017-06-07 14:42:18,583 - INFO - [model_Huff]	Generating Umsatz predictions ... 
+2017-06-07 14:42:35,333 - INFO - [model_Huff]	Exporting Umsatz predictions to csv
+2017-06-07 16:26:20,456 - INFO - [input_reader]	Read settings from settings.cfg
+2017-06-07 16:26:20,461 - INFO - [input_reader]	Reading input files from cache into Pandas data frames
+2017-06-07 16:26:25,534 - INFO - [main]	Subsetting only the hektars from which a Migros store is reachable
+2017-06-07 16:29:00,598 - INFO - [main]	Obtaining all drive times only for hektars from which a Migros store is reachable
+2017-06-07 16:29:20,305 - INFO - [main]	Enriching with store information
+2017-06-07 16:29:47,436 - INFO - [main]	22 stores appear in drivetimes, but have no associated information in stores_sm.csv
+2017-06-07 16:29:47,437 - INFO - [main]	Enriching with Haushalt information
+2017-06-07 16:30:10,869 - INFO - [model_Huff]	Initialized model Model_Huff
+2017-06-07 16:30:10,869 - INFO - [model_Huff]	Reindexing ...
+2017-06-07 16:30:43,240 - INFO - [model_Huff]	Removing duplicates ...
+2017-06-07 16:31:31,989 - INFO - [model_Huff]	Computing local market share. This takes a while ...
+2017-06-07 16:35:31,292 - INFO - [model_Huff]	Done
+2017-06-07 16:35:31,292 - INFO - [model_Huff]	Generating Umsatz predictions ... 
+2017-06-07 16:35:47,999 - INFO - [model_Huff]	Exporting Umsatz predictions to csv
+2017-06-07 16:48:07,011 - INFO - [input_reader]	Read settings from settings.cfg
+2017-06-07 16:48:07,017 - INFO - [input_reader]	Reading input files from cache into Pandas data frames
+2017-06-07 16:48:12,181 - INFO - [main]	Subsetting only the hektars from which a Migros store is reachable
+2017-06-07 16:50:41,497 - INFO - [main]	Obtaining all drive times only for hektars from which a Migros store is reachable
+2017-06-07 16:51:01,127 - INFO - [main]	Enriching with store information
+2017-06-07 16:51:28,064 - INFO - [main]	22 stores appear in drivetimes, but have no associated information in stores_sm.csv
+2017-06-07 16:51:28,065 - INFO - [main]	Enriching with Haushalt information
+2017-06-07 16:51:51,234 - INFO - [model_Huff]	Initialized model Model_Huff
+2017-06-07 16:51:51,234 - INFO - [model_Huff]	Reindexing ...
+2017-06-07 16:52:24,042 - INFO - [model_Huff]	Removing duplicates ...
+2017-06-07 16:53:14,441 - INFO - [model_Huff]	Computing local market share. This takes a while ...
+2017-06-07 16:57:19,943 - INFO - [model_Huff]	Done
+2017-06-07 16:57:19,944 - INFO - [model_Huff]	Generating Umsatz predictions ... 
+2017-06-07 16:57:36,821 - INFO - [model_Huff]	Exporting Umsatz predictions to csv
+2017-06-07 17:48:59,636 - INFO - [input_reader]	Read settings from settings.cfg
+2017-06-07 17:48:59,641 - INFO - [input_reader]	Reading input files from cache into Pandas data frames
+2017-06-07 17:49:04,763 - INFO - [main]	Subsetting only the hektars from which a Migros store is reachable
+2017-06-07 17:51:38,425 - INFO - [main]	Obtaining all drive times only for hektars from which a Migros store is reachable
+2017-06-07 17:51:58,238 - INFO - [main]	Enriching with store information
+2017-06-07 17:52:25,451 - INFO - [main]	22 stores appear in drivetimes, but have no associated information in stores_sm.csv
+2017-06-07 17:52:25,452 - INFO - [main]	Enriching with Haushalt information
+2017-06-07 17:52:48,869 - INFO - [model_Huff]	Initialized model Model_Huff
+2017-06-07 17:52:48,869 - INFO - [model_Huff]	Reindexing ...
+2017-06-07 17:53:21,300 - INFO - [model_Huff]	Removing duplicates ...
+2017-06-07 17:54:09,739 - INFO - [model_Huff]	Computing local market share. This takes a while ...
+2017-06-07 17:58:10,903 - INFO - [model_Huff]	Done
+2017-06-07 17:58:10,903 - INFO - [model_Huff]	Generating Umsatz predictions ... 
+2017-06-07 17:58:27,658 - INFO - [model_Huff]	Exporting Umsatz predictions to csv
+2017-06-07 18:44:53,697 - INFO - [input_reader]	Read settings from settings.cfg
+2017-06-07 18:44:53,702 - INFO - [input_reader]	Reading input files from cache into Pandas data frames
+2017-06-07 18:44:58,841 - INFO - [main]	Subsetting only the hektars from which a Migros store is reachable
+2017-06-07 18:47:32,965 - INFO - [main]	Obtaining all drive times only for hektars from which a Migros store is reachable
+2017-06-07 18:47:52,534 - INFO - [main]	Enriching with store information
+2017-06-07 18:48:19,529 - INFO - [main]	22 stores appear in drivetimes, but have no associated information in stores_sm.csv
+2017-06-07 18:48:19,530 - INFO - [main]	Enriching with Haushalt information
+2017-06-07 18:48:42,727 - INFO - [model_Huff]	Initialized model Model_Huff
+2017-06-07 18:48:42,728 - INFO - [model_Huff]	Reindexing ...
+2017-06-07 18:49:14,787 - INFO - [model_Huff]	Removing duplicates ...
+
+
+2017-06-07 18:50:33,653 - INFO - [input_reader]	Read settings from settings.cfg
+2017-06-07 18:50:33,658 - INFO - [input_reader]	Reading input files from cache into Pandas data frames
+2017-06-07 18:50:38,706 - INFO - [main]	Subsetting only the hektars from which a Migros store is reachable
+2017-06-07 18:53:13,510 - INFO - [main]	Obtaining all drive times only for hektars from which a Migros store is reachable
+2017-06-07 18:53:33,197 - INFO - [main]	Enriching with store information
+2017-06-07 18:54:00,391 - INFO - [main]	22 stores appear in drivetimes, but have no associated information in stores_sm.csv
+2017-06-07 18:54:00,392 - INFO - [main]	Enriching with Haushalt information
+2017-06-07 18:54:23,748 - INFO - [model_Huff]	Initialized model Model_Huff
+2017-06-07 18:54:23,749 - INFO - [model_Huff]	Reindexing ...
+2017-06-07 18:54:56,001 - INFO - [model_Huff]	Removing duplicates ...
+2017-06-07 18:55:45,237 - INFO - [model_Huff]	Will do parameter sweep. This will take a while, better run over night
+2017-06-07 18:55:45,238 - INFO - [model_Huff]	Parameters: alpha/beta = 0.100000 / -4.000000
+2017-06-07 18:55:45,238 - INFO - [model_Huff]	Computing local market share. This takes a while ...
+2017-06-07 18:59:29,435 - INFO - [model_Huff]	Done
+2017-06-07 18:59:29,435 - INFO - [model_Huff]	Generating Umsatz predictions ... 
+2017-06-07 18:59:46,097 - INFO - [model_Huff]	TOTAL ERROR: 82910.848340
+2017-06-07 18:59:46,097 - INFO - [model_Huff]	Exporting Umsatz predictions to csv
+2017-06-07 18:59:46,111 - INFO - [model_Huff]	Parameters: alpha/beta = 0.100000 / -3.000000
+2017-06-07 18:59:46,111 - INFO - [model_Huff]	Computing local market share. This takes a while ...
+2017-06-07 19:03:18,491 - INFO - [model_Huff]	Done
+2017-06-07 19:03:18,491 - INFO - [model_Huff]	Generating Umsatz predictions ... 
+2017-06-07 19:03:28,752 - INFO - [model_Huff]	TOTAL ERROR: 82910.848340
+2017-06-07 19:03:28,752 - INFO - [model_Huff]	Exporting Umsatz predictions to csv
+2017-06-07 19:03:28,765 - INFO - [model_Huff]	Parameters: alpha/beta = 0.100000 / -2.000000
+2017-06-07 19:03:28,765 - INFO - [model_Huff]	Computing local market share. This takes a while ...
+2017-06-07 19:07:00,116 - INFO - [model_Huff]	Done
+2017-06-07 19:07:00,117 - INFO - [model_Huff]	Generating Umsatz predictions ... 
+2017-06-07 19:07:10,484 - INFO - [model_Huff]	TOTAL ERROR: 82910.848340
+2017-06-07 19:07:10,484 - INFO - [model_Huff]	Exporting Umsatz predictions to csv
+2017-06-07 19:07:10,498 - INFO - [model_Huff]	Parameters: alpha/beta = 0.100000 / -1.000000
+2017-06-07 19:07:10,498 - INFO - [model_Huff]	Computing local market share. This takes a while ...
+2017-06-07 19:09:22,434 - INFO - [input_reader]	Read settings from settings.cfg
+2017-06-07 19:09:22,440 - INFO - [input_reader]	Reading input files from cache into Pandas data frames
+2017-06-07 19:09:27,518 - INFO - [main]	Subsetting only the hektars from which a Migros store is reachable
+2017-06-07 19:12:00,269 - INFO - [main]	Obtaining all drive times only for hektars from which a Migros store is reachable
+2017-06-07 19:12:20,036 - INFO - [main]	Enriching with store information
+2017-06-07 19:12:47,255 - INFO - [main]	22 stores appear in drivetimes, but have no associated information in stores_sm.csv
+2017-06-07 19:12:47,256 - INFO - [main]	Enriching with Haushalt information
+2017-06-07 19:13:10,865 - INFO - [model_Huff]	Initialized model Model_Huff
+2017-06-07 19:13:10,866 - INFO - [model_Huff]	Reindexing ...
+2017-06-07 19:13:43,323 - INFO - [model_Huff]	Removing duplicates ...
+2017-06-07 19:14:33,896 - INFO - [model_Huff]	Will do parameter sweep. This will take a while, better run over night
+2017-06-07 19:14:33,896 - INFO - [model_Huff]	Parameters: alpha/beta = 0.100000 / -4.000000
