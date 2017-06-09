@@ -23,6 +23,9 @@ class model_Huff(ModelBase):
     calibrate = None
     calibration_T = None
 
+    # the minimum error after the parameter sweep
+    E_min = [(float("inf"), ())]
+
     def whoami(self):
         return 'Model_Huff'
 
@@ -195,9 +198,18 @@ class model_Huff(ModelBase):
                                                       2) / umsatz_potential_pd[
                                                  'Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
 
-                self.logger.info("TOTAL ERROR: %f", np.sqrt(umsatz_potential_pd.E_i.sum()))
+                total_error = np.sqrt(umsatz_potential_pd.E_i.sum())
+                self.logger.info("TOTAL ERROR: %f", total_error)
+
+                if total_error < self.E_min[0][0]:
+                    self.E_min = [(total_error, {"alpha": a, "beta": b})]
+                    self.logger.info('New minimum found.')
+
                 self.logger.info('Exporting Umsatz predictions to csv')
                 umsatz_potential_pd.to_csv(self.umsatz_output_csv + '_a_' + str(a) + '_b_' + str(b))
+
+        self.logger.info('Found error minimum of %f for alpha=%f / beta=%f ',
+                         self.E_min[0][0], self.E_min[0][1]["alpha"], self.E_min[0][1]["beta"])
 
     def calc_gradient(self, umsatz_pd):
         # It can always be asszmed that umsatz_pd will have a column 'E_i' with the local errors

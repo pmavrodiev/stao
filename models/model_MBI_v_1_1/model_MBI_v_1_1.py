@@ -27,6 +27,9 @@ class model_MBI_v_1_1(ModelBase):
     direct_output = None
     calibration_T = None
 
+    # the minimum error after the parameter sweep
+    E_min = [(float("inf"), ())]
+
     def whoami(self):
         return 'Model_MBI_v1.1'
 
@@ -158,15 +161,23 @@ class model_MBI_v_1_1(ModelBase):
                                                               'Tatsechlicher Umsatz - FOOD_AND_FRISCHE'], 2) / \
                                                  umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
                 # RATIO SQUARE ERROR: -1 to make it an optimization problem with a minimum at 0
-                umsatz_potential_pd['E_rsq_i'] = np.power(umsatz_potential_pd['Umsatzpotential'] /
-                                                          umsatz_potential_pd[
-                                                              'Tatsechlicher Umsatz - FOOD_AND_FRISCHE'] - 1, 2)
+                # umsatz_potential_pd['E_rsq_i'] = np.power(umsatz_potential_pd['Umsatzpotential'] /
+                #                                         umsatz_potential_pd[
+                #                                           'Tatsechlicher Umsatz - FOOD_AND_FRISCHE'] - 1, 2)
 
-                self.logger.info("TOTAL LINEAR SQUARE ERROR: %f", np.sqrt(umsatz_potential_pd.E_lsq_i.sum()))
-                self.logger.info("TOTAL RATIO SQUARE ERROR: %f", umsatz_potential_pd.E_rsq_i.sum())
+                total_error = np.sqrt(umsatz_potential_pd.E_i.sum())
+                self.logger.info("TOTAL ERROR: %f", total_error)
+
+                if total_error < self.E_min[0][0]:
+                    self.E_min = [(total_error, {"a": a, "b": b})]
+                    self.logger.info('New minimum found.')
+                # self.logger.info("TOTAL RATIO SQUARE ERROR: %f", umsatz_potential_pd.E_rsq_i.sum())
 
                 self.logger.info("Generating output csv")
                 umsatz_potential_pd.to_csv(self.umsatz_output_csv + '_pruned_a_' + str(a) + '_b_' + str(b))
+
+        self.logger.info('Found error minimum of %f for a=%f / b=%f ',
+                     self.E_min[0][0], self.E_min[0][1]["a"], self.E_min[0][1]["b"])
 
     def analysis_calibration(self, pandas_dt, stores_migros_pd, referenz_pd):
         self.logger.info("BEGINNING CALIBRATION")
@@ -191,13 +202,13 @@ class model_MBI_v_1_1(ModelBase):
                                                       2) / \
                                              umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
             # RATIO SQUARE ERROR: -1 to make it an optimization problem with a minimum at 0
-            umsatz_potential_pd['E_rsq_i'] = np.power(umsatz_potential_pd['Umsatzpotential'] /
-                                                      umsatz_potential_pd[
-                                                          'Tatsechlicher Umsatz - FOOD_AND_FRISCHE'] - 1, 2)
+            # umsatz_potential_pd['E_rsq_i'] = np.power(umsatz_potential_pd['Umsatzpotential'] /
+            #                                          umsatz_potential_pd[
+            #                                              'Tatsechlicher Umsatz - FOOD_AND_FRISCHE'] - 1, 2)
 
             self.logger.info("TOTAL LINEAR SQUARE ERROR after %d iterations: %f", t,
                         np.sqrt(umsatz_potential_pd.E_lsq_i.sum()))
-            self.logger.info("TOTAL RATIO SQUARE ERROR after %d iterations: %f", t, umsatz_potential_pd.E_rsq_i.sum())
+            # self.logger.info("TOTAL RATIO SQUARE ERROR after %d iterations: %f", t, umsatz_potential_pd.E_rsq_i.sum())
 
             error[t % len(error)] = umsatz_potential_pd.E_lsq_i.sum()
 
@@ -214,26 +225,27 @@ class model_MBI_v_1_1(ModelBase):
                                                  umsatz_potential_pd['sum_terms_b'] / \
                                                  umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
             # gradient ratio square error
-            umsatz_potential_pd['dE_rsq_i_da'] = 2.0 * (
-                umsatz_potential_pd['Umsatzpotential'] / umsatz_potential_pd[
-                    'Tatsechlicher Umsatz - FOOD_AND_FRISCHE'] - 1) * \
-                                                 umsatz_potential_pd['sum_terms_a'] / \
-                                                 umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
-            umsatz_potential_pd['dE_rsq_i_db'] = 2.0 * (
-                umsatz_potential_pd['Umsatzpotential'] / umsatz_potential_pd[
-                    'Tatsechlicher Umsatz - FOOD_AND_FRISCHE'] - 1) * \
-                                                 umsatz_potential_pd['sum_terms_b'] / \
-                                                 umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
+            # umsatz_potential_pd['dE_rsq_i_da'] = 2.0 * (
+            #     umsatz_potential_pd['Umsatzpotential'] / umsatz_potential_pd[
+            #        'Tatsechlicher Umsatz - FOOD_AND_FRISCHE'] - 1) * \
+            #                                     umsatz_potential_pd['sum_terms_a'] / \
+            #                                     umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
+
+            # umsatz_potential_pd['dE_rsq_i_db'] = 2.0 * (
+            #    umsatz_potential_pd['Umsatzpotential'] / umsatz_potential_pd[
+            #        'Tatsechlicher Umsatz - FOOD_AND_FRISCHE'] - 1) * \
+            #                                     umsatz_potential_pd['sum_terms_b'] / \
+            #                                     umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
 
             # total gradients
             dE_lsq_da = umsatz_potential_pd.dE_lsq_i_da.sum() / (2.0 * np.sqrt(umsatz_potential_pd.E_lsq_i.sum()))
             dE_lsq_db = umsatz_potential_pd.dE_lsq_i_db.sum() / (2.0 * np.sqrt(umsatz_potential_pd.E_lsq_i.sum()))
             #
-            dE_rsq_da = umsatz_potential_pd.dE_rsq_i_da.sum()
-            dE_rsq_db = umsatz_potential_pd.dE_rsq_i_db.sum()
+            # dE_rsq_da = umsatz_potential_pd.dE_rsq_i_da.sum()
+            # dE_rsq_db = umsatz_potential_pd.dE_rsq_i_db.sum()
 
             self.logger.info("\tGRADIENT LINEAR SQUARE ERROR after %d iterations %f (da) , %f (db)", t, dE_lsq_da, dE_lsq_db)
-            self.logger.info("\tGRADIENT RATIO SQUARE ERROR after %d iterations %f (da), %f (db)", t, dE_rsq_da, dE_rsq_db)
+            # self.logger.info("\tGRADIENT RATIO SQUARE ERROR after %d iterations %f (da), %f (db)", t, dE_rsq_da, dE_rsq_db)
 
             # update the parameters, but limit learning rate
             a_next -= np.sign(dE_lsq_da) * np.fmin(np.abs(dE_lsq_da), 0.01)
