@@ -1,29 +1,56 @@
 # -*- coding: utf-8 -*-
 
-import logging
-import pandas as pd
-import numpy as np
 import configparser
+import logging
+import sys
 
-
-from simple_logging.custom_logging import setup_custom_logger
 from input_reader.input_reader import get_input
+from simple_logging.custom_logging import setup_custom_logger
 
-# logger einrichten
-LOGGING_LEVEL = logging.INFO
-logger = setup_custom_logger('GM_LOGGER', LOGGING_LEVEL, flog="logs/gm.log")
 
-settingsFile = "settings.cfg"
+from optparse import OptionParser
+import importlib
+
 
 if __name__ == "__main__":
 
-    (stores_pd, stores_migros_pd, drivetimes_pd, haushalt_pd) = get_input(settingsFile, logger)
+    # Define command-line arguments
+    parser = OptionParser()
+    parser.add_option("-m", "--model", dest="model",
+                      help = "The model to use. This should be a package in the models/ directory. The __init__.py"
+                             " of the package should create an instance of the model, named 'model'")
+    parser.add_option("-c", "--config", dest="config",
+                      help="A file containing the settings for the specified model")
 
-    logger.info("MAIN ALGO BEGINS")
+    parser.add_option("-l", "--log", dest="logname",
+                      help="Location of a log file for the current run. While the log file will be appended to if it"
+                           " exists or created if it does not, the base log directory should exist")
+
+
+    (options, args) = parser.parse_args()
+
+    if not options.model or not options.config or not options.logname:
+        parser.print_help()
+        sys.exit(1)
+
+    config = configparser.ConfigParser()
+    config.read(options.config)
+
+    # logger einrichten
+    LOGGING_LEVEL = logging.INFO
+    logger = setup_custom_logger('GM_LOGGER', LOGGING_LEVEL, flog=options.logname)
+
+    # load the chosen model
+    m = importlib.import_module("models." + options.model)
+
+    ##########################
+    #### READ-IN AND PREPARE THE DATA ####
+    ##########################
+    # read-in the data
+    (stores_pd, stores_migros_pd, drivetimes_pd, haushalt_pd, referenz_pd) = get_input(options.config, logger)
+
     # get all relevant hektars, i.e. those from which a Migros store is reachable
     # use a 'set' to easily remove duplicates
-
-
     logger.info("Subsetting only the hektars from which a Migros store is reachable")
     relevant_hektars = set(drivetimes_pd.loc[stores_migros_pd.ID]['hektar_id'])
 
@@ -37,73 +64,22 @@ if __name__ == "__main__":
     before = len(set(drivetimes_rel_hektars_pd.index))
 
     drivetimes_rel_hektars_stores_pd = drivetimes_rel_hektars_pd.merge(
-        stores_pd[['ID', 'FORMAT', 'VERKAUFSFLAECHE', 'VERKAUFSFLAECHE_TOTAL', 'RELEVANZ']],
+        stores_pd[['ID', 'FORMAT', 'vfl', 'RELEVANZ', 'type']],
         left_index=True, right_on='ID', how='inner')
 
     logger.info("%d stores appear in drivetimes, but have no associated information in stores_sm.csv",
-                before-len(set(drivetimes_rel_hektars_stores_pd.index)))
+                before - len(set(drivetimes_rel_hektars_stores_pd.index)))
 
     # enrich the drive times of the relevant hektars with Haushalt information
     logger.info("Enriching with Haushalt information")
-    enriched_pd = drivetimes_rel_hektars_stores_pd.merge(haushalt_pd[['H14PTOT']],
-                                                         left_on='hektar_id', right_index=True)
-    # try to correct for missing HA info by assuming a default 1
-    enriched_pd['H14PTOT_corrected'] = enriched_pd['H14PTOT'].fillna(1)
+    enriched_pd = drivetimes_rel_hektars_stores_pd.merge(haushalt_pd[['Tot_Haushaltausgaben']],
+                                                         left_on='hektar_id', right_index=True,
+                                                         how='left')
+    # try to correct for missing HA info by assuming a default of 1 household / person
+    enriched_pd['Tot_Haushaltausgaben_corrected'] = enriched_pd['Tot_Haushaltausgaben'].fillna(7800 / 2.5)
 
+    ##########################
+    ##########################
+    ##########################
 
-    # compute LAT and RLAT
-    logger.info("Computing LAT and RLAT")
-    enriched_pd['LAT'] = 12.0 * enriched_pd['RELEVANZ'] * enriched_pd['VERKAUFSFLAECHE_TOTAL']
-    enriched_pd['LAT2'] = 12.0 * enriched_pd['RELEVANZ'] * enriched_pd['VERKAUFSFLAECHE']
-    enriched_pd['RLAT'] = enriched_pd['LAT'] * np.power(10, -0.17 * np.fmax(enriched_pd['fahrzeit'] - 5, 0))
-    enriched_pd['RLAT2'] = enriched_pd['LAT2'] * np.power(10, -0.17 * np.fmax(enriched_pd['fahrzeit'] - 5, 0))
-
-    # now calculate Marktanteil
-    logger.info("Computing Marktanteil. Takes a while")
-
-    def calc_MA(x):
-        x['Marktanteil'] = x['RLAT'] / np.nansum(x['RLAT'])
-        x['Marktanteil2'] = x['RLAT2'] / np.nansum(x['RLAT2'])
-        return x
-
-    enriched_pd = enriched_pd.reset_index().groupby('hektar_id').apply(calc_MA)
-
-    logger.info("Computing local Umsatzpotential")
-    enriched_pd['LokalUP'] = enriched_pd['Marktanteil'] * enriched_pd['H14PTOT'] * 7800
-    enriched_pd['LokalUP2'] = enriched_pd['Marktanteil2'] * enriched_pd['H14PTOT'] * 7800
-    enriched_pd['LokalUP_corrected'] = enriched_pd['Marktanteil'] * enriched_pd['H14PTOT_corrected'] * 7800
-    enriched_pd['LokalUP2_corrected'] = enriched_pd['Marktanteil2'] * enriched_pd['H14PTOT_corrected'] * 7800
-
-    logger.info("Serializing final data frame ")
-
-    config = configparser.ConfigParser()
-    config.read(settingsFile)
-    enriched_pd.to_pickle(config["output"]["output_pickle"])
-
-    logger.info("Done")
-
-    # get only the Migros stores
-    if len(list(stores_migros_pd['FORMAT'])) == 1:
-        migros_only_pd = enriched_pd[enriched_pd['FORMAT'] == stores_migros_pd['FORMAT']]
-    else:
-        migros_only_pd = enriched_pd[enriched_pd['FORMAT'].isin(list(set(stores_migros_pd['FORMAT'])))]
-
-    logger.info("Computing total Umsatz potential for relevant Migros stores")
-    umsatz_potential_pd = migros_only_pd.groupby('ID').agg({'LokalUP': lambda x: np.nansum(x),
-                                                               'LokalUP2': lambda x: np.nansum(x),
-                                                               'LokalUP_corrected': lambda x: np.nansum(x),
-                                                               'LokalUP2_corrected': lambda x: np.nansum(x)})
-
-
-    umsatz_potential_pd = umsatz_potential_pd.rename(columns={'LokalUP2': 'Umsatzpotential2',
-                                                              'LokalUP': 'Umsatzpotential',
-                                                              'LokalUP_corrected': 'Umsatzpotential_corrected',
-                                                              'LokalUP2_corrected': 'Umsatzpotential2_corrected'})
-
-
-    logger.info("Done")
-
-    logger.info("Generating output csv")
-    umsatz_potential_pd.to_csv(config["output"]["output_csv"])
-    logger.info("Done")
-
+    m.model.entry(enriched_pd, config, logger, stores_migros_pd, referenz_pd)
