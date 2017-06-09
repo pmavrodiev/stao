@@ -77,11 +77,10 @@ def get_input(settingsFile, logger):
         drivetimes_pd = drivetimes_pd.reset_index().set_index(keys='filiale_id')
         logger.info("Removed %d duplicates entries", before-len(drivetimes_pd))
 
-        # only get the first 4 columns - X_COORD, Y_COORD, RELI. H14PTOT
         haushalt_pd = pd.read_csv(haushalt, sep=',', header=0, index_col=2)
-        haushalt_pd['Tot_Haushaltausgaben'] = (haushalt_pd['H14P01'] + 2*haushalt_pd['H14P02'] + 3*haushalt_pd['H14P03'] \
-                                              + 4*haushalt_pd['H14P04'] + 5*haushalt_pd['H14P05'] + 6*haushalt_pd['H14P06'])*(7800 / 2.25)
-        # haushalt_pd['Tot_Haushaltausgaben'] = haushalt_pd['H14PTOT'] * 7800
+        # haushalt_pd['Tot_Haushaltausgaben'] = (haushalt_pd['H14P01'] + 2*haushalt_pd['H14P02'] + 3*haushalt_pd['H14P03'] \
+        #                                      + 4*haushalt_pd['H14P04'] + 5*haushalt_pd['H14P05'] + 6*haushalt_pd['H14P06'])*(7800 / 2.25)
+        haushalt_pd['Tot_Haushaltausgaben'] = haushalt_pd['H14PTOT'] * 7800
 
 
         # Get all Migros stores used by MP Technology OR the single store if in single store mode

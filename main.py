@@ -11,9 +11,6 @@ from simple_logging.custom_logging import setup_custom_logger
 from optparse import OptionParser
 import importlib
 
-# logger einrichten
-LOGGING_LEVEL = logging.INFO
-logger = setup_custom_logger('GM_LOGGER', LOGGING_LEVEL, flog="logs/gm.log")
 
 if __name__ == "__main__":
 
@@ -23,16 +20,25 @@ if __name__ == "__main__":
                       help = "The model to use. This should be a package in the models/ directory. The __init__.py"
                              " of the package should create an instance of the model, named 'model'")
     parser.add_option("-c", "--config", dest="config",
-                      help="A filename with the settings for the specified model")
+                      help="A file containing the settings for the specified model")
+
+    parser.add_option("-l", "--log", dest="logname",
+                      help="Location of a log file for the current run. While the log file will be appended to if it"
+                           " exists or created if it does not, the base log directory should exist")
+
 
     (options, args) = parser.parse_args()
 
-    if not options.model or not options.config:
+    if not options.model or not options.config or not options.logname:
         parser.print_help()
         sys.exit(1)
 
     config = configparser.ConfigParser()
     config.read(options.config)
+
+    # logger einrichten
+    LOGGING_LEVEL = logging.INFO
+    logger = setup_custom_logger('GM_LOGGER', LOGGING_LEVEL, flog=options.logname)
 
     # load the chosen model
     m = importlib.import_module("models." + options.model)

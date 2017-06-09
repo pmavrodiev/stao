@@ -1,3 +1,3 @@
-import models.model_Huff.model_Huff
+import models.model_MBI_v1_0.model_MBI_v1_0
 
-model = model_Huff.model_Huff()
+model = model_MBI_v1_0.model_MBI_v_1_0()

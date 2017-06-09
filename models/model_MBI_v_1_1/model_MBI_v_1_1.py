@@ -28,7 +28,7 @@ class model_MBI_v_1_1(ModelBase):
     calibration_T = None
 
     def whoami(self):
-        return 'Model_MBI'
+        return 'Model_MBI_v1.1'
 
     def process_settings(self, config):
         # first check if we are doing a parameter sweep over a and b
