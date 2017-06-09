@@ -63,7 +63,7 @@ class model_MBI_v_1_0(ModelBase):
 
         pandas_dt['LAT'] = slope_lat * pandas_dt['RELEVANZ'] * pandas_dt['vfl']
         pandas_dt['RLAT'] = pandas_dt['LAT'] * np.power(10, slope_rlat * np.fmax(pandas_dt['fahrzeit'] - fahrzeit_cutoff, 0))
-        
+
         self.logger.info('Computing sum RLATs ...')
         pandas_dt['sumRLATs'] = pandas_dt.groupby('hektar_id')[["RLAT"]].transform(lambda x: np.sum(x))
         pandas_dt['local_market_share'] = pandas_dt['RLAT'] / pandas_dt['sumRLATs']
