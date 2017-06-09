@@ -219,11 +219,6 @@ class model_Huff(ModelBase):
                                                 umsatz_potential_pd[
                                                     'Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
 
-        umsatz_potential_pd['verhaeltnis_tU_prozent'] = (umsatz_potential_pd['Umsatzpotential'] -
-                                                         umsatz_potential_pd[
-                                                             'Tatsechlicher Umsatz - FOOD_AND_FRISCHE']) / \
-                                                        umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
-
         umsatz_potential_pd['verhaeltnis_MP2'] = umsatz_potential_pd['Umsatzpotential'] / \
                                                  umsatz_potential_pd['MP - CALCULATED_REVENUE 2']
 

@@ -4,11 +4,11 @@ import numpy as np
 import pandas as pd
 
 from models.model_base import ModelBase
-from models.model_MBI.parallel import apply_parallel, group_by_store_type
+from models.model_MBI_v_1_1.parallel import apply_parallel, group_by_store_type
 
 
 @ModelBase.register
-class model_MBI(ModelBase):
+class model_MBI_v_1_1(ModelBase):
 
     logger = None
     umsatz_output_csv = None
@@ -346,6 +346,10 @@ class model_MBI(ModelBase):
         umsatz_potential_pd['verhaeltnis_tU'] = umsatz_potential_pd['Umsatzpotential'] / \
                                                 umsatz_potential_pd[
                                                     'Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
+
+        umsatz_potential_pd['verhaeltnis_tU_prozent'] = (umsatz_potential_pd['Umsatzpotential'] -
+                                                         umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE'] ) / \
+                                                        umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
 
         umsatz_potential_pd['verhaeltnis_MP2'] = umsatz_potential_pd['Umsatzpotential'] / \
                                                  umsatz_potential_pd['MP - CALCULATED_REVENUE 2']

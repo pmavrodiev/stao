@@ -7,8 +7,6 @@ import sys
 from input_reader.input_reader import get_input
 from simple_logging.custom_logging import setup_custom_logger
 
-# from models.model_MBI import model_MBI
-# from models.model_Huff import model_Huff
 
 from optparse import OptionParser
 import importlib
