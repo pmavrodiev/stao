@@ -136,6 +136,11 @@ class model_Huff(ModelBase):
             return 0
 
         if self.calibrate:
+            self.logger.error('Gradient descent is not implemented. Turn off calibration from the settings')
+            return 1
+
+        # TODO: Eventually implement gradient descent
+        if self.calibrate:
             error = np.zeros(10)
             alpha_next = self.alpha
             beta_next = self.beta
