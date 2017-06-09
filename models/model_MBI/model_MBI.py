@@ -34,8 +34,8 @@ class model_MBI(ModelBase):
         # first check if we are doing a parameter sweep over a and b
         self.param_sweep = False  # by default False
         if config.has_option('parameter_sweep', 'a_array') and config.has_option('parameter_sweep', 'b_array'):
-            self.a_sweep = json.loads(config.get('parameter_sweep', 'a_array'))
-            self.b_sweep = json.loads(config.get('parameter_sweep', 'b_array'))
+            self.alpha_sweep = [float(x) for x in json.loads(config.get('parameter_sweep', 'alpha_array'))]
+            self.beta_sweep = [float(x) for x in json.loads(config.get('parameter_sweep', 'beta_array'))]
             self.param_sweep = True
         ####
         try:

@@ -11,11 +11,11 @@ import numpy as np
     such as distributing also the pruning per store type.
 """
 
-import configparser
+# import configparser
 
-settingsFile = "settings.cfg"
-config = configparser.ConfigParser()
-config.read(settingsFile)
+# settingsFile = "settings.cfg"
+# config = configparser.ConfigParser()
+# config.read(settingsFile)
 
 def apply_parallel(dfGrouped, func, ncpus, chunk_size):
     with Pool(ncpus) as p:

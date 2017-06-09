@@ -30,8 +30,8 @@ class model_Huff(ModelBase):
         # first check if we are doing a parameter sweep over a and b
         self.param_sweep = False  # by default False
         if config.has_option('parameter_sweep', 'alpha_array') and config.has_option('parameter_sweep', 'beta_array'):
-            self.alpha_sweep = json.loads(config.get('parameter_sweep', 'alpha_array'))
-            self.beta_sweep = json.loads(config.get('parameter_sweep', 'beta_array'))
+            self.alpha_sweep = [float(x) for x in json.loads(config.get('parameter_sweep', 'alpha_array'))]
+            self.beta_sweep = [float(x) for x in json.loads(config.get('parameter_sweep', 'beta_array'))]
             self.param_sweep = True
         ####
 
@@ -82,8 +82,24 @@ class model_Huff(ModelBase):
 
         self.logger.info('Done')
 
-    def compute_huff_market_share(self, pandas_dt, alpha, beta):
+    def compute_huff_market_share_parallel(self, pandas_dt, alpha, beta):
         self.logger.info('Computing local market share. This takes a while ...')
+
+        # this is A_i^alpha*fahrzeit^beta
+        pandas_dt['huff_numerator'] = np.power(np.power(pandas_dt['vfl'], 2.0), alpha) * np.power(pandas_dt['fahrzeit'], beta)
+
+        # this is sum(A_i^alpha * fahrzeit^beta)
+        pandas_dt['huff_denumerator'] = pandas_dt.groupby('hektar_id')[["huff_numerator"]].transform(lambda x: np.sum(x))
+
+        pandas_dt['local_market_share'] = pandas_dt['huff_numerator'] / pandas_dt['huff_denumerator']
+
+        self.logger.info('Done')
+        return pandas_dt
+
+    def compute_huff_market_share(self, pandas_dt, alpha, beta):
+
+        self.logger.info('Computing local market share. This takes a while ...')
+        self.logger.info("Parameters: alpha/beta = %f / %f", alpha, beta)
 
         # this is A_i^alpha*fahrzeit^beta
         pandas_dt['huff_numerator'] = np.power(np.power(pandas_dt['vfl'], 2.0), alpha) * np.power(pandas_dt['fahrzeit'], beta)
@@ -164,11 +180,10 @@ class model_Huff(ModelBase):
         self.logger.info('Will do parameter sweep. This will take a while, better run over night')
         for a in self.alpha_sweep:
             for b in self.beta_sweep:
-                self.logger.info("Parameters: alpha/beta = %f / %f", a, b)
-                pandas_sweeped_dt = self.compute_huff_market_share(pandas_sweeped_dt, a, b)
+                pandas_sweeped_dt = self.compute_huff_market_share(pandas_dt, a, b)
                 # pandas_preprocessed_dt now has a column 'local_market_share' giving the
                 # local market share of store i in each hektar
-                umsatz_potential_pd = self.gen_umsatz_prognose(pandas_dt, stores_migros_pd, referenz_pd)
+                umsatz_potential_pd = self.gen_umsatz_prognose(pandas_sweeped_dt, stores_migros_pd, referenz_pd)
                 # calculate the individual errors
                 umsatz_potential_pd['E_i'] = np.power(umsatz_potential_pd['Umsatzpotential'] -
                                                       umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE'],
