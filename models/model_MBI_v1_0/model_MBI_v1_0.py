@@ -128,7 +128,7 @@ class model_MBI_v_1_0(ModelBase):
                     self.logger.info('Exporting Umsatz predictions to csv')
 
                     umsatz_potential_pd.to_csv(self.umsatz_output_csv + '_lat_' + str(lat) + '_rlat_' + str(rlat) +
-                                               '_fz_' + fz)
+                                               '_fz_' + str(fz))
 
         self.logger.info('Found error minimum of %f for lat=%f / rlat=%f / fz_cutoff=%f',
                          self.E_min[0][0], self.E_min[0][1]["lat"], self.E_min[0][1]["rlat"],
