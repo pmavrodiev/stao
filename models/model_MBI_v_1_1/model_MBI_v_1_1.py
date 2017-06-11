@@ -37,8 +37,8 @@ class model_MBI_v_1_1(ModelBase):
         # first check if we are doing a parameter sweep over a and b
         self.param_sweep = False  # by default False
         if config.has_option('parameter_sweep', 'a_array') and config.has_option('parameter_sweep', 'b_array'):
-            self.alpha_sweep = [float(x) for x in json.loads(config.get('parameter_sweep', 'alpha_array'))]
-            self.beta_sweep = [float(x) for x in json.loads(config.get('parameter_sweep', 'beta_array'))]
+            self.a_sweep = [float(x) for x in json.loads(config.get('parameter_sweep', 'a_array'))]
+            self.b_sweep = [float(x) for x in json.loads(config.get('parameter_sweep', 'b_array'))]
             self.param_sweep = True
         ####
         try:
@@ -165,7 +165,7 @@ class model_MBI_v_1_1(ModelBase):
                 #                                         umsatz_potential_pd[
                 #                                           'Tatsechlicher Umsatz - FOOD_AND_FRISCHE'] - 1, 2)
 
-                total_error = np.sqrt(umsatz_potential_pd.E_i.sum())
+                total_error = np.sqrt(umsatz_potential_pd.E_lsq_i.sum())
                 self.logger.info("TOTAL ERROR: %f", total_error)
 
                 if total_error < self.E_min[0][0]:
