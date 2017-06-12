@@ -13,7 +13,8 @@ class model_Huff(ModelBase):
 
     param_sweep = None
     alpha_sweep = None
-    beta_sweep = None
+    beta_M_sweep = None
+    beta_REST_sweep = None
     alpha = None
     beta = None
 
@@ -32,9 +33,10 @@ class model_Huff(ModelBase):
     def process_settings(self, config):
         # first check if we are doing a parameter sweep over a and b
         self.param_sweep = False  # by default False
-        if config.has_option('parameter_sweep', 'alpha_array') and config.has_option('parameter_sweep', 'beta_array'):
+        if config.has_option('parameter_sweep', 'alpha_array') and config.has_option('parameter_sweep', 'beta_array_M'):
             self.alpha_sweep = [float(x) for x in json.loads(config.get('parameter_sweep', 'alpha_array'))]
-            self.beta_sweep = [float(x) for x in json.loads(config.get('parameter_sweep', 'beta_array'))]
+            self.beta_M_sweep = [float(x) for x in json.loads(config.get('parameter_sweep', 'beta_array_M'))]
+            self.beta_REST_sweep = [float(x) for x in json.loads(config.get('parameter_sweep', 'beta_array_REST'))]
             self.param_sweep = True
         ####
 
@@ -64,11 +66,13 @@ class model_Huff(ModelBase):
         # this is ln(A_i)
         pandas_dt['ln_A_i'] = np.log(pandas_dt['vfl'])
 
+        pandas_dt['fahrzeit_huff'] = np.where(pandas_dt['FORMAT']=='M', np.power(pandas_dt['fahrzeit'], 2 * beta), np.power(pandas_dt['fahrzeit'], beta))
+
         # this is A_i^alpha*fahrzeit^beta
-        pandas_dt['huff_numerator'] = np.power(np.power(pandas_dt['vfl'], 2.0), alpha) * np.power(pandas_dt['fahrzeit'], beta)
+        pandas_dt['huff_numerator'] = np.power(np.power(pandas_dt['vfl'], 2.0), alpha) * pandas_pd['fahrzeit_huff']
 
 
-        pandas_dt['huff_denumerator'] = np.power(np.power(pandas_dt['vfl'], 2.0), alpha) * np.power(pandas_dt['fahrzeit'], beta)
+        pandas_dt['huff_denumerator'] = np.power(np.power(pandas_dt['vfl'], 2.0), alpha) * pandas_pd['fahrzeit_huff']
 
         # this is A_i^alpha * fahrzeit^beta * log(A_i)
         pandas_dt['huff_denumerator_log'] = np.power(np.power(pandas_dt['vfl'], 2.0), alpha) * \
@@ -99,13 +103,15 @@ class model_Huff(ModelBase):
         self.logger.info('Done')
         return pandas_dt
 
-    def compute_huff_market_share(self, pandas_dt, alpha, beta):
+    def compute_huff_market_share(self, pandas_dt, alpha, beta_M, beta_REST):
 
         self.logger.info('Computing local market share. This takes a while ...')
-        self.logger.info("Parameters: alpha/beta = %f / %f", alpha, beta)
+        self.logger.info("Parameters: alpha/beta_M/beta_REST = %f / %f /%f", alpha, beta_M, beta_REST)
+
+        pandas_dt['fahrzeit_huff'] = np.where(pandas_dt['FORMAT']=='M', np.power(pandas_dt['fahrzeit'], beta_M), np.power(pandas_dt['fahrzeit'], beta_REST))
 
         # this is A_i^alpha*fahrzeit^beta
-        pandas_dt['huff_numerator'] = np.power(np.power(pandas_dt['vfl'], 2.0), alpha) * np.power(pandas_dt['fahrzeit'], beta)
+        pandas_dt['huff_numerator'] = np.power(np.power(pandas_dt['vfl'], 2.0), alpha) * pandas_dt['fahrzeit_huff']
 
         # this is sum(A_i^alpha * fahrzeit^beta)
         pandas_dt['huff_denumerator'] = pandas_dt.groupby('hektar_id')[["huff_numerator"]].transform(lambda x: np.sum(x))
@@ -187,29 +193,30 @@ class model_Huff(ModelBase):
     def analysis_sweep(self, pandas_dt, stores_migros_pd, referenz_pd):
         self.logger.info('Will do parameter sweep. This will take a while, better run over night')
         for a in self.alpha_sweep:
-            for b in self.beta_sweep:
-                pandas_sweeped_dt = self.compute_huff_market_share(pandas_dt, a, b)
-                # pandas_preprocessed_dt now has a column 'local_market_share' giving the
-                # local market share of store i in each hektar
-                umsatz_potential_pd = self.gen_umsatz_prognose(pandas_sweeped_dt, stores_migros_pd, referenz_pd)
-                # calculate the individual errors
-                umsatz_potential_pd['E_i'] = np.power(umsatz_potential_pd['Umsatzpotential'] -
+            for b_M in self.beta_M_sweep:
+                for b_REST in self.beta_REST_sweep:
+                    pandas_sweeped_dt = self.compute_huff_market_share(pandas_dt, a, b_M, b_REST)
+                    # pandas_preprocessed_dt now has a column 'local_market_share' giving the
+                    # local market share of store i in each hektar
+                    umsatz_potential_pd = self.gen_umsatz_prognose(pandas_sweeped_dt, stores_migros_pd, referenz_pd)
+                    # calculate the individual errors
+                    umsatz_potential_pd['E_i'] = np.power(umsatz_potential_pd['Umsatzpotential'] -
                                                       umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE'],
                                                       2) / umsatz_potential_pd[
                                                  'Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
 
-                total_error = np.sqrt(umsatz_potential_pd.E_i.sum())
-                self.logger.info("TOTAL ERROR: %f", total_error)
+                    total_error = np.sqrt(umsatz_potential_pd.E_i.sum())
+                    self.logger.info("TOTAL ERROR: %f", total_error)
 
-                if total_error < self.E_min[0][0]:
-                    self.E_min = [(total_error, {"alpha": a, "beta": b})]
-                    self.logger.info('New minimum found.')
+                    if total_error < self.E_min[0][0]:
+                        self.E_min = [(total_error, {"alpha": a, "beta_M": b_M, "beta_REST": b_REST})]
+                        self.logger.info('New minimum found.')
 
-                self.logger.info('Exporting Umsatz predictions to csv')
-                umsatz_potential_pd.to_csv(self.umsatz_output_csv + '_a_' + str(a) + '_b_' + str(b))
+                        self.logger.info('Exporting Umsatz predictions to csv')
+                        umsatz_potential_pd.to_csv(self.umsatz_output_csv + '_a_' + str(a) + '_bM_' + str(b_M) + "_bREST_" + str(b_REST))
 
-        self.logger.info('Found error minimum of %f for alpha=%f / beta=%f ',
-                         self.E_min[0][0], self.E_min[0][1]["alpha"], self.E_min[0][1]["beta"])
+        self.logger.info('Found error minimum of %f for alpha=%f / beta_M=%f / beta_REST=%f',
+                         self.E_min[0][0], self.E_min[0][1]["alpha"], self.E_min[0][1]["beta_M"], self.E_min[0][1]["beta_REST"])
 
     def calc_gradient(self, umsatz_pd):
         # It can always be asszmed that umsatz_pd will have a column 'E_i' with the local errors
