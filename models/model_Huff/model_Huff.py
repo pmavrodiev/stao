@@ -108,7 +108,7 @@ class model_Huff(ModelBase):
         self.logger.info('Computing local market share. This takes a while ...')
         self.logger.info("Parameters: alpha/beta_M/beta_REST = %f / %f /%f", alpha, beta_M, beta_REST)
 
-        pandas_dt['fahrzeit_huff'] = np.where(pandas_dt['FORMAT']=='M', np.power(pandas_dt['fahrzeit'], beta_M), np.power(pandas_dt['fahrzeit'], beta_REST))
+        pandas_dt['fahrzeit_huff'] = np.where(pandas_dt['FORMAT'] == 'M', np.power(pandas_dt['fahrzeit'], beta_M), np.power(pandas_dt['fahrzeit'], beta_REST))
 
         # this is A_i^alpha*fahrzeit^beta
         pandas_dt['huff_numerator'] = np.power(np.power(pandas_dt['vfl'], 2.0), alpha) * pandas_dt['fahrzeit_huff']
@@ -212,8 +212,8 @@ class model_Huff(ModelBase):
                         self.E_min = [(total_error, {"alpha": a, "beta_M": b_M, "beta_REST": b_REST})]
                         self.logger.info('New minimum found.')
 
-                        self.logger.info('Exporting Umsatz predictions to csv')
-                        umsatz_potential_pd.to_csv(self.umsatz_output_csv + '_a_' + str(a) + '_bM_' + str(b_M) + "_bREST_" + str(b_REST))
+                    self.logger.info('Exporting Umsatz predictions to csv')
+                    umsatz_potential_pd.to_csv(self.umsatz_output_csv + '_a_' + str(a) + '_bM_' + str(b_M) + "_bREST_" + str(b_REST))
 
         self.logger.info('Found error minimum of %f for alpha=%f / beta_M=%f / beta_REST=%f',
                          self.E_min[0][0], self.E_min[0][1]["alpha"], self.E_min[0][1]["beta_M"], self.E_min[0][1]["beta_REST"])

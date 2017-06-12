@@ -284,6 +284,7 @@ class model_MBI_v_1_1(ModelBase):
 
         if self.param_sweep:
             self.analysis_sweep(pandas_preprocessed_dt, stores_migros_pd, referenz_pd)
+            return 0
         else:
             if not self.use_pruned_cache:
                 self.logger.info("Computing RLAT")

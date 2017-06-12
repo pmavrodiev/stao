@@ -129,9 +129,9 @@ class model_MBI_v_1_0(ModelBase):
                         self.E_min = [(total_error, {"lat": lat, "rlat_M": rlat_M, "rlat_REST": rlat_REST, "fz_cutoff": fz})]
                         self.logger.info('New minimum found.')
 
-                        self.logger.info('Exporting Umsatz predictions to csv')
+                    self.logger.info('Exporting Umsatz predictions to csv')
 
-                        umsatz_potential_pd.to_csv(self.umsatz_output_csv + '_lat_' + str(lat) + '_rlatM_' + str(rlat_M) +
+                    umsatz_potential_pd.to_csv(self.umsatz_output_csv + '_lat_' + str(lat) + '_rlatM_' + str(rlat_M) +
                                                '_RLATREST_' + str(rlat_REST) + '_fz_' + str(fz))
 
         self.logger.info('Found error minimum of %f for lat=%f / rlat_M=%f / rlat_REST=%f / fz_cutoff=%f',
