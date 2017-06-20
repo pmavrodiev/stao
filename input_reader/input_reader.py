@@ -65,6 +65,10 @@ def get_input(settingsFile, logger):
         # choose the right Verkaufsflaeche for Frische und Food
         # stores_pd['vfl'] = np.where(pd.isnull(stores_pd['VERKAUFSFLAECHE_SABRINA']), stores_pd['VERKAUFSFLAECHE'],
         #                             stores_pd['VERKAUFSFLAECHE_SABRINA'])
+
+        # stores_pd['vfl'] = np.where(np.isnull(stores_pd['VERKAUFSFLAECHE_SABRINA']), stores_pd['VERKAUFSFLAECHE'] ,
+        #                                      stores_pd['VERKAUFSFLAECHE_SABRINA'])
+
         stores_pd['vfl'] = stores_pd['VERKAUFSFLAECHE_TOTAL']
 
         drivetimes_pd = pd.read_csv(drivetimes, sep=',', header=None, names=['filiale_id', 'fahrzeit', 'hektar_id'],
