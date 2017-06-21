@@ -38,6 +38,8 @@ def get_input(settingsFile, logger):
                                                         config['cache_config']['drivetimes_cached']))
             haushalt_pd = pd.read_pickle(os.path.join(cache_dir,
                                                       config['cache_config']['haushalt_cached']))
+            stations_pd = pd.read_pickle(os.path.join(cache_dir,
+                                                      config['cache_config']['stations_cached']))
         except IOError as e:
             logger.error("Cannot find cache for the input data. Generate the cache by running with cache disabled"
                          " in the settings.")
@@ -49,6 +51,7 @@ def get_input(settingsFile, logger):
         stores = config['inputdata']['stores_cm']
         drivetimes = config['inputdata']['drivetimes']
         haushalt = config['inputdata']['haushalt']
+        stations = config['inputdata']['stations']
 
         stores_pd = pd.read_csv(stores, sep=';', header=0, index_col=0, encoding='latin-1')
         # stores_pd['RELEVANZ'] = 1
@@ -65,6 +68,10 @@ def get_input(settingsFile, logger):
         # choose the right Verkaufsflaeche for Frische und Food
         # stores_pd['vfl'] = np.where(pd.isnull(stores_pd['VERKAUFSFLAECHE_SABRINA']), stores_pd['VERKAUFSFLAECHE'],
         #                             stores_pd['VERKAUFSFLAECHE_SABRINA'])
+
+        # stores_pd['vfl'] = np.where(np.isnull(stores_pd['VERKAUFSFLAECHE_SABRINA']), stores_pd['VERKAUFSFLAECHE'] ,
+        #                                      stores_pd['VERKAUFSFLAECHE_SABRINA'])
+
         stores_pd['vfl'] = stores_pd['VERKAUFSFLAECHE_TOTAL']
 
         drivetimes_pd = pd.read_csv(drivetimes, sep=',', header=None, names=['filiale_id', 'fahrzeit', 'hektar_id'],
@@ -82,6 +89,7 @@ def get_input(settingsFile, logger):
                                               + 4*haushalt_pd['H14P04'] + 5*haushalt_pd['H14P05'] + 6*haushalt_pd['H14P06'])*(7800 / 2.25)
         # haushalt_pd['Tot_Haushaltausgaben'] = haushalt_pd['H14PTOT'] * 7800
 
+        stations_pd = pd.read_csv(stations, sep=';', header=0, index_col=0, encoding='latin-1')
 
         # Get all Migros stores used by MP Technology OR the single store if in single store mode
 
@@ -100,8 +108,9 @@ def get_input(settingsFile, logger):
             drivetimes_pd.to_pickle(os.path.join(cache_dir,
                                                  config['cache_config']['drivetimes_cached']))
             haushalt_pd.to_pickle(os.path.join(cache_dir, config['cache_config']['haushalt_cached']))
+            stations_pd.to_pickle(os.path.join(cache_dir, config['cache_config']['stations_cached']))
             logger.info("Done caching input data")
 
         logger.info("Done reading input data")
 
-    return (stores_pd, stores_migros_pd, drivetimes_pd, haushalt_pd, referenz_pd)
+    return (stores_pd, stores_migros_pd, drivetimes_pd, haushalt_pd, referenz_pd, stations_pd)

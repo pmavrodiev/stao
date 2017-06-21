@@ -47,7 +47,7 @@ if __name__ == "__main__":
     #### READ-IN AND PREPARE THE DATA ####
     ##########################
     # read-in the data
-    (stores_pd, stores_migros_pd, drivetimes_pd, haushalt_pd, referenz_pd) = get_input(options.config, logger)
+    (stores_pd, stores_migros_pd, drivetimes_pd, haushalt_pd, referenz_pd, stations_pd) = get_input(options.config, logger)
 
     # get all relevant hektars, i.e. those from which a Migros store is reachable
     # use a 'set' to easily remove duplicates
@@ -82,4 +82,4 @@ if __name__ == "__main__":
     ##########################
     ##########################
 
-    m.model.entry(enriched_pd, config, logger, stores_migros_pd, referenz_pd)
+    m.model.entry(enriched_pd, config, logger, stores_migros_pd, referenz_pd, stations_pd)
