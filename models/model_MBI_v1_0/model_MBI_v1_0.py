@@ -13,8 +13,7 @@ class model_MBI_v_1_0(ModelBase):
     umsatz_output_csv = None
     # basic parameters
     slope_lat = None
-    slope_rlat_M = None
-    slope_rlat_REST = None
+    slope_rlat = None
     fahrzeit_cutoff = None
 
     # öV parameters
@@ -43,12 +42,10 @@ class model_MBI_v_1_0(ModelBase):
         self.param_basic_sweep = False  # by default False
         self.param_ov_sweep = False  # by default False
         if config.has_option('parameter_basic_sweep', 'slope_lat')       and \
-           config.has_option('parameter_basic_sweep', 'slope_rlat_M')    and \
-           config.has_option('parameter_basic_sweep', 'slope_rlat_REST') and \
+           config.has_option('parameter_basic_sweep', 'slope_rlat')    and \
            config.has_option('parameter_basic_sweep', 'fahrzeit_cutoff'):
             self.slope_lat_sweep = [float(x) for x in json.loads(config.get('parameter_basic_sweep', 'slope_lat'))]
-            self.slope_rlat_M_sweep = [float(x) for x in json.loads(config.get('parameter_basic_sweep', 'slope_rlat_M'))]
-            self.slope_rlat_REST_sweep = [float(x) for x in json.loads(config.get('parameter_basic_sweep', 'slope_rlat_REST'))]
+            self.slope_rlat_sweep = [float(x) for x in json.loads(config.get('parameter_basic_sweep', 'slope_rlat'))]
             self.fahrzeit_cutoff_sweep = [float(x) for x in json.loads(config.get('parameter_basic_sweep', 'fahrzeit_cutoff'))]
             self.param_basic_sweep = True
         ####
@@ -63,8 +60,7 @@ class model_MBI_v_1_0(ModelBase):
             sys.exit(1)
         try:
             self.slope_lat = float(config["parameters_basic"]["slope_lat"])
-            self.slope_rlat_M = float(config["parameters_basic"]["slope_rlat_M"])
-            self.slope_rlat_REST = float(config["parameters_basic"]["slope_rlat_REST"])
+            self.slope_rlat = float(config["parameters_basic"]["slope_rlat"])
             self.fahrzeit_cutoff = float(config["parameters_basic"]["fahrzeit_cutoff"])
             #
             self.beta_ov = float(config["parameters_ov"]["beta_ov"])
@@ -84,14 +80,13 @@ class model_MBI_v_1_0(ModelBase):
         pandas_reindexed_dt = pandas_reindexed_dt.reset_index()  # .set_index(keys=['hektar_id']) # , 'type'])
         return pandas_reindexed_dt
 
-    def compute_market_share(self, pandas_dt, slope_lat, slope_rlat_M, slope_rlat_REST, fahrzeit_cutoff):
+    def compute_market_share(self, pandas_dt, slope_lat, slope_rlat, fahrzeit_cutoff):
 
         self.logger.info('Computing local market share. This takes a while ...')
-        self.logger.info("Parameters: slope_lat/slope_rlat_M/slope_rlat_REST/fahrzeit_cutoff = %f / %f / %f / %f", slope_lat, slope_rlat_M, slope_rlat_REST,
-                         fahrzeit_cutoff)
+        self.logger.info("Parameters: slope_lat/slope_rlat/fahrzeit_cutoff = %f / %f / %f", slope_lat, slope_rlat, fahrzeit_cutoff)
 
         pandas_dt['LAT'] = slope_lat * pandas_dt['RELEVANZ'] * pandas_dt['vfl']
-        pandas_dt['RLAT'] = pandas_dt['LAT'] * np.where(pandas_dt['FORMAT'] == 'M', np.power(10, slope_rlat_M * np.fmax(pandas_dt['fahrzeit'] - fahrzeit_cutoff, 0)), np.power(10, slope_rlat_REST * np.fmax(pandas_dt['fahrzeit'] - fahrzeit_cutoff, 0)))
+        pandas_dt['RLAT'] = pandas_dt['LAT'] * np.power(10, slope_rlat * np.fmax(pandas_dt['fahrzeit'] - fahrzeit_cutoff, 0))
 
         self.logger.info('Computing sum RLATs ...')
         pandas_dt['sumRLATs'] = pandas_dt.groupby('hektar_id')[["RLAT"]].transform(lambda x: np.sum(x))
@@ -123,8 +118,7 @@ class model_MBI_v_1_0(ModelBase):
             self.analysis_sweep(pandas_preprocessed_dt, stores_migros_pd, referenz_pd)
             return 0
 
-        pandas_postprocessed_dt = self.compute_market_share(pandas_preprocessed_dt, self.slope_lat, self.slope_rlat_M,
-                                                            self.slope_rlat_REST, self.fahrzeit_cutoff)
+        pandas_postprocessed_dt = self.compute_market_share(pandas_preprocessed_dt, self.slope_lat, self.slope_rlat, self.fahrzeit_cutoff)
         # pandas_preprocessed_dt now has a column 'local_market_share' giving the
         # local market share of store i in each hektar
         umsatz_potential_pd = self.gen_umsatz_prognose(pandas_postprocessed_dt, stores_migros_pd, referenz_pd)
@@ -136,11 +130,12 @@ class model_MBI_v_1_0(ModelBase):
 
         pendler_einfluss_pd = self.calc_pendler_einfluss(stores_migros_pd, stations_pd, self.beta_ov, self.f_pendler)
         # left join between the calculated umsatz and the pendler einfluss
-        umsatz_potential_pd = pd.merge(umsatz_potential_pd, pendler_einfluss_pd, \
-                                       how='left', left_index=True, right_index=True)
+        umsatz_potential_pd = pd.merge(umsatz_potential_pd, pendler_einfluss_pd, how='left', left_index=True, right_index=True)
 
         umsatz_potential_pd['umsatz_with_pendler'] = umsatz_potential_pd['Umsatzpotential'] + \
                                                      umsatz_potential_pd['additional_kaeufer'] * 50
+        umsatz_potential_pd.loc[np.isnan(umsatz_potential_pd['umsatz_with_pendler']), 'umsatz_with_pendler'] = \
+            umsatz_potential_pd[np.isnan(umsatz_potential_pd['umsatz_with_pendler'])]['Umsatzpotential']
 
         umsatz_potential_pd['verhaeltnis_tU_pendler_prozent'] = (umsatz_potential_pd['umsatz_with_pendler'] -
                                                          umsatz_potential_pd[
@@ -186,6 +181,9 @@ class model_MBI_v_1_0(ModelBase):
                 umsatz_potential_pd['umsatz_with_pendler'] = umsatz_potential_pd['Umsatzpotential'] + \
                                                              umsatz_potential_pd['additional_kaeufer'] * 50
 
+                umsatz_potential_pd.loc[np.isnan(umsatz_potential_pd['umsatz_with_pendler']), 'umsatz_with_pendler'] = \
+                    umsatz_potential_pd[np.isnan(umsatz_potential_pd['umsatz_with_pendler'])]['Umsatzpotential']
+
                 umsatz_potential_pd['verhaeltnis_tU_pendler_prozent'] = (umsatz_potential_pd['umsatz_with_pendler'] -
                                                                          umsatz_potential_pd[
                                                                              'Tatsechlicher Umsatz - FOOD_AND_FRISCHE']) / \
@@ -214,10 +212,9 @@ class model_MBI_v_1_0(ModelBase):
         self.logger.info('Will do basic parameter sweep. This will take a while, better run over night')
 
         for lat in self.slope_lat_sweep:
-            for rlat_M in self.slope_rlat_M_sweep:
+            for rlat in self.slope_rlat_sweep:
                 for fz in self.fahrzeit_cutoff_sweep:
-                    rlat_REST = 0.5 * rlat_M
-                    pandas_sweeped_dt = self.compute_market_share(pandas_dt, lat, rlat_M, rlat_REST, fz)
+                    pandas_sweeped_dt = self.compute_market_share(pandas_dt, lat, rlat, fz)
                     # pandas_preprocessed_dt now has a column 'local_market_share' giving the
                     # local market share of store i in each hektar
                     umsatz_potential_pd = self.gen_umsatz_prognose(pandas_sweeped_dt, stores_migros_pd, referenz_pd)
@@ -230,17 +227,15 @@ class model_MBI_v_1_0(ModelBase):
                     self.logger.info("TOTAL ERROR: %f", total_error)
 
                     if total_error < self.E_min[0][0]:
-                        self.E_min = [(total_error, {"lat": lat, "rlat_M": rlat_M, "rlat_REST": rlat_REST, "fz_cutoff": fz})]
+                        self.E_min = [(total_error, {"lat": lat, "rlat": rlat, "fz_cutoff": fz})]
                         self.logger.info('New minimum found.')
 
                     self.logger.info('Exporting Umsatz predictions to csv')
 
-                    umsatz_potential_pd.to_csv(self.umsatz_output_csv + '_lat_' + str(lat) + '_rlatM_' + str(rlat_M) +
-                                               '_RLATREST_' + str(rlat_REST) + '_fz_' + str(fz))
+                    umsatz_potential_pd.to_csv(self.umsatz_output_csv + '_lat_' + str(lat) + '_rlat_' + str(rlat) + '_fz_' + str(fz))
 
-        self.logger.info('Found error minimum of %f for lat=%f / rlat_M=%f / rlat_REST=%f / fz_cutoff=%f',
-                         self.E_min[0][0], self.E_min[0][1]["lat"], self.E_min[0][1]["rlat_M"],self.E_min[0][1]["rlat_REST"],
-                         self.E_min[0][1]["fz_cutoff"])
+        self.logger.info('Found error minimum of %f for lat=%f / rlat=%f / fz_cutoff=%f',
+                         self.E_min[0][0], self.E_min[0][1]["lat"], self.E_min[0][1]["rlat"], self.E_min[0][1]["fz_cutoff"])
 
     def gen_umsatz_prognose(self, pandas_pd, stores_migros_pd, referenz_pd):
         self.logger.info('Generating Umsatz predictions ... ')

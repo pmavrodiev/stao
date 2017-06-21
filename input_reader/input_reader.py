@@ -85,9 +85,9 @@ def get_input(settingsFile, logger):
         logger.info("Removed %d duplicates entries", before-len(drivetimes_pd))
 
         haushalt_pd = pd.read_csv(haushalt, sep=',', header=0, index_col=2)
-        haushalt_pd['Tot_Haushaltausgaben'] = (haushalt_pd['H14P01'] + 2*haushalt_pd['H14P02'] + 3*haushalt_pd['H14P03'] \
-                                              + 4*haushalt_pd['H14P04'] + 5*haushalt_pd['H14P05'] + 6*haushalt_pd['H14P06'])*(7800 / 2.25)
-        # haushalt_pd['Tot_Haushaltausgaben'] = haushalt_pd['H14PTOT'] * 7800
+        # haushalt_pd['Tot_Haushaltausgaben'] = (haushalt_pd['H14P01'] + 2*haushalt_pd['H14P02'] + 3*haushalt_pd['H14P03'] \
+        #                                       + 4*haushalt_pd['H14P04'] + 5*haushalt_pd['H14P05'] + 6*haushalt_pd['H14P06'])*(7800 / 2.25)
+        haushalt_pd['Tot_Haushaltausgaben'] = haushalt_pd['H14PTOT'] * 7800
 
         stations_pd = pd.read_csv(stations, sep=';', header=0, index_col=0, encoding='latin-1')
 
