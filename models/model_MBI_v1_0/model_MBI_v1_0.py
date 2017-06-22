@@ -246,7 +246,8 @@ class model_MBI_v_1_0(ModelBase):
                         umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
 
                     total_error = np.sqrt(umsatz_potential_pd.E_i.sum())
-                    error_quantile = umsatz_potential_pd.E_i.quantile(0.99)
+
+                    error_quantile = umsatz_potential_pd[~np.isnan(umsatz_potential_pd['E_i'])]['E_i'].quantile(q=0.99)
                     total_error_0_99 = np.sqrt(umsatz_potential_pd[umsatz_potential_pd['E_i'] <=
                                                                    error_quantile]['E_i'].sum())
                     self.logger.info("TOTAL ERROR: %f / %f", total_error, total_error_0_99)
@@ -282,7 +283,7 @@ class model_MBI_v_1_0(ModelBase):
                         umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
 
                     total_error = np.sqrt(umsatz_potential_pd.E_i.sum())
-                    error_quantile = umsatz_potential_pd.E_i.quantile(0.99)
+                    error_quantile = umsatz_potential_pd[~np.isnan(umsatz_potential_pd['E_i'])]['E_i'].quantile(q=0.99)
                     total_error_0_99 = np.sqrt(umsatz_potential_pd[umsatz_potential_pd['E_i'] <=
                                                                    error_quantile]['E_i'].sum())
 
