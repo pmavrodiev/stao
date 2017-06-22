@@ -8,7 +8,7 @@ class ModelBase(metaclass=abc.ABCMeta):
         return 'Should never reach here'
 
     @abc.abstractmethod
-    def entry(self, pandas_dt, config, logger, stores_migros_pd, referenz_pd, stations_pd):
+    def entry(self, pandas_dt, config, logger, stores_pd, stores_migros_pd, referenz_pd, stations_pd):
         """
 
         :param pandas_dt:
@@ -28,6 +28,9 @@ class ModelBase(metaclass=abc.ABCMeta):
 
         :param logger:
             Python logging object to which logging info will be sent
+
+        :param stores_pd:
+            A Pandas DataFrame with the input stores data
 
         :param stores_migros_pd:
             A Pandas DataFrame with basic Migros-only store information. This is a subset of the input stores data.

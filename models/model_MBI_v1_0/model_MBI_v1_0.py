@@ -106,7 +106,7 @@ class model_MBI_v_1_0(ModelBase):
         self.logger.info('Done')
         return pandas_dt
 
-    def entry(self, pandas_dt, config, logger, stores_migros_pd, referenz_pd, stations_pd):
+    def entry(self, pandas_dt, config, logger, stores_pd, stores_migros_pd, referenz_pd, stations_pd):
         self.logger = logger
         self.logger.info("Initialized model %s", self.whoami())
 
@@ -137,7 +137,7 @@ class model_MBI_v_1_0(ModelBase):
 
         # pendler einfluss is modelled as a last step of the umsatz prognose
         if self.param_ov_sweep:
-            self.analysis_ov_sweep(umsatz_potential_pd, stores_migros_pd, referenz_pd, stations_pd)
+            self.analysis_ov_sweep(umsatz_potential_pd, stores_pd, referenz_pd, stations_pd)
             return 0
 
         pendler_einfluss_pd = self.calc_zusaetzliche_kauefer(stores_migros_pd, stations_pd, self.beta_ov,
@@ -153,17 +153,18 @@ class model_MBI_v_1_0(ModelBase):
             umsatz_potential_pd[np.isnan(umsatz_potential_pd['umsatz_with_pendler'])]['Umsatzpotential']
 
         umsatz_potential_pd['verhaeltnis_tU_pendler_prozent'] = (umsatz_potential_pd['umsatz_with_pendler'] -
-            umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']) / \
+                                                                 umsatz_potential_pd['Tatsechlicher Umsatz - '
+                                                                                     'FOOD_AND_FRISCHE']) / \
             umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
 
         self.logger.info('Exporting Umsatz predictions to csv')
         umsatz_potential_pd.to_csv(self.umsatz_output_csv)
 
-    def calc_zusaetzliche_kauefer(self, stores_migros_pd, stations_pd, beta, f):
+    def calc_zusaetzliche_kauefer(self, stores_pd, stations_pd, beta, f):
         def get_reachable_stations(group, radius):
             row = group.iloc[0]
-            distanz_squared = np.power(stations_pd['E_LV03'] - row['Y'], 2) + np.power(
-                stations_pd['N_LV03'] - row['X'], 2)
+            distanz_squared = np.power(stations_pd['E_LV03'] - row['Y'], 2) + np.power(stations_pd['N_LV03'] - row['X'],
+                                                                                       2)
             within_circle = distanz_squared <= np.power(radius, 2)
             return_pd = pd.DataFrame(stations_pd[within_circle])
             return_pd['OBJECTID'] = row['OBJECTID']
@@ -186,8 +187,8 @@ class model_MBI_v_1_0(ModelBase):
         self.logger.info('Computing Pendler einfluss ...')
         self.logger.info("Parameters: beta/f_pendler = %f / %f", beta, f)
 
-        x = pd.DataFrame(stores_migros_pd.reset_index().groupby('OBJECTID',
-                                                                group_keys=False).apply(get_reachable_stations, 300))
+        x = pd.DataFrame(stores_pd.reset_index().groupby('OBJECTID',
+                                                         group_keys=False).apply(get_reachable_stations, 300))
 
         '''
             'x' looks like this now:
@@ -214,13 +215,13 @@ class model_MBI_v_1_0(ModelBase):
         return y.reset_index().groupby('OBJECTID',
                                        as_index=False)['additional_kauefer'].aggregate(np.sum).set_index('OBJECTID')
 
-    def analysis_ov_sweep(self, umsatz_dt, stores_migros_pd, referenz_pd, stations_pd):
+    def analysis_ov_sweep(self, umsatz_dt, stores_pd, referenz_pd, stations_pd):
 
         self.logger.info('Will do oV parameter sweep. This will take a while, better run over night')
         for beta in self.beta_ov_sweep:
             for f_pendler in self.f_pendler_sweep:
                 for pendler_ausgaben in self.pendler_ausgaben_sweep:
-                    pendler_einfluss_pd = self.calc_zusaetzliche_kauefer(stores_migros_pd, stations_pd, beta, f_pendler)
+                    pendler_einfluss_pd = self.calc_zusaetzliche_kauefer(stores_pd, stations_pd, beta, f_pendler)
 
                     # left join between the calculated umsatz and the pendler einfluss
                     umsatz_potential_pd = pd.merge(umsatz_dt, pendler_einfluss_pd,
@@ -229,7 +230,8 @@ class model_MBI_v_1_0(ModelBase):
                     umsatz_potential_pd['umsatz_with_pendler'] = umsatz_potential_pd['Umsatzpotential'] + \
                         umsatz_potential_pd['additional_kaeufer'] * pendler_ausgaben
 
-                    umsatz_potential_pd.loc[np.isnan(umsatz_potential_pd['umsatz_with_pendler']), 'umsatz_with_pendler'] = \
+                    umsatz_potential_pd.loc[np.isnan(umsatz_potential_pd['umsatz_with_pendler']),
+                                            'umsatz_with_pendler'] = \
                         umsatz_potential_pd[np.isnan(umsatz_potential_pd['umsatz_with_pendler'])]['Umsatzpotential']
 
                     umsatz_potential_pd['verhaeltnis_tU_pendler_prozent'] = \
@@ -239,12 +241,14 @@ class model_MBI_v_1_0(ModelBase):
 
                     # calculate the individual errors
                     umsatz_potential_pd['E_i'] = np.power(umsatz_potential_pd['umsatz_with_pendler'] -
-                                                          umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE'], 2) / \
-                                                 umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
+                                                          umsatz_potential_pd['Tatsechlicher Umsatz - '
+                                                                              'FOOD_AND_FRISCHE'], 2) / \
+                        umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
 
                     total_error = np.sqrt(umsatz_potential_pd.E_i.sum())
                     error_quantile = umsatz_potential_pd.E_i.quantile(0.99)
-                    total_error_0_99 = np.sqrt(umsatz_potential_pd[umsatz_potential_pd['E_i'] <= error_quantile]['E_i'].sum())
+                    total_error_0_99 = np.sqrt(umsatz_potential_pd[umsatz_potential_pd['E_i'] <=
+                                                                   error_quantile]['E_i'].sum())
                     self.logger.info("TOTAL ERROR: %f / %f", total_error, total_error_0_99)
 
                     if total_error_0_99 < self.E_min[0][0]:
