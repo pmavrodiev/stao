@@ -64,7 +64,7 @@ class ModelBase(metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def gen_umsatz_prognose(self, enriched_pruned_pd, stores_migros_pd, referenz_pd, logger):
+    def gen_umsatz_prognose(self, enriched_pruned_pd, stores_migros_pd, referenz_pd):
         """
 
         :param enriched_pruned_pd:
