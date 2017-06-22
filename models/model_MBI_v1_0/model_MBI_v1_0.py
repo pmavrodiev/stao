@@ -19,6 +19,7 @@ class model_MBI_v_1_0(ModelBase):
     # öV parameters
     beta_ov = None
     f_pendler = None
+    pendler_ausgaben = None
 
     # bacis parameter sweep
     param_basic_sweep = None
@@ -30,6 +31,7 @@ class model_MBI_v_1_0(ModelBase):
     param_ov_sweep = None
     beta_ov_sweep = None
     f_pendler_sweep = None
+    pendler_ausgaben_sweep = None
 
     # the minimum error after the parameter sweep
     E_min = [(float("inf"), ())]
@@ -50,9 +52,11 @@ class model_MBI_v_1_0(ModelBase):
             self.param_basic_sweep = True
         ####
         if config.has_option('parameters_ov_sweep', 'beta_ov_sweep') and \
-           config.has_option('parameters_ov_sweep', 'f_pendler_sweep'):
+           config.has_option('parameters_ov_sweep', 'f_pendler_sweep') and \
+           config.has_option('parameters_ov_sweep', 'pendler_ausgaben_sweep') :
             self.beta_ov_sweep = [float(x) for x in json.loads(config.get('parameters_ov_sweep', 'beta_ov_sweep'))]
             self.f_pendler_sweep = [float(x) for x in json.loads(config.get('parameters_ov_sweep', 'f_pendler_sweep'))]
+            self.pendler_ausgaben_sweep = [float(x) for x in json.loads(config.get('parameters_ov_sweep', 'pendler_ausgaben_sweep'))]
             self.param_ov_sweep = True
         #
         if self.param_ov_sweep and self.param_basic_sweep:
@@ -65,6 +69,7 @@ class model_MBI_v_1_0(ModelBase):
             #
             self.beta_ov = float(config["parameters_ov"]["beta_ov"])
             self.f_pendler = float(config["parameters_ov"]["f_pendler"])
+            self.pendler_ausgaben = float(config["parameters_ov"]["pendler_ausgaben"])
             #
             self.umsatz_output_csv = config["output"]["output_csv"]
         except Exception:
@@ -128,7 +133,7 @@ class model_MBI_v_1_0(ModelBase):
             self.analysis_ov_sweep(umsatz_potential_pd, stores_migros_pd, referenz_pd, stations_pd)
             return 0
 
-        pendler_einfluss_pd = self.calc_pendler_einfluss(stores_migros_pd, stations_pd, self.beta_ov, self.f_pendler)
+        pendler_einfluss_pd = self.calc_zusaetzliche_kauefer(stores_migros_pd, stations_pd, self.beta_ov, self.f_pendler)
         # left join between the calculated umsatz and the pendler einfluss
         umsatz_potential_pd = pd.merge(umsatz_potential_pd, pendler_einfluss_pd, how='left', left_index=True, right_index=True)
 
@@ -145,7 +150,7 @@ class model_MBI_v_1_0(ModelBase):
         self.logger.info('Exporting Umsatz predictions to csv')
         umsatz_potential_pd.to_csv(self.umsatz_output_csv)
 
-    def calc_pendler_einfluss(self, stores_migros_pd, stations_pd, beta, f):
+    def calc_zusaetzliche_kauefer(self, stores_migros_pd, stations_pd, beta, f):
         def get_reachable_stations(group, radius):
             row = group.iloc[0]
             distanz_squared = np.power(stations_pd['E_LV03'] - row['Y'], 2) + np.power(
@@ -174,38 +179,40 @@ class model_MBI_v_1_0(ModelBase):
         self.logger.info('Will do oV parameter sweep. This will take a while, better run over night')
         for beta in self.beta_ov_sweep:
             for f_pendler in self.f_pendler_sweep:
-                pendler_einfluss_pd = self.calc_pendler_einfluss(stores_migros_pd, stations_pd, beta, f_pendler)
-                # left join between the calculated umsatz and the pendler einfluss
-                umsatz_potential_pd = pd.merge(umsatz_dt, pendler_einfluss_pd, \
-                                               how='left', left_index=True, right_index=True)
-                umsatz_potential_pd['umsatz_with_pendler'] = umsatz_potential_pd['Umsatzpotential'] + \
-                                                             umsatz_potential_pd['additional_kaeufer'] * 50
+                for pendler_ausgaben in self.pendler_ausgaben_sweep:
+                    pendler_einfluss_pd = self.calc_zusaetzliche_kauefer(stores_migros_pd, stations_pd, beta, f_pendler)
+                    # left join between the calculated umsatz and the pendler einfluss
+                    umsatz_potential_pd = pd.merge(umsatz_dt, pendler_einfluss_pd, \
+                                                   how='left', left_index=True, right_index=True)
+                    umsatz_potential_pd['umsatz_with_pendler'] = umsatz_potential_pd['Umsatzpotential'] + \
+                                                                 umsatz_potential_pd['additional_kaeufer'] * pendler_ausgaben
 
-                umsatz_potential_pd.loc[np.isnan(umsatz_potential_pd['umsatz_with_pendler']), 'umsatz_with_pendler'] = \
-                    umsatz_potential_pd[np.isnan(umsatz_potential_pd['umsatz_with_pendler'])]['Umsatzpotential']
+                    umsatz_potential_pd.loc[np.isnan(umsatz_potential_pd['umsatz_with_pendler']), 'umsatz_with_pendler'] = \
+                        umsatz_potential_pd[np.isnan(umsatz_potential_pd['umsatz_with_pendler'])]['Umsatzpotential']
 
-                umsatz_potential_pd['verhaeltnis_tU_pendler_prozent'] = (umsatz_potential_pd['umsatz_with_pendler'] -
-                                                                         umsatz_potential_pd[
-                                                                             'Tatsechlicher Umsatz - FOOD_AND_FRISCHE']) / \
-                                                                        umsatz_potential_pd[
-                                                                            'Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
-                # calculate the individual errors
-                umsatz_potential_pd['E_i'] = np.power(umsatz_potential_pd['umsatz_with_pendler'] -
-                                                      umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE'],
-                                                      2) / umsatz_potential_pd[
-                                                 'Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
-                total_error = np.sqrt(umsatz_potential_pd.E_i.sum())
-                self.logger.info("TOTAL ERROR: %f", total_error)
+                    umsatz_potential_pd['verhaeltnis_tU_pendler_prozent'] = (umsatz_potential_pd['umsatz_with_pendler'] -
+                                                                             umsatz_potential_pd[
+                                                                                 'Tatsechlicher Umsatz - FOOD_AND_FRISCHE']) / \
+                                                                            umsatz_potential_pd[
+                                                                                'Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
+                    # calculate the individual errors
+                    umsatz_potential_pd['E_i'] = np.power(umsatz_potential_pd['umsatz_with_pendler'] -
+                                                          umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE'],
+                                                          2) / umsatz_potential_pd[
+                                                     'Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
+                    total_error = np.sqrt(umsatz_potential_pd.E_i.sum())
+                    self.logger.info("TOTAL ERROR: %f", total_error)
 
-                if total_error < self.E_min[0][0]:
-                    self.E_min = [(total_error, {"beta": beta, "f_pendler": f_pendler})]
-                    self.logger.info('New minimum found.')
+                    if total_error < self.E_min[0][0]:
+                        self.E_min = [(total_error, {"beta": beta, "f_pendler": f_pendler, "pendler_ausgaben": pendler_ausgaben})]
+                        self.logger.info('New minimum found.')
 
-                self.logger.info('Exporting Umsatz predictions to csv')
+                    self.logger.info('Exporting Umsatz predictions to csv')
 
-                umsatz_potential_pd.to_csv(self.umsatz_output_csv + '_beta_' + str(beta) + '_fPendler_' + str(f_pendler))
-        self.logger.info('Found error minimum of %f for beta=%f / f_pendler=%f',
-                         self.E_min[0][0], self.E_min[0][1]["beta"], self.E_min[0][1]["f_pendler"])
+                    umsatz_potential_pd.to_csv(self.umsatz_output_csv + '_beta_' + str(beta) + '_fPendler_' + str(f_pendler)+ '_pAusgaben_' + str(pendler_ausgaben))
+
+        self.logger.info('Found error minimum of %f for beta=%f / f_pendler=%f / pendler_ausgaben=%f',
+                         self.E_min[0][0], self.E_min[0][1]["beta"], self.E_min[0][1]["f_pendler"], self.E_min[0][1]["pendler_ausgaben"])
 
 
     def analysis_sweep(self, pandas_dt, stores_migros_pd, referenz_pd):
