@@ -86,16 +86,18 @@ class model_MBI_v_1_0(ModelBase):
         self.logger.info("Removing duplicates ...")
         # remove the duplicates introduced after merging drivetimes and store information
         pandas_reindexed_dt = pandas_reindexed_dt[~pandas_reindexed_dt.index.duplicated(keep='first')]
-        pandas_reindexed_dt = pandas_reindexed_dt.reset_index()  # .set_index(keys=['hektar_id']) # , 'type'])
-        return pandas_reindexed_dt
+        return pandas_reindexed_dt.reset_index()
 
     def compute_market_share(self, pandas_dt, slope_lat, slope_rlat, fahrzeit_cutoff):
 
         self.logger.info('Computing local market share. This takes a while ...')
-        self.logger.info("Parameters: slope_lat/slope_rlat/fahrzeit_cutoff = %f / %f / %f", slope_lat, slope_rlat, fahrzeit_cutoff)
+        self.logger.info("Parameters: slope_lat/slope_rlat/fahrzeit_cutoff = %f / %f / %f", slope_lat, slope_rlat,
+                         fahrzeit_cutoff)
 
         pandas_dt['LAT'] = slope_lat * pandas_dt['RELEVANZ'] * pandas_dt['vfl']
-        pandas_dt['RLAT'] = pandas_dt['LAT'] * np.power(10, slope_rlat * np.fmax(pandas_dt['fahrzeit'] - fahrzeit_cutoff, 0))
+        pandas_dt['RLAT'] = pandas_dt['LAT'] * np.power(10,
+                                                        slope_rlat * np.fmax(pandas_dt['fahrzeit'] - fahrzeit_cutoff,
+                                                                             0))
 
         self.logger.info('Computing sum RLATs ...')
         pandas_dt['sumRLATs'] = pandas_dt.groupby('hektar_id')[["RLAT"]].transform(lambda x: np.sum(x))
@@ -127,7 +129,8 @@ class model_MBI_v_1_0(ModelBase):
             self.analysis_sweep(pandas_preprocessed_dt, stores_migros_pd, referenz_pd)
             return 0
 
-        pandas_postprocessed_dt = self.compute_market_share(pandas_preprocessed_dt, self.slope_lat, self.slope_rlat, self.fahrzeit_cutoff)
+        pandas_postprocessed_dt = self.compute_market_share(pandas_preprocessed_dt, self.slope_lat, self.slope_rlat,
+                                                            self.fahrzeit_cutoff)
         # pandas_preprocessed_dt now has a column 'local_market_share' giving the
         # local market share of store i in each hektar
         umsatz_potential_pd = self.gen_umsatz_prognose(pandas_postprocessed_dt, stores_migros_pd, referenz_pd)
@@ -137,19 +140,21 @@ class model_MBI_v_1_0(ModelBase):
             self.analysis_ov_sweep(umsatz_potential_pd, stores_migros_pd, referenz_pd, stations_pd)
             return 0
 
-        pendler_einfluss_pd = self.calc_zusaetzliche_kauefer(stores_migros_pd, stations_pd, self.beta_ov, self.f_pendler)
+        pendler_einfluss_pd = self.calc_zusaetzliche_kauefer(stores_migros_pd, stations_pd, self.beta_ov,
+                                                             self.f_pendler)
         # left join between the calculated umsatz and the pendler einfluss
-        umsatz_potential_pd = pd.merge(umsatz_potential_pd, pendler_einfluss_pd, how='left', left_index=True, right_index=True)
+        umsatz_potential_pd = pd.merge(umsatz_potential_pd, pendler_einfluss_pd, how='left', left_index=True,
+                                       right_index=True)
 
         umsatz_potential_pd['umsatz_with_pendler'] = umsatz_potential_pd['Umsatzpotential'] + \
-                                                     umsatz_potential_pd['additional_kaeufer'] * 50
+            umsatz_potential_pd['additional_kaeufer'] * self.pendler_ausgaben
+
         umsatz_potential_pd.loc[np.isnan(umsatz_potential_pd['umsatz_with_pendler']), 'umsatz_with_pendler'] = \
             umsatz_potential_pd[np.isnan(umsatz_potential_pd['umsatz_with_pendler'])]['Umsatzpotential']
 
         umsatz_potential_pd['verhaeltnis_tU_pendler_prozent'] = (umsatz_potential_pd['umsatz_with_pendler'] -
-                                                         umsatz_potential_pd[
-                                                             'Tatsechlicher Umsatz - FOOD_AND_FRISCHE']) / \
-                                                        umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
+            umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']) / \
+            umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
 
         self.logger.info('Exporting Umsatz predictions to csv')
         umsatz_potential_pd.to_csv(self.umsatz_output_csv)
@@ -164,19 +169,34 @@ class model_MBI_v_1_0(ModelBase):
             return_pd['OBJECTID'] = row['OBJECTID']
             return_pd['distanz'] = np.sqrt(distanz_squared[within_circle])
             return return_pd.set_index(['OBJECTID'])
-        #
-        def calc_pendler_einfluss(group, beta, f):
+
+        def calc_pendler_wahrscheinlichkeit(group, beta):
             row = group.iloc[0]
-            einfluss = np.sum(f * group['DWV'] * np.exp(-beta * group['distanz']))
-            rv = pd.DataFrame({'OBJECTID': [row['OBJECTID']], 'additional_kaeufer': [einfluss]})
+            partition_function = np.sum(np.exp(-beta * group['distanz']))
+            probabilities = np.exp(-beta * group['distanz']) / partition_function
+
+            rv = pd.DataFrame({'OBJECTID': group['OBJECTID'],
+                               'code': group['Code'],
+                               'bahnhof': group['Bahnhof_Haltestelle'],
+                               'distanz': group['distanz'],
+                               'DTV': group['DTV'],
+                               'DWV': group['DWV'],
+                               'pendler_wahrscheinlichkeit': probabilities})
             return rv.set_index(['OBJECTID'])
         #
         self.logger.info('Computing Pendler einfluss ...')
         self.logger.info("Parameters: beta/f_pendler = %f / %f", beta, f)
 
-        x = pd.DataFrame(stores_migros_pd.reset_index().groupby('OBJECTID', group_keys=False).apply(get_reachable_stations, 300))
-        x = x.reset_index().groupby('OBJECTID', group_keys=False).apply(calc_pendler_einfluss, beta, f)
-        return x
+        x = pd.DataFrame(stores_migros_pd.reset_index().groupby('OBJECTID',
+                                                                group_keys=False).apply(get_reachable_stations, 300))
+
+        y = x.reset_index().groupby('Code', group_keys=False).apply(calc_pendler_wahrscheinlichkeit, beta)
+        y['additional_kauefer'] = f * y['DWV'] * y['pendler_wahrscheinlichkeit']
+        # now aggregate over all stores
+        return y.reset_index().groupby('OBJECTID',
+                                       as_index=False)['additional_kauefer'].aggregate(np.sum).set_index('OBJECTID')
+
+
 
     def analysis_ov_sweep(self, umsatz_dt, stores_migros_pd, referenz_pd, stations_pd):
 

@@ -8,7 +8,7 @@ class ModelBase(metaclass=abc.ABCMeta):
         return 'Should never reach here'
 
     @abc.abstractmethod
-    def entry(self, pandas_dt, logger):
+    def entry(self, pandas_dt, config, logger, stores_migros_pd, referenz_pd, stations_pd):
         """
 
         :param pandas_dt:
@@ -23,8 +23,21 @@ class ModelBase(metaclass=abc.ABCMeta):
             |    6	 |  21	    |61341719|SM_MIG_61607_15939|	M  |878.621|   1.0  |   MIG	      | 15600.0	            |   15600.0                    |
             |----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 
+        :param config:
+            A config object containing the model settings supplied by the user
+
         :param logger:
             Python logging object to which logging info will be sent
+
+        :param stores_migros_pd:
+            A Pandas DataFrame with basic Migros-only store information. This is a subset of the input stores data.
+
+        :param referenz_pd:
+            A Pandas DataFrame with the actual revenue for each store of interest. This is used to calculate the model
+            errors
+
+        :oaram stations_pd:
+            A Pandas DataFrame containing the SBB data.
 
         :return:
             Nothing.
