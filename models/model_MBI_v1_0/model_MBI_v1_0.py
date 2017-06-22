@@ -43,24 +43,26 @@ class model_MBI_v_1_0(ModelBase):
         # first check if we are doing a parameter sweep
         self.param_basic_sweep = False  # by default False
         self.param_ov_sweep = False  # by default False
-        if config.has_option('parameter_basic_sweep', 'slope_lat')       and \
-           config.has_option('parameter_basic_sweep', 'slope_rlat')    and \
+        if config.has_option('parameter_basic_sweep', 'slope_lat') and \
+           config.has_option('parameter_basic_sweep', 'slope_rlat') and \
            config.has_option('parameter_basic_sweep', 'fahrzeit_cutoff'):
             self.slope_lat_sweep = [float(x) for x in json.loads(config.get('parameter_basic_sweep', 'slope_lat'))]
             self.slope_rlat_sweep = [float(x) for x in json.loads(config.get('parameter_basic_sweep', 'slope_rlat'))]
-            self.fahrzeit_cutoff_sweep = [float(x) for x in json.loads(config.get('parameter_basic_sweep', 'fahrzeit_cutoff'))]
+            self.fahrzeit_cutoff_sweep = [float(x) for x in json.loads(config.get('parameter_basic_sweep',
+                                                                                  'fahrzeit_cutoff'))]
             self.param_basic_sweep = True
         ####
         if config.has_option('parameters_ov_sweep', 'beta_ov_sweep') and \
            config.has_option('parameters_ov_sweep', 'f_pendler_sweep') and \
-           config.has_option('parameters_ov_sweep', 'pendler_ausgaben_sweep') :
+           config.has_option('parameters_ov_sweep', 'pendler_ausgaben_sweep'):
             self.beta_ov_sweep = [float(x) for x in json.loads(config.get('parameters_ov_sweep', 'beta_ov_sweep'))]
             self.f_pendler_sweep = [float(x) for x in json.loads(config.get('parameters_ov_sweep', 'f_pendler_sweep'))]
-            self.pendler_ausgaben_sweep = [float(x) for x in json.loads(config.get('parameters_ov_sweep', 'pendler_ausgaben_sweep'))]
+            self.pendler_ausgaben_sweep = [float(x) for x in json.loads(config.get('parameters_ov_sweep',
+                                                                                   'pendler_ausgaben_sweep'))]
             self.param_ov_sweep = True
         #
         if self.param_ov_sweep and self.param_basic_sweep:
-            self.logger.error('Parameter sweep over basic and ov parameters not yet implemented')
+            self.logger.error('Parameter sweep over both basic and ov parameters not yet implemented')
             sys.exit(1)
         try:
             self.slope_lat = float(config["parameters_basic"]["slope_lat"])
@@ -73,7 +75,9 @@ class model_MBI_v_1_0(ModelBase):
             #
             self.umsatz_output_csv = config["output"]["output_csv"]
         except Exception:
-            pass # TODO implement error handling
+            self.logger.error('Some of the required parameters for model %s are not supplied in the settings',
+                              self.whoami())
+            sys.exit(1)
 
     def preprocess(self, pandas_dt):
 
