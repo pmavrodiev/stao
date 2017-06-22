@@ -200,7 +200,7 @@ class model_MBI_v_1_0(ModelBase):
         '''
 
         y = x.reset_index().groupby('Code', group_keys=False).apply(calc_pendler_wahrscheinlichkeit, beta)
-        y['additional_kauefer'] = f * y['DWV'] * y['pendler_wahrscheinlichkeit']
+        y['additional_kaeufer'] = f * y['DWV'] * y['pendler_wahrscheinlichkeit']
 
         '''
             'y' looks like this now:
@@ -213,7 +213,7 @@ class model_MBI_v_1_0(ModelBase):
 
         # now aggregate over all stores
         return y.reset_index().groupby('OBJECTID',
-                                       as_index=False)['additional_kauefer'].aggregate(np.sum).set_index('OBJECTID')
+                                       as_index=False)['additional_kaeufer'].aggregate(np.sum).set_index('OBJECTID')
 
     def analysis_ov_sweep(self, umsatz_dt, stores_pd, referenz_pd, stations_pd):
 
@@ -277,48 +277,57 @@ class model_MBI_v_1_0(ModelBase):
                     umsatz_potential_pd = self.gen_umsatz_prognose(pandas_sweeped_dt, stores_migros_pd, referenz_pd)
                     # calculate the individual errors
                     umsatz_potential_pd['E_i'] = np.power(umsatz_potential_pd['Umsatzpotential'] -
-                                                       umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE'],
-                                                       2) / umsatz_potential_pd[
-                                                      'Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
-                    total_error = np.sqrt(umsatz_potential_pd.E_i.sum())
-                    self.logger.info("TOTAL ERROR: %f", total_error)
+                                                          umsatz_potential_pd['Tatsechlicher Umsatz - '
+                                                                              'FOOD_AND_FRISCHE'], 2) / \
+                        umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
 
-                    if total_error < self.E_min[0][0]:
+                    total_error = np.sqrt(umsatz_potential_pd.E_i.sum())
+                    error_quantile = umsatz_potential_pd.E_i.quantile(0.99)
+                    total_error_0_99 = np.sqrt(umsatz_potential_pd[umsatz_potential_pd['E_i'] <=
+                                                                   error_quantile]['E_i'].sum())
+
+                    self.logger.info("TOTAL ERROR: %f / %f", total_error, total_error_0_99)
+
+                    if total_error_0_99 < self.E_min[0][0]:
                         self.E_min = [(total_error, {"lat": lat, "rlat": rlat, "fz_cutoff": fz})]
                         self.logger.info('New minimum found.')
 
                     self.logger.info('Exporting Umsatz predictions to csv')
 
-                    umsatz_potential_pd.to_csv(self.umsatz_output_csv + '_lat_' + str(lat) + '_rlat_' + str(rlat) + '_fz_' + str(fz))
+                    umsatz_potential_pd.to_csv(self.umsatz_output_csv + '_lat_' + str(lat) + '_rlat_' + str(rlat) +
+                                               '_fz_' + str(fz))
 
         self.logger.info('Found error minimum of %f for lat=%f / rlat=%f / fz_cutoff=%f',
-                         self.E_min[0][0], self.E_min[0][1]["lat"], self.E_min[0][1]["rlat"], self.E_min[0][1]["fz_cutoff"])
+                         self.E_min[0][0], self.E_min[0][1]["lat"], self.E_min[0][1]["rlat"],
+                         self.E_min[0][1]["fz_cutoff"])
 
     def gen_umsatz_prognose(self, pandas_pd, stores_migros_pd, referenz_pd):
         self.logger.info('Generating Umsatz predictions ... ')
         pandas_pd['lokal_umsatz_potenzial'] = pandas_pd['Tot_Haushaltausgaben'] * pandas_pd['local_market_share']
-        pandas_pd['lokal_umsatz_potenzial_corrected'] = pandas_pd['Tot_Haushaltausgaben_corrected'] * pandas_pd['local_market_share']
+        pandas_pd['lokal_umsatz_potenzial_corrected'] = pandas_pd['Tot_Haushaltausgaben_corrected'] * \
+                                                        pandas_pd['local_market_share']
 
         migros_only_pd = pandas_pd[pandas_pd['OBJECTID'].isin(stores_migros_pd.index.values)]
 
         umsatz_potential_pd = migros_only_pd.groupby('OBJECTID').agg({'ID': lambda x: x.iloc[0],
                                                                       'lokal_umsatz_potenzial': lambda x: np.nansum(x),
-                                                                      'lokal_umsatz_potenzial_corrected': lambda x: np.nansum(x)
+                                                                      'lokal_umsatz_potenzial_corrected': lambda x:
+                                                                      np.nansum(x)
                                                                       })
 
         umsatz_potential_pd = umsatz_potential_pd.rename(columns={'lokal_umsatz_potenzial': 'Umsatzpotential',
-                                                                  'lokal_umsatz_potenzial_corrected': 'Umsatzpotential_corrected'})
+                                                                  'lokal_umsatz_potenzial_corrected':
+                                                                      'Umsatzpotential_corrected'})
 
         umsatz_potential_pd = umsatz_potential_pd.merge(referenz_pd, left_index=True, right_index=True, how='inner')
 
         umsatz_potential_pd['verhaeltnis_tU'] = umsatz_potential_pd['Umsatzpotential'] / \
-                                                umsatz_potential_pd[
-                                                    'Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
+            umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
 
         umsatz_potential_pd['verhaeltnis_tU_prozent'] = (umsatz_potential_pd['Umsatzpotential'] -
-                                                         umsatz_potential_pd[
-                                                             'Tatsechlicher Umsatz - FOOD_AND_FRISCHE']) / \
-                                                        umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
+                                                         umsatz_potential_pd['Tatsechlicher Umsatz - '
+                                                                             'FOOD_AND_FRISCHE']) / \
+            umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
 
         umsatz_potential_pd['verhaeltnis_MP2'] = umsatz_potential_pd['Umsatzpotential'] / \
                                                  umsatz_potential_pd['MP - CALCULATED_REVENUE 2']
