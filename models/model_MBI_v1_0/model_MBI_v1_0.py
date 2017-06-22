@@ -171,7 +171,6 @@ class model_MBI_v_1_0(ModelBase):
             return return_pd.set_index(['OBJECTID'])
 
         def calc_pendler_wahrscheinlichkeit(group, beta):
-            row = group.iloc[0]
             partition_function = np.sum(np.exp(-beta * group['distanz']))
             probabilities = np.exp(-beta * group['distanz']) / partition_function
 
@@ -190,8 +189,27 @@ class model_MBI_v_1_0(ModelBase):
         x = pd.DataFrame(stores_migros_pd.reset_index().groupby('OBJECTID',
                                                                 group_keys=False).apply(get_reachable_stations, 300))
 
+        '''
+            'x' looks like this now:
+
+                    Code	Bahnhof_Haltestelle	[...]    lat      lon	    E_LV03	N_LV03	distanz
+        OBJECTID
+            8	    MI  	Muri AG	                 47.276660	8.339798	668185	236587	538.396460
+            9	    BURI	Burier	                 46.447876	6.877116	556853	144215	1456.600536
+        '''
+
         y = x.reset_index().groupby('Code', group_keys=False).apply(calc_pendler_wahrscheinlichkeit, beta)
         y['additional_kauefer'] = f * y['DWV'] * y['pendler_wahrscheinlichkeit']
+
+        '''
+            'y' looks like this now:
+
+                    DTV 	DWV 	bahnhof	    code	distanz	    pendler_wahrscheinlichkeit	additional_kauefer
+        OBJECTID
+            9	    970	    1300	Burier	    BURI	1456.600536	    0.062500	                81.250000
+            9	    1900	2200	Clarens	    CL	    240.076282	    0.083333	                183.333333
+        '''
+
         # now aggregate over all stores
         return y.reset_index().groupby('OBJECTID',
                                        as_index=False)['additional_kauefer'].aggregate(np.sum).set_index('OBJECTID')
@@ -206,7 +224,7 @@ class model_MBI_v_1_0(ModelBase):
                 for pendler_ausgaben in self.pendler_ausgaben_sweep:
                     pendler_einfluss_pd = self.calc_zusaetzliche_kauefer(stores_migros_pd, stations_pd, beta, f_pendler)
                     # left join between the calculated umsatz and the pendler einfluss
-                    umsatz_potential_pd = pd.merge(umsatz_dt, pendler_einfluss_pd, \
+                    umsatz_potential_pd = pd.merge(umsatz_dt, pendler_einfluss_pd,
                                                    how='left', left_index=True, right_index=True)
                     umsatz_potential_pd['umsatz_with_pendler'] = umsatz_potential_pd['Umsatzpotential'] + \
                                                                  umsatz_potential_pd['additional_kaeufer'] * pendler_ausgaben
