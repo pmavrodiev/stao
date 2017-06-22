@@ -333,6 +333,3 @@ class model_MBI_v_1_0(ModelBase):
                                                  umsatz_potential_pd['MP - CALCULATED_REVENUE 2']
 
         return umsatz_potential_pd
-
-
-

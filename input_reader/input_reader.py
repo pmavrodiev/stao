@@ -41,7 +41,7 @@ def get_input(settingsFile, logger):
             stations_pd = pd.read_pickle(os.path.join(cache_dir,
                                                       config['cache_config']['stations_cached']))
         except IOError as e:
-            logger.error("Cannot find cache for the input data. Generate the cache by running with cache disabled"
+            logger.error("Cannot find cache for the input data. Generate the cache by running with cache_enabled=False"
                          " in the settings.")
             print(e)
             sys.exit(1)
