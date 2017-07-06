@@ -2,7 +2,7 @@
 
 #### Installation
 
-Just clone the git repository. Google for instructions
+Just clone the git repository. Google for instructions.
 
 #### Code structure
 
@@ -30,11 +30,11 @@ Just clone the git repository. Google for instructions
 
 Run without arguments to see the Usage:
 
-`/opt/r/anaconda/bin/python3 /userdata/pmavrodi/Projekte/Stao/src/main.py`
+`/opt/r/anaconda/bin/python3 main.py`
 
 To run the currenty used model MBI v.1.0:
 
-`/opt/r/anaconda/bin/python3 /userdata/pmavrodi/Projekte/Stao/src/main.py -m model_MBI_v1_0 -c models/model_MBI_v1_0/mbi1.0_settings.cfg  -l logs/model_mbi_1_0/gm_mbi_v_1_0.log`
+`/opt/r/anaconda/bin/python3 main.py -m model_MBI_v1_0 -c models/model_MBI_v1_0/mbi1.0_settings.cfg  -l logs/model_mbi_1_0/gm_mbi_v_1_0.log`
 
 
 #### Model Settings
