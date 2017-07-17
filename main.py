@@ -44,7 +44,7 @@ if __name__ == "__main__":
     logger = setup_custom_logger('GM_LOGGER', LOGGING_LEVEL, flog=options.logname)
 
 	# -------------------------------------
-    # Load the chosen model
+    # Load the chosen model here
 	# -------------------------------------
     m = importlib.import_module("models." + options.model)
 
