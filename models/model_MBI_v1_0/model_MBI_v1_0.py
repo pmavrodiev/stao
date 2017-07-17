@@ -163,8 +163,10 @@ class model_MBI_v_1_0(ModelBase):
     def calc_zusaetzliche_kauefer(self, stores_pd, stations_pd, beta, f):
         def get_reachable_stations(group, radius):
             row = group.iloc[0]
+	    # Calculate squared distance (Euclidean). Coordinates in stores_sm.csv are X = North, Y = East
             distanz_squared = np.power(stations_pd['E_LV03'] - row['Y'], 2) + np.power(stations_pd['N_LV03'] - row['X'],
                                                                                        2)
+
             within_circle = distanz_squared <= np.power(radius, 2)
             return_pd = pd.DataFrame(stations_pd[within_circle])
             return_pd['OBJECTID'] = row['OBJECTID']

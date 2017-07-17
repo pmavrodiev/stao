@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 import pandas as pd
 import os
 import sys
@@ -13,20 +12,22 @@ def get_input(settingsFile, logger):
     logger.info("Read settings from settings.cfg")
 
     # do we read the data from cache? cache loads faster
-    use_cache = config.getboolean('global', 'cache_enabled')
-    cache_input_data = config.getboolean('global', 'cache_input_data')
+    use_cache = config.getboolean('global', 'cache_enabled') # read data from cache
+    cache_input_data = config.getboolean('global', 'cache_input_data') # store data to cache
 
-    cache_dir = config['cache_config']['cache_dir']
-    single_store = config['global']['single_store']
+    cache_dir = config['cache_config']['cache_dir'] # cache directory
+    cache_dir = config['cache_config']['cache_dir'] # cache directory
+    single_store = config['global']['single_store'] # single-store option
 
-    refenz_resultate = config['inputdata']['referenz_ergebnisse']
+    refenz_resultate = config['inputdata']['referenz_ergebnisse'] # reference results (actual sales) for error calculation
 
     # read the reference results from file always, because it's small
     referenz_pd = pd.read_csv(refenz_resultate, sep=';', header=0, index_col=0, encoding='latin-1')
-    # convert all 0s to NaNs, so that the stores can be later ignored
-    referenz_pd[referenz_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE'] == 0] = np.nan
+    # convert all 0s to NaNs, so that the stores can be ignored later
+    referenz_pd[referenz_pd['Umsatz Total'] == 0] = np.nan
 
     if use_cache:
+        # --- READ FROM CACHE -----------------------------------------------------------------------------------
         logger.info("Reading input files from cache into Pandas data frames")
         try:
             stores_pd = pd.read_pickle(os.path.join(cache_dir,
@@ -46,13 +47,15 @@ def get_input(settingsFile, logger):
             print(e)
             sys.exit(1)
     else:
+        # --- READ FROM CSV --------------------------------------------------------------------------------------
         logger.info("Reading input files into Pandas data frames")
-
+        
         stores = config['inputdata']['stores_cm']
         drivetimes = config['inputdata']['drivetimes']
         haushalt = config['inputdata']['haushalt']
         stations = config['inputdata']['stations']
-
+        
+        # --- STORES ---------------------------------------------------------------------------------------------
         stores_pd = pd.read_csv(stores, sep=';', header=0, index_col=0, encoding='latin-1')
         # stores_pd['RELEVANZ'] = 1
         # extract the store type from the its name, e.g. COOP, MIG, DENNER, etc.
@@ -64,16 +67,9 @@ def get_input(settingsFile, logger):
         # stores_pd.loc[stores_pd['FORMAT'] == 'ALNA', 'type'] = 'ALNA'
         # stores_pd.loc[stores_pd['FORMAT'] == 'migrolino', 'type'] = 'migrolino'
         # stores_pd.loc[stores_pd['FORMAT'] == 'FM', 'type'] = 'FM'
-
-        # choose the right Verkaufsflaeche for Frische und Food
-        # stores_pd['vfl'] = np.where(pd.isnull(stores_pd['VERKAUFSFLAECHE_SABRINA']), stores_pd['VERKAUFSFLAECHE'],
-        #                             stores_pd['VERKAUFSFLAECHE_SABRINA'])
-
-        # stores_pd['vfl'] = np.where(np.isnull(stores_pd['VERKAUFSFLAECHE_SABRINA']), stores_pd['VERKAUFSFLAECHE'] ,
-        #                                      stores_pd['VERKAUFSFLAECHE_SABRINA'])
-
         stores_pd['vfl'] = stores_pd['VERKAUFSFLAECHE_TOTAL']
 
+        # --- DRIVE TIMES ------------------------------------------------------------------------------------------
         drivetimes_pd = pd.read_csv(drivetimes, sep=',', header=None, names=['filiale_id', 'fahrzeit', 'hektar_id'],
                                     index_col=[0, 1, 2], nrows=110299436)
 
@@ -84,15 +80,17 @@ def get_input(settingsFile, logger):
         drivetimes_pd = drivetimes_pd.reset_index().set_index(keys='filiale_id')
         logger.info("Removed %d duplicates entries", before-len(drivetimes_pd))
 
-        haushalt_pd = pd.read_csv(haushalt, sep=',', header=0, index_col=2)
-        # haushalt_pd['Tot_Haushaltausgaben'] = (haushalt_pd['H14P01'] + 2*haushalt_pd['H14P02'] + 3*haushalt_pd['H14P03'] \
-        #                                       + 4*haushalt_pd['H14P04'] + 5*haushalt_pd['H14P05'] + 6*haushalt_pd['H14P06'])*(7800 / 2.25)
-        haushalt_pd['Tot_Haushaltausgaben'] = haushalt_pd['H14PTOT'] * 7800
+        # --- HAUSHALT ---------------------------------------------------------------------------------------------
+        haushalt_pd = pd.read_csv(haushalt, sep=';', header=0, index_col=0)
+        # Durchschnitt über Grossregion, Kanton, Sprachregion, Alter und Einkommen (* 12 für Jahr)
+        # haushalt_pd['Tot_Haushaltausgaben'] = haushalt_pd['AnzahlHH'] * haushalt_pd['HHA_AVG_ALL'] * 12
+        haushalt_pd['Tot_Haushaltausgaben'] = haushalt_pd['AnzahlHH'] * haushalt_pd['HHA_AVG_EA'] * 12
 
+        # --- SBB --------------------------------------------------------------------------------------------------
         stations_pd = pd.read_csv(stations, sep=';', header=0, index_col=False, encoding='latin-1')
 
+        # --- FILTER MIGROS ----------------------------------------------------------------------------------------
         # Get all Migros stores used by MP Technology OR the single store if in single store mode
-
         if len(single_store) > 0:
             logger.info('Single store mode chosen - %s', single_store)
             stores_migros_pd = stores_pd[stores_pd['ID'] == single_store]
@@ -100,7 +98,8 @@ def get_input(settingsFile, logger):
             stores_migros_pd = stores_pd[stores_pd['FORMAT'].isin(['M', 'MM', 'MMM', 'FM'])]
             # sanity check: the number of stores must equal 591 - the number of stores
             # in "STAO Vergleich V1 and V2.xlsx". It does.
-
+        
+        # --- SAVE TO PICKLE (CACHE) --------------------------------------------------------------------------------
         if cache_input_data:
             logger.info("Caching input data")
             stores_pd.to_pickle(os.path.join(cache_dir, config['cache_config']['stores_cm_cached']))
