@@ -16,15 +16,15 @@ def get_input(settingsFile, logger):
     cache_input_data = config.getboolean('global', 'cache_input_data') # store data to cache
 
     cache_dir = config['cache_config']['cache_dir'] # cache directory
-    cache_dir = config['cache_config']['cache_dir'] # cache directory
     single_store = config['global']['single_store'] # single-store option
 
-    refenz_resultate = config['inputdata']['referenz_ergebnisse'] # reference results (actual sales) for error calculation
+    # reference results (actual sales) for error calculation
+    refenz_resultate = config['inputdata']['referenz_ergebnisse']
 
     # read the reference results from file always, because it's small
     referenz_pd = pd.read_csv(refenz_resultate, sep=';', header=0, index_col=0, encoding='latin-1')
     # convert all 0s to NaNs, so that the stores can be ignored later
-    referenz_pd[referenz_pd['Umsatz Total'] == 0] = np.nan
+    referenz_pd[referenz_pd['Umsatz_Total'] == 0] = np.nan
 
     if use_cache:
         # --- READ FROM CACHE -----------------------------------------------------------------------------------
@@ -58,15 +58,7 @@ def get_input(settingsFile, logger):
         # --- STORES ---------------------------------------------------------------------------------------------
         stores_pd = pd.read_csv(stores, sep=';', header=0, index_col=0, encoding='latin-1')
         # stores_pd['RELEVANZ'] = 1
-        # extract the store type from the its name, e.g. COOP, MIG, DENNER, etc.
-        # needed to implement step 4 of the model
-        stores_pd['type'] = stores_pd['ID'].str[3:6]
-        # M, MM, MMM, DMP, SPEZ, VOI zusammen
-        # stores_pd.loc[stores_pd['FORMAT'].isin(['M', 'MM', 'MMM', 'DMP', 'SPEZ', 'VOI']), 'type'] = 'Migros'
-        # Migrolino, Alnatura und FM separat
-        # stores_pd.loc[stores_pd['FORMAT'] == 'ALNA', 'type'] = 'ALNA'
-        # stores_pd.loc[stores_pd['FORMAT'] == 'migrolino', 'type'] = 'migrolino'
-        # stores_pd.loc[stores_pd['FORMAT'] == 'FM', 'type'] = 'FM'
+
         stores_pd['vfl'] = stores_pd['VERKAUFSFLAECHE_TOTAL']
 
         # --- DRIVE TIMES ------------------------------------------------------------------------------------------

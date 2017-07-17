@@ -59,14 +59,6 @@ class ModelBase(metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def whoami(self):
-        """
-
-        :return:
-            returns a string representing the implementing class
-        """
-
-    @abc.abstractmethod
     def gen_umsatz_prognose(self, enriched_pruned_pd, stores_migros_pd, referenz_pd):
         """
 

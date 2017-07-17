@@ -24,8 +24,6 @@ if __name__ == "__main__":
     parser.add_option("-l", "--log", dest="logname",
                       help="Location of a log file for the current run. While the log file will be appended to if it"
                            " exists or created if it does not, the base log directory should exist")
-    parser.add_option("-b", "--blubb", dest="bojanvar",
-                     help="just testing stuff")
 
     (options, args) = parser.parse_args()
 
@@ -37,15 +35,15 @@ if __name__ == "__main__":
     config = configparser.ConfigParser()
     config.read(options.config)
     
-	# -------------------------------------
+    # -------------------------------------
     # Set up logger
-	# -------------------------------------
+    # -------------------------------------
     LOGGING_LEVEL = logging.INFO
     logger = setup_custom_logger('GM_LOGGER', LOGGING_LEVEL, flog=options.logname)
 
-	# -------------------------------------
+    # -------------------------------------
     # Load the chosen model here
-	# -------------------------------------
+    # -------------------------------------
     m = importlib.import_module("models." + options.model)
 
     # -------------------------------------
