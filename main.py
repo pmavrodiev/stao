@@ -43,17 +43,17 @@ if __name__ == "__main__":
     logger = setup_custom_logger('GM_LOGGER', LOGGING_LEVEL, flog=options.logname)
 
     # -------------------------------------
-    # Load the chosen model here
+    # Load the chosen model first in order to quit early if misspecified
     # -------------------------------------
+    # TODO: this will spit out a python exception. Handle in a more user friendly manner
     m = importlib.import_module("models." + options.model)
 
     # -------------------------------------
     # Read-in an prepare the data
     # -------------------------------------
     # read-in the data
-    (migros_stores_pd, konkurrenten_stores_pd, drivetimes_pd, haushalt_pd, stations_pd) = get_input(options.config,
-                                                                                                    logger)
-    # (stores_pd, stores_migros_pd, drivetimes_pd, haushalt_pd, referenz_pd, stations_pd) =
+    (migros_stores_pd, konkurrenten_stores_pd,
+     drivetimes_pd, haushalt_pd, stations_pd) = get_input(options.config, logger)
 
     # --- Get only the relevant hektars from the drivetimes, i.e. those from which a Migros store is reachable
     logger.info("Obtaining all drive times only for hectars from which a Migros store is reachable ... ")
@@ -92,6 +92,6 @@ if __name__ == "__main__":
     # -------------------------------------
     # RUN MODEL
     # -------------------------------------
-    # pass data frames to model (at model's entry point) --> enriched_pd becomes panads_dt
+    # pass data frames to model (at model's entry point) --> enriched_pd becomes pandas_dt
     m.model.entry({"all_stores": enriched_pd, "sbb_stations": stations_pd},
                   config, logger)

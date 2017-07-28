@@ -104,12 +104,13 @@ class model_MBI_v_1_0(ModelBase):
 
         self.process_settings(config)
 
-        # check if model got the right input tables
+        # check if the model got the right dict with input tables
+        # TODO: super basic check for names only. Handle more robustly
         try:
             pandas_dt = tables_dict["all_stores"]
             stations_pd = tables_dict["sbb_stations"]
         except:
-            logger.error('Model %s did not get the right input tables. Expected %s got %s',
+            logger.error('Model %s did not get the right input table names. Expected %s got %s',
                         self.whoami(), "['all_stores', 'sbb_stations']", list(tables_dict.keys()))
             sys.exit(1)
 
@@ -183,7 +184,7 @@ class model_MBI_v_1_0(ModelBase):
         self.logger.info('Computing Pendler einfluss ...')
         self.logger.info("Parameters: beta/f_pendler = %f / %f", beta, f)
 
-        x = pd.DataFrame(stores_pd.reset_index().groupby('OBJECTID',
+        x = pd.DataFrame(stores_pd.reset_index().groupby('StoreID',
                                                          group_keys=False).apply(get_reachable_stations, 300))
 
         '''
@@ -202,7 +203,7 @@ class model_MBI_v_1_0(ModelBase):
             'y' looks like this now:
 
                     DTV 	DWV 	bahnhof	    code	distanz	    pendler_wahrscheinlichkeit	additional_kauefer
-        OBJECTID
+        StoreID
             9	    970	    1300	Burier	    BURI	1456.600536	    0.062500	                81.250000
             9	    1900	2200	Clarens	    CL	    240.076282	    0.083333	                183.333333
         '''

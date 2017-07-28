@@ -86,9 +86,6 @@ def get_input(settingsFile, logger):
         kwargs = {"errors": 'ignore'}
         konkurrenten_stores_pd = konkurrenten_stores_pd.apply(pd.to_numeric, axis=0, **kwargs)
 
-        # PAM - TODO missing form data
-        # Otto's Warenposten - TODO missing from data
-
         # --- DRIVE TIMES ------------------------------------------------------------------------------------------
         logger.info("Reading Drivetimes, takes a while ...")
         drivetimes_pd = pd.read_csv(drivetimes, sep=';', header=0, index_col=False, encoding='latin-1')
