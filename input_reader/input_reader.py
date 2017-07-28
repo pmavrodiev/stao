@@ -25,9 +25,8 @@ def get_input(settingsFile, logger):
         try:
             migros_stores_pd = pd.read_pickle(os.path.join(cache_dir,
                                                     config['cache_config']['migros_stores_cache']))
-            single_store_migros_pd = pd.read_pickle(os.path.join(cache_dir,
-                                                            config['cache_config']['stores_migros_only_cached']))
-
+            konkurrenten_stores_pd = pd.read_pickle(os.path.join(cache_dir,
+                                                    config['cache_config']['konkurrenten_stores_cache']))
 
             drivetimes_pd = pd.read_pickle(os.path.join(cache_dir,
                                                         config['cache_config']['drivetimes_cached']))
@@ -45,97 +44,88 @@ def get_input(settingsFile, logger):
         logger.info("Reading input files into Pandas data frames")
         
         migros_stores = config['inputdata']['migros_stores']
-        denner_stores = config['inputdata']['denner_stores']
         konkurrenten_stores = config['inputdata']['konkurrenten_stores']
         drivetimes = config['inputdata']['drivetimes']
         haushalt = config['inputdata']['haushalt']
         stations = config['inputdata']['stations']
 
         # --- MIGROS STORES ----------------------------------------------------------------------------------------
-        migros_stores_pd = pd.read_csv(migros_stores, sep=';', header=0, index_col=0, encoding='latin-1')
-        # Fix the sales area for VOI stores
-        migros_stores_pd.loc[migros_stores_pd['VertriebstypInternID'] == 260, 'VFL_TOTAL'] = 220
-        # Fix the sales area for DMP stores
-        migros_stores_pd.loc[migros_stores_pd['VertriebstypInternID'] == 220, 'VFL_TOTAL'] = 220
-        # Fix the sales area for Migrolino stores
-        migros_stores_pd.loc[migros_stores_pd['VertriebstypInternID'] == 240, 'VFL_TOTAL'] = 150
-        # Now remove stores with VFL 0 or undefined
-        # first make the respective column numeric
-        valid_areas = pd.to_numeric(migros_stores_pd['VFL_TOTAL'], errors='coerce')
-        # now filter
-        migros_stores_pd = migros_stores_pd[ valid_areas > 0 ].reset_index()
+        logger.info("Reading Migros stores")
+        migros_stores_pd = pd.read_csv(migros_stores, sep=';', header=0, index_col=False, encoding='latin-1')
+        # --- Remove stores with VFL 0 or undefined
+        kwargs = {"errors": 'coerce'}
+        migros_stores_pd.VFL = migros_stores_pd.VFL.apply(pd.to_numeric, **kwargs)
+        migros_stores_pd = migros_stores_pd.loc[migros_stores_pd.VFL > 0]
+        # --- Remove all stores without Geo coordinates
+        migros_stores_pd.lon = migros_stores_pd.lon.apply(pd.to_numeric, **kwargs)
+        migros_stores_pd.lat = migros_stores_pd.lat.apply(pd.to_numeric, **kwargs)
+        migros_stores_pd = migros_stores_pd.loc[(migros_stores_pd.lon > 0) & (migros_stores_pd.lat > 0)]
+        # --- Now make all quantitative columns numeric
+        kwargs = {"errors": 'ignore'}
+        migros_stores_pd = migros_stores_pd.apply(pd.to_numeric, axis=0, **kwargs)
 
-        # --- DENNER STORES ----------------------------------------------------------------------------------------
-        denner_stores_pd = pd.read_csv(denner_stores, sep=';', header=0, index_col=0, encoding='latin-1')
-        denner_stores_pd = denner_stores_pd.rename(columns = {'area': 'VFL_TOTAL'})
+        # --- SINGLE STORE MODE? -----------------------------------------------------------------------------------
+        if len(single_store) > 0:
+            logger.info('Single store mode chosen - %s', single_store)
+            migros_stores_pd = migros_stores_pd.loc[migros_stores_pd.StoreName == single_store]
 
-        # --- COMPETITORS STORES -----------------------------------------------------------------------------------
-        konkurrenten_stores_pd = pd.read_csv(konkurrenten_stores, sep=';', header=0, index_col=0, encoding='latin-1')
-        # Fix the competitors' sales area according to the heuristics from MP
-        # Volg
-        konkurrenten_stores_pd.loc[
-            konkurrenten_stores_pd['NAME_KONKURRENT'].str.lower() == 'volg', 'VFL_GESCHAETZT'] = 172
-        # Spar express
-        konkurrenten_stores_pd.loc[
-            (konkurrenten_stores_pd['NAME_KONKURRENT'].str.lower() == 'spar') &
-            (konkurrenten_stores_pd['FILIAL_BEZ'].str.contains('express', case=False)), 'VFL_GESCHAETZT'] = 150
-        # Spar supermarkt
-        konkurrenten_stores_pd.loc[
-            (konkurrenten_stores_pd['NAME_KONKURRENT'].str.lower() == 'spar') &
-            (konkurrenten_stores_pd['FILIAL_BEZ'].str.contains('supermarkt', case=False)), 'VFL_GESCHAETZT'] = 450
-        # Manor
-        konkurrenten_stores_pd.loc[konkurrenten_stores_pd['NAME_KONKURRENT'].str.lower() == 'manor', 'VFL_GESCHAETZT'] = 1000
 
-        # Take only the Coop Pronto and Coop Supermakrt stores
-        konkurrenten_stores_pd = konkurrenten_stores_pd.loc[~((konkurrenten_stores_pd['NAME_KONKURRENT'].str.lower() == 'coop') &
-                                     (konkurrenten_stores_pd['FORMAT_BEZ'].str.lower() != 'supermarkt') &
-                                     (konkurrenten_stores_pd['FORMAT_BEZ'].str.lower() != 'coop pronto') )]
+        # --- COMPETITORS STORES -------------------------------------4----------------------------------------------
+        logger.info("Reading Competitors' stores")
+        konkurrenten_stores_pd = pd.read_csv(konkurrenten_stores, sep=';', header=0, index_col=False, encoding='latin-1')
+        kwargs = {"errors": 'coerce'}
+        konkurrenten_stores_pd.VFL = konkurrenten_stores_pd.VFL.apply(pd.to_numeric, **kwargs)
+        konkurrenten_stores_pd = konkurrenten_stores_pd.loc[konkurrenten_stores_pd.VFL > 0]
+
+        konkurrenten_stores_pd.lon = konkurrenten_stores_pd.lon.apply(pd.to_numeric, **kwargs)
+        konkurrenten_stores_pd.lat = konkurrenten_stores_pd.lat.apply(pd.to_numeric, **kwargs)
+        konkurrenten_stores_pd = konkurrenten_stores_pd.loc[
+            (konkurrenten_stores_pd.lon > 0) & (konkurrenten_stores_pd.lat > 0)]
+
+        # make all quantitative columns numeric!!!!
+        kwargs = {"errors": 'ignore'}
+        konkurrenten_stores_pd = konkurrenten_stores_pd.apply(pd.to_numeric, axis=0, **kwargs)
 
         # PAM - TODO missing form data
         # Otto's Warenposten - TODO missing from data
 
-        # finally leave only competitors in the Food business
-        konkurrenten_stores_pd = konkurrenten_stores_pd.loc[konkurrenten_stores_pd['NAME_KONKURRENT'].str.lower().isin(
-                                                            ['aldi', 'coop', 'landi', 'lidl', 'manor', 'spar', 'volg'])]
-
-
-
         # --- DRIVE TIMES ------------------------------------------------------------------------------------------
-        drivetimes_pd = pd.read_csv(drivetimes, sep=';', header=0, index_ycol=[0, 1])
-
-        logger.info("Removing duplicate drive times from drivetimes_pd")
+        logger.info("Reading Drivetimes, takes a while ...")
+        drivetimes_pd = pd.read_csv(drivetimes, sep=';', header=0, index_col=False, encoding='latin-1')
+        kwargs = {"errors": 'coerce'}
+        drivetimes_pd = drivetimes_pd.apply(pd.to_numeric, axis=0, **kwargs)
+        # remove duplicates from the drive times
+        logger.info('Removing duplicates from drivetimes ...')
         before = len(drivetimes_pd)
-        drivetimes_pd = drivetimes_pd[~drivetimes_pd.index.duplicated(keep='first')]
-        # reindex, easier to handle than a multi-index
-        drivetimes_pd = drivetimes_pd.reset_index().set_index(keys='filiale_id')
-        logger.info("Removed %d duplicates entries", before-len(drivetimes_pd))
+        drivetimes_pd = drivetimes_pd[~drivetimes_pd.index.duplicated(keep='first')].reset_index()
+        after = len(drivetimes_pd)
+        logger.info('Done! - %d duplicates removed', before-after)
+        # --- generate a unified FZ column
+        drivetimes_pd['FZ'] = np.where(np.isnan(drivetimes_pd.velo_distanzminuten), drivetimes_pd.auto_distanzminuten,
+                                       drivetimes_pd.velo_distanzminuten / 4.0)
 
         # --- HAUSHALT ---------------------------------------------------------------------------------------------
+        logger.info("Reading information on Haushaltausgaben")
         haushalt_pd = pd.read_csv(haushalt, sep=';', header=0, index_col=0)
         # Durchschnitt über Grossregion, Kanton, Sprachregion, Alter und Einkommen (* 12 für Jahr)
         # haushalt_pd['Tot_Haushaltausgaben'] = haushalt_pd['AnzahlHH'] * haushalt_pd['HHA_AVG_ALL'] * 12
         haushalt_pd['Tot_Haushaltausgaben'] = haushalt_pd['AnzahlHH'] * haushalt_pd['HHA_AVG_EA'] * 12
 
         # --- SBB --------------------------------------------------------------------------------------------------
+        logger.info("Reading oeV info")
         stations_pd = pd.read_csv(stations, sep=';', header=0, index_col=False, encoding='latin-1')
 
-        # --- FILTER MIGROS ----------------------------------------------------------------------------------------
-        # Get all Migros stores used by MP Technology OR the single store if in single store mode
-        if len(single_store) > 0:
-            logger.info('Single store mode chosen - %s', single_store)
-            single_store_migros_pd = migros_stores_pd[migros_stores_pd['KostenstelleName'] == single_store]
-        
+
         # --- SAVE TO PICKLE (CACHE) --------------------------------------------------------------------------------
         if cache_input_data:
             logger.info("Caching input data")
             migros_stores_pd.to_pickle(os.path.join(cache_dir, config['cache_config']['migros_stores_cache']))
-            single_store_migros_pd.to_pickle(os.path.join(cache_dir, config['cache_config']['stores_migros_only_cached']))
-            drivetimes_pd.to_pickle(os.path.join(cache_dir,
-                                                 config['cache_config']['drivetimes_cached']))
+            konkurrenten_stores_pd.to_pickle(os.path.join(cache_dir, config['cache_config']['konkurrenten_stores_cache']))
+            drivetimes_pd.to_pickle(os.path.join(cache_dir, config['cache_config']['drivetimes_cached']))
             haushalt_pd.to_pickle(os.path.join(cache_dir, config['cache_config']['haushalt_cached']))
             stations_pd.to_pickle(os.path.join(cache_dir, config['cache_config']['stations_cached']))
             logger.info("Done caching input data")
 
         logger.info("Done reading input data")
 
-    return (migros_stores_pd, single_store_migros_pd, drivetimes_pd, haushalt_pd, stations_pd)
+    return (migros_stores_pd, konkurrenten_stores_pd, drivetimes_pd, haushalt_pd, stations_pd)

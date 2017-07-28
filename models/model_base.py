@@ -8,39 +8,30 @@ class ModelBase(metaclass=abc.ABCMeta):
         return 'Should never reach here'
 
     @abc.abstractmethod
-    def entry(self, pandas_dt, config, logger, stores_pd, stores_migros_pd, referenz_pd, stations_pd):
+    def entry(self, tables_dict, config, logger):
         """
 
-        :param pandas_dt:
-            All available data is flattened into this pandas data table. You can always assume the following format:
-            |----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-            |        |fahrzeit |hektar_id|          ID      |FORMAT|vfl    |RELEVANZ|    type      |Tot_Haushaltausgaben  
-            |----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-            |OBJECTID|
-            |----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-            |    6   |    21      |61341718|SM_MIG_61607_15939|    M  |878.621|   1.0  |    MIG          | 7800.0            
-            |----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-            |    6     |  21        |61341719|SM_MIG_61607_15939|    M  |878.621|   1.0  |   MIG          | 15600.0               
-            |----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+        :param table_l:
+            A list with all pandas table objects needed for the model.
+            At least the following should be defined.
 
+            table_l[0]:
+                All available data is flattened into this pandas data table. You can always assume the following header:
+
+                'StoreID', 'StoreName', 'Retailer', 'Format', 'VFL', 'Adresse', 'PLZ',
+                'Ort', 'lon', 'lat', 'E_LV03', 'N_LV03', 'HARasterID', 'ProfitKSTID',
+                'KostenstelleID', 'JahrID', 'Food', 'Frische', 'Near/Non Food',
+                'Fachmaerkte', 'Oeffnungsdatum', 'velo_StartHARasterID',
+                'velo_ZielHARasterID', 'auto_distanzminuten', 'velo_distanzminuten',
+                'FZ', 'Tot_Haushaltausgaben'
+
+            table_l[1]:
+                A Pandas DataFrame containing the SBB data.
         :param config:
             A config object containing the model settings supplied by the user
 
         :param logger:
             Python logging object to which logging info will be sent
-
-        :param stores_pd:
-            A Pandas DataFrame with the input stores data
-
-        :param stores_migros_pd:
-            A Pandas DataFrame with basic Migros-only store information. This is a subset of the input stores data.
-
-        :param referenz_pd:
-            A Pandas DataFrame with the actual revenue for each store of interest. This is used to calculate the model
-            errors
-
-        :oaram stations_pd:
-            A Pandas DataFrame containing the SBB data.
 
         :return:
             Nothing.

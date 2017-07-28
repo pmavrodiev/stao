@@ -65,13 +65,13 @@ class model_MBI_v_1_0(ModelBase):
             self.logger.error('Parameter sweep over both basic and ov parameters not yet implemented')
             sys.exit(1)
         try:
-            self.slope_lat = float(config["parameters_basic"]["slope_lat"])
-            self.slope_rlat = float(config["parameters_basic"]["slope_rlat"])
-            self.fahrzeit_cutoff = float(config["parameters_basic"]["fahrzeit_cutoff"])
+            self.slope_lat = float(config["parameters"]["slope_lat"])
+            self.slope_rlat = float(config["parameters"]["slope_rlat"])
+            self.fahrzeit_cutoff = float(config["parameters"]["fahrzeit_cutoff"])
             #
-            self.beta_ov = float(config["parameters_ov"]["beta_ov"])
-            self.f_pendler = float(config["parameters_ov"]["f_pendler"])
-            self.pendler_ausgaben = float(config["parameters_ov"]["pendler_ausgaben"])
+            self.beta_ov = float(config["parameters"]["beta_ov"])
+            self.f_pendler = float(config["parameters"]["f_pendler"])
+            self.pendler_ausgaben = float(config["parameters"]["pendler_ausgaben"])
             #
             self.umsatz_output_csv = config["output"]["output_csv"]
         except Exception:
@@ -79,14 +79,6 @@ class model_MBI_v_1_0(ModelBase):
                               self.whoami())
             sys.exit(1)
 
-    def preprocess(self, pandas_dt):
-
-        self.logger.info("Reindexing ...")
-        pandas_reindexed_dt = pandas_dt.reset_index().set_index(keys=['hektar_id', 'type', 'OBJECTID'])
-        self.logger.info("Removing duplicates ...")
-        # remove the duplicates introduced after merging drivetimes and store information
-        pandas_reindexed_dt = pandas_reindexed_dt[~pandas_reindexed_dt.index.duplicated(keep='first')]
-        return pandas_reindexed_dt.reset_index()
 
     def compute_market_share(self, pandas_dt, slope_lat, slope_rlat, fahrzeit_cutoff):
 
@@ -94,57 +86,60 @@ class model_MBI_v_1_0(ModelBase):
         self.logger.info("Parameters: slope_lat/slope_rlat/fahrzeit_cutoff = %f / %f / %f", slope_lat, slope_rlat,
                          fahrzeit_cutoff)
 
-        pandas_dt['LAT'] = slope_lat * pandas_dt['RELEVANZ'] * pandas_dt['vfl']
+        pandas_dt['LAT'] = slope_lat *  pandas_dt['VFL']
         pandas_dt['RLAT'] = pandas_dt['LAT'] * np.power(10,
-                                                        slope_rlat * np.fmax(pandas_dt['fahrzeit'] - fahrzeit_cutoff,
+                                                        slope_rlat * np.fmax(pandas_dt['FZ'] - fahrzeit_cutoff,
                                                                              0))
 
         self.logger.info('Computing sum RLATs ...')
-        pandas_dt['sumRLATs'] = pandas_dt.groupby('hektar_id')[["RLAT"]].transform(lambda x: np.sum(x))
-        pandas_dt['local_market_share'] = pandas_dt['RLAT'] / pandas_dt['sumRLATs']
+        pandas_dt['sumRLATs'] = pandas_dt.groupby('velo_StartHARasterID')[["RLAT"]].transform(lambda x: np.sum(x))
+        pandas_dt['LMA'] = pandas_dt['RLAT'] / pandas_dt['sumRLATs']
 
         self.logger.info('Done')
         return pandas_dt
 
-    def entry(self, pandas_dt, config, logger, stores_pd, stores_migros_pd, referenz_pd, stations_pd):
+    def entry(self, tables_dict, config, logger):
         self.logger = logger
         self.logger.info("Initialized model %s", self.whoami())
 
         self.process_settings(config)
 
-        pandas_preprocessed_dt = self.preprocess(pandas_dt)
-        """
-            pandas_preprocessed_dt looks like this now:
-
-            |----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-            |              |OBJECTID |fahrzeit|          ID       |FORMAT|vfl    |RELEVANZ|	Tot_Haushaltausgaben	|Tot_Haushaltausgaben_corrected|
-            |----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-            |hektar_id|type|
-            |----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-            | 61341718|	MIG|   6     |21      |	SM_MIG_61607_15939|   M  |878.621| 1      |	7800.0                  |   7800                       |
-            |----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-        """
+        # check if model got the right input tables
+        try:
+            pandas_dt = tables_dict["all_stores"]
+            stations_pd = tables_dict["sbb_stations"]
+        except:
+            logger.error('Model %s did not get the right input tables. Expected %s got %s',
+                        self.whoami(), "['all_stores', 'sbb_stations']", list(tables_dict.keys()))
+            sys.exit(1)
 
         if self.param_basic_sweep:
-            self.analysis_sweep(pandas_preprocessed_dt, stores_migros_pd, referenz_pd)
+            self.analysis_sweep(pandas_dt)
             return 0
 
-        pandas_postprocessed_dt = self.compute_market_share(pandas_preprocessed_dt, self.slope_lat, self.slope_rlat,
+        pandas_postprocessed_dt = self.compute_market_share(pandas_dt, self.slope_lat, self.slope_rlat,
                                                             self.fahrzeit_cutoff)
-        # pandas_preprocessed_dt now has a column 'local_market_share' giving the
-        # local market share of store i in each hektar
-        umsatz_potential_pd = self.gen_umsatz_prognose(pandas_postprocessed_dt, stores_migros_pd, referenz_pd)
+
+        # pandas_preprocessed_dt now has a column 'LMA' giving the local market share of store i in each hektar
+        umsatz_potential_pd = self.gen_umsatz_prognose(pandas_postprocessed_dt)
 
         # pendler einfluss is modelled as a last step of the umsatz prognose
         if self.param_ov_sweep:
-            self.analysis_ov_sweep(umsatz_potential_pd, stores_pd, referenz_pd, stations_pd)
+            self.analysis_ov_sweep(umsatz_potential_pd, stations_pd)
             return 0
 
-        pendler_einfluss_pd = self.calc_zusaetzliche_kauefer(stores_migros_pd, stations_pd, self.beta_ov,
+        pendler_einfluss_pd = self.calc_zusaetzliche_kauefer(pandas_postprocessed_dt, stations_pd, self.beta_ov,
                                                              self.f_pendler)
         # left join between the calculated umsatz and the pendler einfluss
         umsatz_potential_pd = pd.merge(umsatz_potential_pd, pendler_einfluss_pd, how='left', left_index=True,
                                        right_index=True)
+
+        column_order = ['StoreID', 'StoreName', 'Retailer', 'Format', 'VFL', 'Adresse', 'PLZ', 'Ort',
+                        'HARasterID', 'E_LV03', 'N_LV03', 'ProfitKSTID', 'Food', 'Frische', 'Near/Non Food',
+                        'Fachmaerkte', 'lokal_umsatz_potenzial', 'additional_kaeufer']
+
+        # again re-order columns
+        umsatz_potential_pd = umsatz_potential_pd[column_order]
 
         umsatz_potential_pd['umsatz_with_pendler'] = umsatz_potential_pd['Umsatzpotential'] + \
             umsatz_potential_pd['additional_kaeufer'] * self.pendler_ausgaben
@@ -153,9 +148,8 @@ class model_MBI_v_1_0(ModelBase):
             umsatz_potential_pd[np.isnan(umsatz_potential_pd['umsatz_with_pendler'])]['Umsatzpotential']
 
         umsatz_potential_pd['verhaeltnis_tU_pendler_prozent'] = (umsatz_potential_pd['umsatz_with_pendler'] -
-                                                                 umsatz_potential_pd['Tatsechlicher Umsatz - '
-                                                                                     'FOOD_AND_FRISCHE']) / \
-            umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
+                                                                 umsatz_potential_pd['istUmsatz']) / \
+            umsatz_potential_pd['istUmsatz']
 
         self.logger.info('Exporting Umsatz predictions to csv')
         umsatz_potential_pd.to_csv(self.umsatz_output_csv)
@@ -163,28 +157,28 @@ class model_MBI_v_1_0(ModelBase):
     def calc_zusaetzliche_kauefer(self, stores_pd, stations_pd, beta, f):
         def get_reachable_stations(group, radius):
             row = group.iloc[0]
-            # Calculate squared distance (Euclidean). Coordinates in stores_sm.csv are X = North, Y = East
-            distanz_squared = np.power(stations_pd['E_LV03'] - row['Y'], 2) + np.power(stations_pd['N_LV03'] - row['X'],
-                                                                                       2)
+            # Calculate squared distance (Euclidean).
+            distanz_squared = np.power(stations_pd['E_LV03'] - row['E_LV03'], 2) + \
+                              np.power(stations_pd['N_LV03'] - row['N_LV03'], 2)
 
             within_circle = distanz_squared <= np.power(radius, 2)
             return_pd = pd.DataFrame(stations_pd[within_circle])
-            return_pd['OBJECTID'] = row['OBJECTID']
+            return_pd['StoreID'] = row['StoreID']
             return_pd['distanz'] = np.sqrt(distanz_squared[within_circle])
-            return return_pd.set_index(['OBJECTID'])
+            return return_pd.set_index(['StoreID'])
 
         def calc_pendler_wahrscheinlichkeit(group, beta):
             partition_function = np.sum(np.exp(-beta * group['distanz']))
             probabilities = np.exp(-beta * group['distanz']) / partition_function
 
-            rv = pd.DataFrame({'OBJECTID': group['OBJECTID'],
+            rv = pd.DataFrame({'StoreID': group['StoreID'],
                                'code': group['Code'],
                                'bahnhof': group['Bahnhof_Haltestelle'],
                                'distanz': group['distanz'],
                                'DTV': group['DTV'],
                                'DWV': group['DWV'],
                                'pendler_wahrscheinlichkeit': probabilities})
-            return rv.set_index(['OBJECTID'])
+            return rv.set_index(['StoreID'])
         #
         self.logger.info('Computing Pendler einfluss ...')
         self.logger.info("Parameters: beta/f_pendler = %f / %f", beta, f)
@@ -196,7 +190,7 @@ class model_MBI_v_1_0(ModelBase):
             'x' looks like this now:
 
                     Code	Bahnhof_Haltestelle	[...]    lat      lon	    E_LV03	N_LV03	distanz
-        OBJECTID
+        StoreID
             8	    MI  	Muri AG	                 47.276660	8.339798	668185	236587	538.396460
             9	    BURI	Burier	                 46.447876	6.877116	556853	144215	1456.600536
         '''
@@ -214,8 +208,8 @@ class model_MBI_v_1_0(ModelBase):
         '''
 
         # now aggregate over all stores
-        return y.reset_index().groupby('OBJECTID',
-                                       as_index=False)['additional_kaeufer'].aggregate(np.sum).set_index('OBJECTID')
+        return y.reset_index().groupby('StoreID',
+                                       as_index=False)['additional_kaeufer'].aggregate(np.sum).set_index('StoreID')
 
     def analysis_ov_sweep(self, umsatz_dt, stores_pd, referenz_pd, stations_pd):
 
@@ -268,7 +262,7 @@ class model_MBI_v_1_0(ModelBase):
                          self.E_min[0][0], self.E_min[0][1]["beta"], self.E_min[0][1]["f_pendler"],
                          self.E_min[0][1]["pendler_ausgaben"])
 
-    def analysis_sweep(self, pandas_dt, stores_migros_pd, referenz_pd):
+    def analysis_sweep(self, pandas_dt):
         self.logger.info('Will do basic parameter sweep. This will take a while, better run over night')
 
         for lat in self.slope_lat_sweep:
@@ -277,12 +271,11 @@ class model_MBI_v_1_0(ModelBase):
                     pandas_sweeped_dt = self.compute_market_share(pandas_dt, lat, rlat, fz)
                     # pandas_preprocessed_dt now has a column 'local_market_share' giving the
                     # local market share of store i in each hektar
-                    umsatz_potential_pd = self.gen_umsatz_prognose(pandas_sweeped_dt, stores_migros_pd, referenz_pd)
+                    umsatz_potential_pd = self.gen_umsatz_prognose(pandas_sweeped_dt)
                     # calculate the individual errors
                     umsatz_potential_pd['E_i'] = np.power(umsatz_potential_pd['Umsatzpotential'] -
-                                                          umsatz_potential_pd['Tatsechlicher Umsatz - '
-                                                                              'FOOD_AND_FRISCHE'], 2) / \
-                        umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
+                                                          umsatz_potential_pd['istUmsatz'], 2) / \
+                        umsatz_potential_pd['istUmsatz']
 
                     total_error = np.sqrt(umsatz_potential_pd.E_i.sum())
                     error_quantile = umsatz_potential_pd[~np.isnan(umsatz_potential_pd['E_i'])]['E_i'].quantile(q=0.99)
@@ -304,35 +297,46 @@ class model_MBI_v_1_0(ModelBase):
                          self.E_min[0][0], self.E_min[0][1]["lat"], self.E_min[0][1]["rlat"],
                          self.E_min[0][1]["fz_cutoff"])
 
-    def gen_umsatz_prognose(self, pandas_pd, stores_migros_pd, referenz_pd):
+    def gen_umsatz_prognose(self, pandas_pd):
         self.logger.info('Generating Umsatz predictions ... ')
-        pandas_pd['lokal_umsatz_potenzial'] = pandas_pd['Tot_Haushaltausgaben'] * pandas_pd['local_market_share']
-        pandas_pd['lokal_umsatz_potenzial_corrected'] = pandas_pd['Tot_Haushaltausgaben_corrected'] * \
-                                                        pandas_pd['local_market_share']
+        pandas_pd['lokal_umsatz_potenzial'] = pandas_pd['Tot_Haushaltausgaben'] * pandas_pd['LMA']
 
-        migros_only_pd = pandas_pd[pandas_pd['OBJECTID'].isin(stores_migros_pd.index.values)]
-
-        umsatz_potential_pd = migros_only_pd.groupby('OBJECTID').agg({'ID': lambda x: x.iloc[0],
-                                                                      'lokal_umsatz_potenzial': lambda x: np.nansum(x),
-                                                                      'lokal_umsatz_potenzial_corrected': lambda x:
-                                                                      np.nansum(x)
+        print(pandas_pd.columns.tolist())
+        # get only the Migros stores - StoreID between 0 and 9999
+        umsatz_potential_pd = pandas_pd.loc[pandas_pd.StoreID < 10000].groupby('StoreID').agg({
+                                                                         'StoreName': lambda x: x.iloc[0],
+                                                                         'Retailer': lambda x: x.iloc[0],
+                                                                         'Format': lambda x: x.iloc[0],
+                                                                         'VFL': lambda x: x.iloc[0],
+                                                                         'Adresse': lambda x: x.iloc[0],
+                                                                         'PLZ': lambda x: x.iloc[0],
+                                                                         'Ort': lambda x: x.iloc[0],
+                                                                         'HARasterID': lambda x: x.iloc[0],
+                                                                         'E_LV03': lambda x: x.iloc[0],
+                                                                         'N_LV03': lambda x: x.iloc[0],
+                                                                         'ProfitKSTID': lambda x: x.iloc[0],
+                                                                         'Food': lambda x: x.iloc[0],
+                                                                         'Frische': lambda x: x.iloc[0],
+                                                                         'Near/Non Food': lambda x: x.iloc[0],
+                                                                         'Fachmaerkte': lambda x: x.iloc[0],
+                                                                    'lokal_umsatz_potenzial': lambda x: np.nansum(x),
                                                                       })
+        # stupid Pandas is shuffling the columns for some reason
+        column_order = ['StoreName', 'Retailer', 'Format', 'VFL', 'Adresse', 'PLZ', 'Ort',
+                        'HARasterID', 'E_LV03', 'N_LV03', 'ProfitKSTID', 'Food', 'Frische', 'Near/Non Food',
+                        'Fachmaerkte', 'lokal_umsatz_potenzial']
+        umsatz_potential_pd = umsatz_potential_pd[column_order]
+        umsatz_potential_pd = umsatz_potential_pd.rename(columns={'lokal_umsatz_potenzial': 'Umsatzpotential'})
 
-        umsatz_potential_pd = umsatz_potential_pd.rename(columns={'lokal_umsatz_potenzial': 'Umsatzpotential',
-                                                                  'lokal_umsatz_potenzial_corrected':
-                                                                      'Umsatzpotential_corrected'})
-
-        umsatz_potential_pd = umsatz_potential_pd.merge(referenz_pd, left_index=True, right_index=True, how='inner')
+        # sum up the relevant Umsaetze
+        umsatz_potential_pd['istUmsatz'] = umsatz_potential_pd['Food']+umsatz_potential_pd['Frische']+\
+                                           umsatz_potential_pd['Near/Non Food']
 
         umsatz_potential_pd['verhaeltnis_tU'] = umsatz_potential_pd['Umsatzpotential'] / \
-            umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
+                                                (umsatz_potential_pd['istUmsatz'])
 
         umsatz_potential_pd['verhaeltnis_tU_prozent'] = (umsatz_potential_pd['Umsatzpotential'] -
-                                                         umsatz_potential_pd['Tatsechlicher Umsatz - '
-                                                                             'FOOD_AND_FRISCHE']) / \
-            umsatz_potential_pd['Tatsechlicher Umsatz - FOOD_AND_FRISCHE']
-
-        umsatz_potential_pd['verhaeltnis_MP2'] = umsatz_potential_pd['Umsatzpotential'] / \
-                                                 umsatz_potential_pd['MP - CALCULATED_REVENUE 2']
+                                                         umsatz_potential_pd['istUmsatz']) / \
+                                                        umsatz_potential_pd['istUmsatz']
 
         return umsatz_potential_pd
