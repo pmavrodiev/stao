@@ -156,7 +156,8 @@ class model_MBI_v_1_0(ModelBase):
                                 self.logger.info('Exporting Umsatz predictions to csv')
                                 output_fname = self.umsatz_output_csv + "_lat_" + str(lat) + "_rlat_" + str(rlat) + \
                                                "_fzcutoff_" + str(fz_cutoff) + "_betaov_" + str(beta_ov) + \
-                                               "_fpendler_" + str(f_pendler) + "_pendler_ausgaben_" + pendler_ausgaben
+                                               "_fpendler_" + str(f_pendler) + \
+                                               "_pendler_ausgaben_" + str(pendler_ausgaben)
                                 umsatz_potential_pd.to_csv(output_fname)
 
     def calc_zusaetzliche_kauefer(self, stores_pd, stations_pd, beta, f):
