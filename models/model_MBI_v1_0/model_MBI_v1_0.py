@@ -109,6 +109,7 @@ class model_MBI_v_1_0(ModelBase):
                             pendler_einfluss_pd = self.calc_zusaetzliche_kauefer(pandas_postprocessed_dt,
                                                                                  stations_pd, beta_ov, f_pendler)
 
+                            # TODO: this is ugly. Fix it.
                             if 'additional_kaeufer' in umsatz_potential_pd.columns:
                                 del umsatz_potential_pd['additional_kaeufer']
                             # left join between the calculated umsatz and the pendler einfluss
