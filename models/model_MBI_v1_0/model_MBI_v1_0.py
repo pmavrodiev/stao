@@ -112,6 +112,7 @@ class model_MBI_v_1_0(ModelBase):
                             umsatz_potential_pd = pd.merge(umsatz_potential_pd, pendler_einfluss_pd,
                                                            how='left', left_index=True, right_index=True)
 
+                            print(umsatz_potential_pd.columns.tolist())
                             for pendler_ausgaben in self.pendler_ausgaben:
                                 self.logger.info('Calculating Final Umsaetze ...')
                                 self.logger.info("Parameters: pendler_ausgaben = %f", pendler_ausgaben)
