@@ -140,19 +140,19 @@ class model_MBI_v_1_0(ModelBase):
 
         column_order = ['StoreName', 'Retailer', 'Format', 'VFL', 'Adresse', 'PLZ', 'Ort',
                         'HARasterID', 'E_LV03', 'N_LV03', 'ProfitKSTID', 'istUmsatz', 'Food', 'Frische', 'Near/Non Food',
-                        'Fachmaerkte', 'Umsatzpotential', 'additional_kaeufer']
+                        'Fachmaerkte', 'ModellUmsatz', 'additional_kaeufer']
 
         # again re-order columns
         umsatz_potential_pd = umsatz_potential_pd[column_order]
 
         umsatz_potential_pd['umsatz_pendler'] = umsatz_potential_pd['additional_kaeufer'] * self.pendler_ausgaben
 
-        umsatz_potential_pd['umsatz_with_pendler'] = umsatz_potential_pd['Umsatzpotential'] + \
+        umsatz_potential_pd['umsatz_with_pendler'] = umsatz_potential_pd['ModellUmsatz'] + \
                                                      umsatz_potential_pd['umsatz_pendler']
 
 
         umsatz_potential_pd.loc[np.isnan(umsatz_potential_pd['umsatz_with_pendler']), 'umsatz_with_pendler'] = \
-            umsatz_potential_pd[np.isnan(umsatz_potential_pd['umsatz_with_pendler'])]['Umsatzpotential']
+            umsatz_potential_pd[np.isnan(umsatz_potential_pd['umsatz_with_pendler'])]['ModellUmsatz']
 
         umsatz_potential_pd['verhaeltnis_tU_pendler_prozent'] = (umsatz_potential_pd['umsatz_with_pendler'] -
                                                                  umsatz_potential_pd['istUmsatz']) / \
@@ -230,12 +230,12 @@ class model_MBI_v_1_0(ModelBase):
                     umsatz_potential_pd = pd.merge(umsatz_dt, pendler_einfluss_pd,
                                                    how='left', left_index=True, right_index=True)
 
-                    umsatz_potential_pd['umsatz_with_pendler'] = umsatz_potential_pd['Umsatzpotential'] + \
+                    umsatz_potential_pd['umsatz_with_pendler'] = umsatz_potential_pd['ModellUmsatz'] + \
                         umsatz_potential_pd['additional_kaeufer'] * pendler_ausgaben
 
                     umsatz_potential_pd.loc[np.isnan(umsatz_potential_pd['umsatz_with_pendler']),
                                             'umsatz_with_pendler'] = \
-                        umsatz_potential_pd[np.isnan(umsatz_potential_pd['umsatz_with_pendler'])]['Umsatzpotential']
+                        umsatz_potential_pd[np.isnan(umsatz_potential_pd['umsatz_with_pendler'])]['ModellUmsatz']
 
                     umsatz_potential_pd['verhaeltnis_tU_pendler_prozent'] = \
                         (umsatz_potential_pd['umsatz_with_pendler'] -
@@ -280,7 +280,7 @@ class model_MBI_v_1_0(ModelBase):
                     # local market share of store i in each hektar
                     umsatz_potential_pd = self.gen_umsatz_prognose(pandas_sweeped_dt)
                     # calculate the individual errors
-                    umsatz_potential_pd['E_i'] = np.power(umsatz_potential_pd['Umsatzpotential'] -
+                    umsatz_potential_pd['E_i'] = np.power(umsatz_potential_pd['ModellUmsatz'] -
                                                           umsatz_potential_pd['istUmsatz'], 2) / \
                         umsatz_potential_pd['istUmsatz']
 
@@ -308,7 +308,6 @@ class model_MBI_v_1_0(ModelBase):
         self.logger.info('Generating Umsatz predictions ... ')
         pandas_pd['lokal_umsatz_potenzial'] = pandas_pd['Tot_Haushaltausgaben'] * pandas_pd['LMA']
 
-        print(pandas_pd.columns.tolist())
         # get only the Migros stores - StoreID between 0 and 9999
         umsatz_potential_pd = pandas_pd.loc[pandas_pd.StoreID < 10000].groupby('StoreID').agg({
                                                                          'StoreName': lambda x: x.iloc[0],
@@ -328,21 +327,21 @@ class model_MBI_v_1_0(ModelBase):
                                                                          'Fachmaerkte': lambda x: x.iloc[0],
                                                                     'lokal_umsatz_potenzial': lambda x: np.nansum(x),
                                                                       })
-        # stupid Pandas is shuffling the columns for some reason
+        # stupid Pandas is shuffling the columns for some reason, we need to rename them
         column_order = ['StoreName', 'Retailer', 'Format', 'VFL', 'Adresse', 'PLZ', 'Ort',
                         'HARasterID', 'E_LV03', 'N_LV03', 'ProfitKSTID', 'Food', 'Frische', 'Near/Non Food',
                         'Fachmaerkte', 'lokal_umsatz_potenzial']
         umsatz_potential_pd = umsatz_potential_pd[column_order]
-        umsatz_potential_pd = umsatz_potential_pd.rename(columns={'lokal_umsatz_potenzial': 'Umsatzpotential'})
+        umsatz_potential_pd = umsatz_potential_pd.rename(columns={'lokal_umsatz_potenzial': 'ModellUmsatz'})
 
         # sum up the relevant Umsaetze
         umsatz_potential_pd['istUmsatz'] = umsatz_potential_pd['Food']+umsatz_potential_pd['Frische']+\
                                            umsatz_potential_pd['Near/Non Food']
 
-        umsatz_potential_pd['verhaeltnis_tU'] = umsatz_potential_pd['Umsatzpotential'] / \
+        umsatz_potential_pd['verhaeltnis_tU'] = umsatz_potential_pd['ModellUmsatz'] / \
                                                 (umsatz_potential_pd['istUmsatz'])
 
-        umsatz_potential_pd['verhaeltnis_tU_prozent'] = (umsatz_potential_pd['Umsatzpotential'] -
+        umsatz_potential_pd['verhaeltnis_tU_prozent'] = (umsatz_potential_pd['ModellUmsatz'] -
                                                          umsatz_potential_pd['istUmsatz']) / \
                                                         umsatz_potential_pd['istUmsatz']
 
