@@ -111,12 +111,11 @@ class model_MBI_v_1_0(ModelBase):
                             # left join between the calculated umsatz and the pendler einfluss
                             umsatz_potential_pd = pd.merge(umsatz_potential_pd, pendler_einfluss_pd,
                                                            how='left', left_index=True, right_index=True)
-
+                            additional_kauefer = umsatz_potential_pd['additional_kaeufer']
                             for pendler_ausgaben in self.pendler_ausgaben:
                                 self.logger.info('Calculating Final Umsaetze ...')
                                 self.logger.info("Parameters: pendler_ausgaben = %f", pendler_ausgaben)
-                                umsatz_potential_pd['Umsatz_Pendler'] = umsatz_potential_pd['additional_kaeufer'] * \
-                                                                        pendler_ausgaben
+                                umsatz_potential_pd['Umsatz_Pendler'] = additional_kauefer * pendler_ausgaben
 
                                 umsatz_potential_pd['Umsatz_Total'] = np.where(
                                     np.isnan(umsatz_potential_pd['Umsatz_Pendler']),
