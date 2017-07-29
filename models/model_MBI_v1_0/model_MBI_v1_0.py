@@ -121,10 +121,13 @@ class model_MBI_v_1_0(ModelBase):
         pandas_postprocessed_dt = self.compute_market_share(pandas_dt, self.slope_lat, self.slope_rlat,
                                                             self.fahrzeit_cutoff)
 
-        # pandas_preprocessed_dt now has a column 'LMA' giving the local market share of store i in each hektar
+        # --- HAUSHALT component -----------------------------------------------------------------------------------
+        # pandas_preprocessed_dt now has a column 'LMA'
+        # giving the local market share of store i
+        # in each hektar from which i can be reached
         umsatz_potential_pd = self.gen_umsatz_prognose(pandas_postprocessed_dt)
 
-        # pendler einfluss is modelled as a last step of the umsatz prognose
+        # pendler einfluss is modelled after the Haushalt part
         if self.param_ov_sweep:
             self.analysis_ov_sweep(umsatz_potential_pd, stations_pd)
             return 0
@@ -135,15 +138,18 @@ class model_MBI_v_1_0(ModelBase):
         umsatz_potential_pd = pd.merge(umsatz_potential_pd, pendler_einfluss_pd, how='left', left_index=True,
                                        right_index=True)
 
-        column_order = ['StoreID', 'StoreName', 'Retailer', 'Format', 'VFL', 'Adresse', 'PLZ', 'Ort',
-                        'HARasterID', 'E_LV03', 'N_LV03', 'ProfitKSTID', 'Food', 'Frische', 'Near/Non Food',
-                        'Fachmaerkte', 'lokal_umsatz_potenzial', 'additional_kaeufer']
+        column_order = ['StoreName', 'Retailer', 'Format', 'VFL', 'Adresse', 'PLZ', 'Ort',
+                        'HARasterID', 'E_LV03', 'N_LV03', 'ProfitKSTID', 'istUmsatz', 'Food', 'Frische', 'Near/Non Food',
+                        'Fachmaerkte', 'Umsatzpotential', 'additional_kaeufer']
 
         # again re-order columns
         umsatz_potential_pd = umsatz_potential_pd[column_order]
 
+        umsatz_potential_pd['umsatz_pendler'] = umsatz_potential_pd['additional_kaeufer'] * self.pendler_ausgaben
+
         umsatz_potential_pd['umsatz_with_pendler'] = umsatz_potential_pd['Umsatzpotential'] + \
-            umsatz_potential_pd['additional_kaeufer'] * self.pendler_ausgaben
+                                                     umsatz_potential_pd['umsatz_pendler']
+
 
         umsatz_potential_pd.loc[np.isnan(umsatz_potential_pd['umsatz_with_pendler']), 'umsatz_with_pendler'] = \
             umsatz_potential_pd[np.isnan(umsatz_potential_pd['umsatz_with_pendler'])]['Umsatzpotential']
