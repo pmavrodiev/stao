@@ -48,14 +48,3 @@ class ModelBase(metaclass=abc.ABCMeta):
         :return:
             Nothing. Populates model-specific data attributes
         """
-
-    @abc.abstractmethod
-    def gen_umsatz_prognose(self, enriched_pruned_pd, stores_migros_pd, referenz_pd):
-        """
-
-        :param enriched_pruned_pd:
-        :param stores_migros_pd:
-        :param referenz_pd:
-        :param logger:
-        :return:
-        """

@@ -34,6 +34,12 @@ def get_input(settingsFile, logger):
                                                       config['cache_config']['haushalt_cached']))
             stations_pd = pd.read_pickle(os.path.join(cache_dir,
                                                       config['cache_config']['stations_cached']))
+            regionstypen_pd = pd.read_pickle(os.path.join(cache_dir,
+                                                      config['cache_config']['regionstypen_cached']))
+
+            arbeitnehmer_pd = pd.read_pickle(os.path.join(cache_dir,
+                                                          config['cache_config']['arbeitnehmer_cached']))
+
         except IOError as e:
             logger.error("Cannot find cache for the input data. Generate the cache by running with cache_enabled=False"
                          " in the settings.")
@@ -48,6 +54,8 @@ def get_input(settingsFile, logger):
         drivetimes = config['inputdata']['drivetimes']
         haushalt = config['inputdata']['haushalt']
         stations = config['inputdata']['stations']
+        regionstypen = config['inputdata']['regionstypen']
+        arbeitnehmer = config['inputdata']['arbeitnehmer']
 
         # --- MIGROS STORES ----------------------------------------------------------------------------------------
         logger.info("Reading Migros stores")
@@ -112,6 +120,24 @@ def get_input(settingsFile, logger):
         logger.info("Reading oeV info")
         stations_pd = pd.read_csv(stations, sep=';', header=0, index_col=False, encoding='latin-1')
 
+        # --- REGIONSTYPEN -----------------------------------------------------------------------------------------
+        # The Regionstypen are coded according to the BfS convention as follows:
+        # ==  11	Städtische Gemeinde einer grossen Agglomeration
+        # ==  12	Städtische Gemeinde einer mittelgrossen Agglomeration
+        # ==  13	Städtische Gemeinde einer kleinen oder ausserhalb einer Agglomeration
+        # ==  21	Periurbane Gemeinde hoher Dichte
+        # ==  22	Periurbane Gemeinde mittlerer Dichte
+        # ==  23	Periurbane Gemeinde geringer Dichte
+        # ==  31	Ländliche Zentrumsgemeinde
+        # ==  32	Ländliche zentral gelegene Gemeinde
+        # ==  33	Ländliche periphere Gemeinde
+
+        logger.info("Reading Regionstyp Info")
+        regionstypen_pd = pd.read_csv(regionstypen, sep=';', header=0, index_col=False, encoding='latin-1')
+
+        # --- ARBEITNEHMER ----------------------------------------------------------------------------------------
+        logger.info("Reading Arbeitnehmer Info")
+        arbeitnehmer_pd = pd.read_csv(arbeitnehmer, sep=';', header=0, index_col=False, encoding='latin-1')
 
         # --- SAVE TO PICKLE (CACHE) --------------------------------------------------------------------------------
         if cache_input_data:
@@ -121,8 +147,11 @@ def get_input(settingsFile, logger):
             drivetimes_pd.to_pickle(os.path.join(cache_dir, config['cache_config']['drivetimes_cached']))
             haushalt_pd.to_pickle(os.path.join(cache_dir, config['cache_config']['haushalt_cached']))
             stations_pd.to_pickle(os.path.join(cache_dir, config['cache_config']['stations_cached']))
+            regionstypen_pd.to_pickle(os.path.join(cache_dir, config['cache_config']['regionstypen_cached']))
+            arbeitnehmer_pd.to_pickle(os.path.join(cache_dir, config['cache_config']['arbeitnehmer_cached']))
             logger.info("Done caching input data")
 
         logger.info("Done reading input data")
 
-    return (migros_stores_pd, konkurrenten_stores_pd, drivetimes_pd, haushalt_pd, stations_pd)
+    return (migros_stores_pd, konkurrenten_stores_pd, drivetimes_pd, haushalt_pd, stations_pd, regionstypen_pd,
+            arbeitnehmer_pd)

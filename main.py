@@ -53,7 +53,7 @@ if __name__ == "__main__":
     # -------------------------------------
     # read-in the data
     (migros_stores_pd, konkurrenten_stores_pd,
-     drivetimes_pd, haushalt_pd, stations_pd) = get_input(options.config, logger)
+     drivetimes_pd, haushalt_pd, stations_pd, regionstypen_pd, arbeitnehmer_pd) = get_input(options.config, logger)
 
     # --- Get only the relevant hektars from the drivetimes, i.e. those from which a Migros store is reachable
     logger.info("Obtaining all drive times only for hectars from which a Migros store is reachable ... ")
@@ -68,6 +68,15 @@ if __name__ == "__main__":
                                       how='left', left_on='HARasterID', right_on='velo_ZielHARasterID')
     # now remove all stores without drivetimes info
     migros_merged_pd = migros_merged_pd.loc[~np.isnan(migros_merged_pd.FZ)]
+    # sanoty check - all stores must have their HARasterIDs as both start and end HARasterID in drivetimes
+    x = migros_merged_pd.loc[
+        (migros_merged_pd.HARasterID == migros_merged_pd.velo_StartHARasterID), ['StoreID', 'StoreName', 'HARasterID',
+                                                                                 'velo_StartHARasterID',
+                                                                                 'velo_ZielHARasterID',
+                                                                                 'FZ']]
+    if len(x) != len(np.unique(migros_merged_pd.StoreID)):
+        logger.warn("Some stores do not have the required 0 entry in drivetimes['FZ']")
+
     konkurrenten_merged_pd = konkurrenten_merged_pd.loc[~np.isnan(konkurrenten_merged_pd.FZ)]
 
     konkurrenten_StartHA = np.unique(konkurrenten_merged_pd.velo_StartHARasterID)
@@ -78,13 +87,32 @@ if __name__ == "__main__":
     all_stores_pd = pd.concat([migros_merged_pd, konkurrenten_merged_pd])[migros_merged_pd.columns.tolist()]
     all_stores_pd = all_stores_pd.loc[~all_stores_pd.velo_StartHARasterID.isin(StartHA_to_exclude)]
 
+    # enrich the drivetimes of the relevant hectars with Arbeitnehmer Information
+    logger.info("Enriching with Arbeitnehmer information ...")
+    enriched_pd = all_stores_pd.merge(arbeitnehmer_pd.set_index('HARasterID'),
+                                      left_on='velo_StartHARasterID', right_index=True, how='left')
+
+    logger.info("Number of unique StartHARasterIDs without Arbeitnehmer info: %d out of %d",
+                len(np.unique(enriched_pd.loc[np.isnan(enriched_pd.ANTOT)].velo_StartHARasterID)),
+                len(np.unique(enriched_pd.velo_StartHARasterID)))
+
+    # enrich the drivetimes of the relevant hectars with RegionsTyp Information
+    logger.info("Enriching with Regionstyp information ...")
+    enriched_pd = enriched_pd.merge(regionstypen_pd.set_index('HARasterID')[['RegionTyp', 'DTB']],
+                                      left_on='HARasterID', right_index=True, how='left')
+
+    logger.info("Number of unique ZielHARasterIDs without Regionstyp info: %d out of %d",
+                len(np.unique(enriched_pd.loc[np.isnan(enriched_pd.RegionTyp)].velo_ZielHARasterID)),
+                len(np.unique(enriched_pd.velo_ZielHARasterID)))
+
     # enrich the drive times of the relevant hectars with Haushalt information
     logger.info("Enriching with Haushalt information ...")
-    enriched_pd = all_stores_pd.merge(haushalt_pd[['Tot_Haushaltausgaben']],
+    enriched_pd = enriched_pd.merge(haushalt_pd[['Tot_Haushaltausgaben']],
                                                          left_on='velo_StartHARasterID', right_index=True,
                                                          how='left')
-    logger.info("HektarIDs without info on Haushaltausgaben %d",
-                len(np.unique(enriched_pd.loc[np.isnan(enriched_pd.Tot_Haushaltausgaben), "velo_StartHARasterID"])))
+    logger.info("Number of unique StartHektarIDs without Haushaltausgaben info: %d out of %d",
+                len(np.unique(enriched_pd.loc[np.isnan(enriched_pd.Tot_Haushaltausgaben), "velo_StartHARasterID"])),
+                len(np.unique(enriched_pd.velo_StartHARasterID)))
     # -------------------------------------
     # DONE reading in data
     # -------------------------------------
