@@ -27,11 +27,11 @@ logs/
 .ipynb_checkpoints/
 input_reader/__pycache__/
 logs/model_huff/
-logs/model_mbi_1_0/
+logs/model_mbi_1_2/
 logs/model_mbi_1_1/
 models/__pycache__/
 models/model_Huff/__pycache__/
-models/model_MBI_v1_0/__pycache__/
+models/model_MBI_v1_2/__pycache__/
 models/model_MBI_v_1_1/__pycache__/model_MBI_v_1_1.cpython-35.pyc
 simple_logging/__pycache__/
 utils/__pycache__/

@@ -34,7 +34,7 @@ Run without arguments to see the Usage:
 
 To run the currenty used model MBI v.1.0:
 
-`/opt/r/anaconda/bin/python3 main.py -m model_MBI_v1_0 -c models/model_MBI_v1_0/mbi1.0_settings.cfg  -l logs/model_mbi_1_0/gm_mbi_v_1_0.log`
+`/opt/r/anaconda/bin/python3 main.py -m model_MBI_v1_2 -c models/model_MBI_v1_2/mbi1.2_settings.cfg  -l logs/model_mbi_1_2/gm_mbi_v_1_2.log`
 
 
 #### Model Settings
