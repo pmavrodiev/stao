@@ -95,19 +95,21 @@ def get_input(settingsFile, logger):
         konkurrenten_stores_pd = konkurrenten_stores_pd.apply(pd.to_numeric, axis=0, **kwargs)
 
         # --- DRIVE TIMES ------------------------------------------------------------------------------------------
-        logger.info("Reading Drivetimes, takes a while ...")
-        drivetimes_pd = pd.read_csv(drivetimes, sep=';', header=0, index_col=False, encoding='latin-1')
         kwargs = {"errors": 'coerce'}
+        logger.info("Reading Drivetimes, takes a while ...")
+        drivetimes_pd = pd.read_csv(drivetimes, sep=',', header=0, index_col=False, encoding='latin-1')
         drivetimes_pd = drivetimes_pd.apply(pd.to_numeric, axis=0, **kwargs)
+        drivetimes_pd = drivetimes_pd.set_index(["StartHARasterID", "ZielHARasterID"])
         # remove duplicates from the drive times
         logger.info('Removing duplicates from drivetimes ...')
         before = len(drivetimes_pd)
         drivetimes_pd = drivetimes_pd[~drivetimes_pd.index.duplicated(keep='first')].reset_index()
         after = len(drivetimes_pd)
         logger.info('Done! - %d duplicates removed', before-after)
+
         # --- generate a unified FZ column
-        drivetimes_pd['FZ'] = np.where(np.isnan(drivetimes_pd.velo_distanzminuten), drivetimes_pd.auto_distanzminuten,
-                                       drivetimes_pd.velo_distanzminuten / 4.0)
+        drivetimes_pd['FZ'] = drivetimes_pd['AutoDistanzMinuten']
+        drivetimes_pd = drivetimes_pd.loc[drivetimes_pd.FZ <= 30]
 
         # --- HAUSHALT ---------------------------------------------------------------------------------------------
         logger.info("Reading information on Haushaltausgaben")
