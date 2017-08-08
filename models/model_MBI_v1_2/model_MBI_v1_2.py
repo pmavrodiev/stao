@@ -3,6 +3,7 @@ import json
 import numpy as np
 import pandas as pd
 import sys
+import os
 
 from models.model_base import ModelBase
 
@@ -212,6 +213,15 @@ class model_MBI_v1_2(ModelBase):
             self.parameters["beta_statent"] = [float(x) for x in json.loads(config["parameters"]["beta_statent"])]
             #
             self.umsatz_output_csv = config["output"]["output_csv"]
+            # create output directory if it doesn't exist
+            try:
+                os.makedirs(os.path.dirname(self.umsatz_output_csv))
+            except FileExistsError as fe:
+                pass
+            except Exception as e:
+                # also captures PermissionError
+                print(e)
+                sys.exit(1)
         except Exception:
             self.logger.error('Some of the required parameters for model %s are not supplied in the settings',
                               self.whoami())
