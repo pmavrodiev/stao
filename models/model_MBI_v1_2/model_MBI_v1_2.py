@@ -37,17 +37,22 @@ class model_MBI_v1_2(ModelBase):
         def calc_umsatz_haushalt(self, pandas_pd, parameters):
             def compute_market_share(pandas_dt, parameters):
                 factor_stadt = parameters["factor_stadt"]
-                halb_zeit = parameters["halb_zeit"]
+                hh_halbzeit = parameters["hh_halbzeit"]
+                penalty_sm_vm = parameters["penalty_sm_vm"]
 
                 self.logger.info('Computing local market share. This takes a while ...')
-                self.logger.info("Parameters: factor_stadt / halb_zeit = %f / %f", factor_stadt, halb_zeit)
+                self.logger.info("Parameters: factor_stadt / hh_halbzeit / penalty_sm_vm = %f / %f /%f",
+                                 factor_stadt, hh_halbzeit, penalty_sm_vm)
 
                 pandas_dt['LAT'] = np.power(pandas_dt['VFL'],
                                             np.where(pandas_dt["RegionTyp"].isin([11, 12]), factor_stadt, 1))
 
-                halb_zeit_vector = np.where(pandas_pd["RegionTyp"].isin([11,12]), 0.8*halb_zeit, halb_zeit)
+                # hh_halbzeit_vector = np.where(pandas_pd["RegionTyp"].isin([11,12]), 0.8*hh_halbzeit, hh_halbzeit)
+                hh_halbzeit_vector = np.where(pandas_pd["Format"].isin(["SM/VM 700", "SM/VM 2000"]),
+                                              penalty_sm_vm * hh_halbzeit,
+                                              hh_halbzeit)
 
-                pandas_dt['RLAT'] = pandas_dt['LAT'] * np.exp(-1.0*pandas_dt['FZ']*np.log(2) / halb_zeit_vector)
+                pandas_dt['RLAT'] = pandas_dt['LAT'] * np.exp(-1.0*pandas_dt['FZ']*np.log(2) / hh_halbzeit_vector)
 
                 self.logger.info('Computing sum RLATs ...')
                 pandas_dt['sumRLATs'] = pandas_dt.groupby('StartHARasterID')[["RLAT"]].transform(
@@ -106,7 +111,7 @@ class model_MBI_v1_2(ModelBase):
             return umsatz_potential_pd
 
         def calc_umsatz_oev(self, pandas_pd, parameters):
-            def calc_zusaetzliche_kauefer(stores_pd, stations_pd, beta):
+            def calc_zusaetzliche_kauefer(stores_pd, stations_pd, halbzeit):
                 def get_reachable_stations(group, radius):
                     row = group.iloc[0]
                     # Calculate squared distance (Euclidean).
@@ -119,9 +124,12 @@ class model_MBI_v1_2(ModelBase):
                     return_pd['distanz'] = np.sqrt(distanz_squared[within_circle])
                     return return_pd.set_index(['StoreID'])
 
-                def calc_pendler_wahrscheinlichkeit(group, beta):
-                    partition_function = np.sum(np.exp(-beta * group['distanz']))
-                    probabilities = np.exp(-beta * group['distanz']) / partition_function
+                def calc_pendler_wahrscheinlichkeit(group, halbzeit):
+
+                    partition_function = np.sum(np.exp(-1.0*np.log(2)* group['distanz'] / halbzeit ))
+
+
+                    probabilities = np.exp(-1.0*np.log(2)* group['distanz'] / halbzeit ) / partition_function
 
                     rv = pd.DataFrame({'StoreID': group['StoreID'],
                                        'code': group['Code'],
@@ -134,7 +142,7 @@ class model_MBI_v1_2(ModelBase):
 
                 #
                 self.logger.info('Computing Pendler einfluss ...')
-                self.logger.info("Parameters: beta/ausgaben_pendler = %f / %f", beta, f)
+                self.logger.info("Parameters: halbzeit/ausgaben_pendler = %f", halbzeit)
 
                 x = pd.DataFrame(stores_pd.reset_index().groupby('StoreID',
                                                                  group_keys=False).apply(get_reachable_stations, 300))
@@ -149,7 +157,7 @@ class model_MBI_v1_2(ModelBase):
                 '''
 
                 y = x.reset_index().groupby('Code', group_keys=False).apply(calc_pendler_wahrscheinlichkeit,
-                                                                            beta).reset_index()
+                                                                            halbzeit).reset_index()
                 y['additional_kaeufer'] = y['DWV'] * y['pendler_wahrscheinlichkeit']
 
                 '''
@@ -164,22 +172,25 @@ class model_MBI_v1_2(ModelBase):
                 return y.loc[y.StoreID < 10000].groupby('StoreID',
                                         as_index=False)['additional_kaeufer'].aggregate(np.sum).set_index('StoreID')
 
-            beta_ov = parameters["beta_ov"]
+            ov_halbzeit = parameters["ov_halbzeit"]
             ausgaben_pendler = parameters["ausgaben_pendler"]
             stations_pd = parameters["stations_pd"]
 
-            pendler_einfluss_pd = calc_zusaetzliche_kauefer(pandas_pd, stations_pd, beta_ov)
+            pendler_einfluss_pd = calc_zusaetzliche_kauefer(pandas_pd, stations_pd, ov_halbzeit)
             pendler_einfluss_pd['Umsatz_Pendler'] = pendler_einfluss_pd['additional_kaeufer'] * ausgaben_pendler
             return pendler_einfluss_pd
 
         def calc_umsatz_statent(self, pandas_pd, parameters):
-            beta_halb_zeit = parameters["beta_halb_zeit"]
+            statent_halb_zeit = parameters["statent_halb_zeit"]
 
             self.logger.info("Computing Arbeitnehmer influence ...")
-            self.logger.info("Parameters: beta_halb_zeit = %f", beta_halb_zeit)
+            self.logger.info("Parameters: statent_halb_zeit = %f", statent_halb_zeit)
 
-            beta_zeit_vector = np.where(pandas_pd["Format"] == "SM/VM 700", 0.5*beta_halb_zeit, beta_halb_zeit)
-            # beta_zeit_vector = np.where(pandas_pd["RegionTyp"].isin([11, 12]), 0.5*beta_halb_zeit, beta_halb_zeit)
+            # beta_zeit_vector = np.where(pandas_pd["Format"].isin(["SM/VM 700"]), 0.5 * statent_halb_zeit,
+              #                           statent_halb_zeit)  # best
+            beta_zeit_vector = np.where(pandas_pd["Format"].isin(["SM/VM 700", "SM/VM 2000"]), 0.5*statent_halb_zeit,
+                                        statent_halb_zeit) # second best
+            # beta_zeit_vector = np.where(pandas_pd["RegionTyp"].isin([11, 12]), 0.5*statent_halb_zeit, statent_halb_zeit) - worst
 
             pandas_pd['statent_numerator'] = np.exp(-1.0*np.log(2)*pandas_pd['AutoDistanzKilometer'] / beta_zeit_vector)
             pandas_pd['statent_denumerator'] = pandas_pd.groupby('StartHARasterID')[
@@ -211,12 +222,13 @@ class model_MBI_v1_2(ModelBase):
         try:
             # Parameters Haushaltausgaben
             self.parameters["factor_stadt"] = [float(x) for x in json.loads(config["parameters"]["factor_stadt"])]
-            self.parameters["halb_zeit"] = [float(x) for x in json.loads(config["parameters"]["halb_zeit"])]
+            self.parameters["hh_halbzeit"] = [float(x) for x in json.loads(config["parameters"]["hh_halbzeit"])]
+            self.parameters["penalty_sm_vm"] = [float(x) for x in json.loads(config["parameters"]["penalty_sm_vm"])]
             # Parameters oeV
-            self.parameters["beta_ov"] = [float(x) for x in json.loads(config["parameters"]["beta_ov"])]
+            self.parameters["ov_halbzeit"] = [float(x) for x in json.loads(config["parameters"]["ov_halbzeit"])]
             self.parameters["ausgaben_pendler"] = [float(x) for x in json.loads(config["parameters"]["ausgaben_pendler"])]
             # Parameters STATENT
-            self.parameters["beta_halb_zeit"] = [float(x) for x in json.loads(config["parameters"]["beta_halb_zeit"])]
+            self.parameters["statent_halb_zeit"] = [float(x) for x in json.loads(config["parameters"]["statent_halb_zeit"])]
             #
             self.umsatz_output_csv = config["output"]["output_csv"]
             # create output directory if it doesn't exist
@@ -229,9 +241,11 @@ class model_MBI_v1_2(ModelBase):
                 print(e)
                 sys.exit(1)
             # now build the cartesian products
-            self.habe_params = [(a, b) for a in self.parameters["factor_stadt"] for b in self.parameters["halb_zeit"]]
-            self.ov_params = [(a, b) for a in self.parameters["beta_ov"] for b in self.parameters["ausgaben_pendler"]]
-            self.statent_params = self.parameters["beta_halb_zeit"] # only 1 parameter
+            self.habe_params = [(a, b, c) for a in self.parameters["factor_stadt"]
+                                for b in self.parameters["hh_halbzeit"]
+                                for c in self.parameters["penalty_sm_vm"]]
+            self.ov_params = [(a, b) for a in self.parameters["ov_halbzeit"] for b in self.parameters["ausgaben_pendler"]]
+            self.statent_params = self.parameters["statent_halb_zeit"] # only 1 parameter
 
 
         except Exception:
@@ -264,7 +278,9 @@ class model_MBI_v1_2(ModelBase):
         cache_haushalte_pd = []
         for habe_p in self.habe_params:
             cache_haushalte_pd.append((habe_p,
-                self.umsatz_components.calc_umsatz_haushalt(pandas_dt, {"factor_stadt": habe_p[0], "halb_zeit": habe_p[1]})))
+                self.umsatz_components.calc_umsatz_haushalt(pandas_dt, {"factor_stadt": habe_p[0],
+                                                                        "hh_halbzeit": habe_p[1],
+                                                                        "penalty_sm_vm": habe_p[2]})))
 
         # -----------------------
         # ---- OEV component
@@ -272,17 +288,16 @@ class model_MBI_v1_2(ModelBase):
         cache_pendler_pd = []
         for ov_p in self.ov_params:
             cache_pendler_pd.append((ov_p,
-                self.umsatz_components.calc_umsatz_oev(pandas_dt, {"beta_ov": ov_p[0], "ausgaben_pendler": ov_p[1],
+                self.umsatz_components.calc_umsatz_oev(pandas_dt, {"ov_halbzeit": ov_p[0], "ausgaben_pendler": ov_p[1],
                                                                    "stations_pd":self.parameters["stations_pd"]})))
-        cache_statent_pd = []
 
         # -----------------------
         # ---- STATENT component
         # -----------------------
+        cache_statent_pd = []
         for statent_p in self.statent_params:
-
             cache_statent_pd.append((statent_p,
-                self.umsatz_components.calc_umsatz_statent(pandas_dt, {"beta_halb_zeit": statent_p})))
+                self.umsatz_components.calc_umsatz_statent(pandas_dt, {"statent_halb_zeit": statent_p})))
 
         # now find the optimal combination
         idx_combinations = [(a, b, c) for a in range(len(cache_haushalte_pd)) for b in range(len(cache_pendler_pd))
@@ -306,12 +321,20 @@ class model_MBI_v1_2(ModelBase):
             if tot_error_quant < self.E_min[len(self.E_min) - 1][0]:
                 umsatz_total_optimal_pd = umsatz_total_pd
                 self.logger.info("New minimum found. TOTAL ERROR: %f / %f", tot_error, tot_error_quant)
+                self.logger.info("Parameters: ")
+                self.logger.info("factor_stadt: %f ", cache_haushalte_pd[idx_haushalt][0][0])
+                self.logger.info("hh_halbzeit: %f ", cache_haushalte_pd[idx_haushalt][0][1])
+                self.logger.info("penalty_sm_vm: %f ", cache_haushalte_pd[idx_haushalt][0][2])
+                self.logger.info("ov_halbzeit: %f ", cache_pendler_pd[idx_ov][0][0])
+                self.logger.info("ausgaben_pendler: %f ", cache_pendler_pd[idx_ov][0][1])
+                self.logger.info("statent_halb_zeit: %f ", cache_statent_pd[idx_statent][0])
                 self.E_min[len(self.E_min) - 1] = (tot_error_quant,
                                                {"factor_stadt": cache_haushalte_pd[idx_haushalt][0][0],
-                                                "halb_zeit": cache_haushalte_pd[idx_haushalt][0][1],
-                                                "beta_ov": cache_pendler_pd[idx_ov][0][0],
+                                                "hh_halbzeit": cache_haushalte_pd[idx_haushalt][0][1],
+                                                "penalty_sm_vm": cache_haushalte_pd[idx_haushalt][0][2],
+                                                "ov_halbzeit": cache_pendler_pd[idx_ov][0][0],
                                                 "ausgaben_pendler": cache_pendler_pd[idx_ov][0][1],
-                                                "beta_halb_zeit": cache_statent_pd[idx_statent][0]})
+                                                "statent_halb_zeit": cache_statent_pd[idx_statent][0]})
 
         # --- FINALIZE ------
 
@@ -324,10 +347,11 @@ class model_MBI_v1_2(ModelBase):
         umsatz_total_optimal_pd = umsatz_total_optimal_pd[column_order]
         output_fname = self.umsatz_output_csv + \
                        "_factor_stadt_" + str(self.E_min[0][1]["factor_stadt"]) + \
-                       "_halb_zeit_" + str(str(self.E_min[0][1]["halb_zeit"])) + \
-                       "_betaov_" + str(self.E_min[0][1]["beta_ov"]) + \
+                       "_hh_halbzeit_" + str(self.E_min[0][1]["hh_halbzeit"]) + \
+                       "penalty_sm_vm" + str(self.E_min[0][1]["penalty_sm_vm"]) + \
+                       "_betaov_" + str(self.E_min[0][1]["ov_halbzeit"]) + \
                        "_ausgaben_pendler_" + str(self.E_min[0][1]["ausgaben_pendler"]) + \
-                       "_beta_halb_zeit_" + str(self.E_min[0][1]["beta_halb_zeit"])
+                       "_statent_halb_zeit_" + str(self.E_min[0][1]["statent_halb_zeit"])
 
         self.logger.info("Exporting results ...")
         umsatz_total_optimal_pd.to_csv(output_fname)
