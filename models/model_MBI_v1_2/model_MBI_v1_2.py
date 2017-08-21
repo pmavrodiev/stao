@@ -8,6 +8,13 @@ import datetime
 
 from scipy.optimize import minimize
 from models.model_base import ModelBase
+from multiprocessing import Pool
+
+
+
+def sumRlATS(dataframe):
+    dataframe['sumRLATs'] = np.sum(dataframe['RLAT'])
+    return dataframe
 
 
 @ModelBase.register
@@ -36,6 +43,13 @@ class model_MBI_v1_2(ModelBase):
         def __init__(self, parent_logger):
             self.logger = parent_logger
 
+        def apply_parallel(self, dfGrouped, func, ncpus, chunk_size):
+
+            with Pool(ncpus) as p:
+                ret_list = p.map(func, [group for name, group in dfGrouped], chunksize=chunk_size)
+            concatenated_pd = pd.concat(ret_list)
+            return concatenated_pd
+
         def calc_umsatz_haushalt(self, pandas_pd, parameters):
             def compute_market_share(pandas_dt, parameters):
                 factor_stadt = parameters["factor_stadt"]
@@ -57,8 +71,19 @@ class model_MBI_v1_2(ModelBase):
                 pandas_dt['RLAT'] = pandas_dt['LAT'] * np.exp(-1.0*pandas_dt['FZ']*np.log(2) / hh_halbzeit_vector)
 
                 self.logger.info('Computing sum RLATs ...')
-                pandas_dt['sumRLATs'] = pandas_dt.groupby('StartHARasterID')[["RLAT"]].transform(
-                    lambda x: np.sum(x))
+                groups_RLAT = pandas_dt.groupby('StartHARasterID')[["RLAT"]]
+                self.logger.info(" %d groups", groups_RLAT.ngroups)
+                if parameters["cpu_count"] is None:
+                    pandas_dt['sumRLATs'] = groups_RLAT.transform(lambda x: np.sum(x))
+                else:
+                    self.logger.info("Doing it parallel. Number of cpu_count %d / chunk_size %d",
+                                     parameters["cpu_count"], parameters["chunk_size"])
+
+                    with Pool(parameters["cpu_count"]) as p:
+                        ret_list = p.map(sumRlATS, [group for name, group in groups_RLAT],
+                                         chunksize=parameters["chunk_size"])
+                    pandas_dt = pd.concat(ret_list)
+
                 pandas_dt['LMA'] = pandas_dt['RLAT'] / pandas_dt['sumRLATs']
 
                 self.logger.info('Done')
@@ -251,6 +276,8 @@ class model_MBI_v1_2(ModelBase):
                                                             ausgaben_arbeitnehmer
             return aggregated_over_stores
 
+
+
     logger = None
 
 
@@ -285,10 +312,26 @@ class model_MBI_v1_2(ModelBase):
             #
             self.optimize = config.getboolean('global', 'optimize')
             self.debug = config.getboolean('global', 'debug')
+            self.store_ids = None
+            self.ha_rasterids = None
             if self.debug:
                 try:
                     self.store_ids = [int(x) for x in json.loads(config["debug"]["store_ids"])]
                     self.ha_rasterids = [int(x) for x in json.loads(config["debug"]["ha_rasterids"])]
+                    self.logger.info("Debug mode chosen. Will output geo statistics for specific stores and hectars.")
+                except Exception as e:
+                    print(e)
+                    sys.exit(1)
+
+            self.parallelize = config.getboolean('global', 'parallelize')
+            self.cpu_count = None
+            self.chunk_size = None
+            if self.parallelize:
+                try:
+                    self.cpu_count = [int(x) for x in json.loads(config["parallel"]["cpu_count"])][0]
+                    self.chunk_size = [int(x) for x in json.loads(config["parallel"]["chunk_size"])][0]
+                    self.logger.info("Parallel mode chosen with cpu_count %d / chunk_size %d",
+                                     self.cpu_count, self.chunk_size)
                 except Exception as e:
                     print(e)
                     sys.exit(1)
@@ -320,6 +363,11 @@ class model_MBI_v1_2(ModelBase):
 
     def total_umsatz(self, param_vector, rest):
 
+        # general parameters
+        cpu_count = rest["parallel"]["cpu_count"]
+        chunk_size = rest["parallel"]["chunk_size"]
+
+        # Parameters STATPOP
         factor_stadt = param_vector[0]
         hh_halbzeit = param_vector[1]
         hh_penalty_smvm = param_vector[2]
@@ -336,7 +384,9 @@ class model_MBI_v1_2(ModelBase):
         umsatz_haushalte = self.umsatz_components.calc_umsatz_haushalt(rest["pandas_dt"],
                                                                        {"factor_stadt": factor_stadt,
                                                                         "hh_halbzeit": hh_halbzeit,
-                                                                        "hh_penalty_smvm": hh_penalty_smvm})
+                                                                        "hh_penalty_smvm": hh_penalty_smvm,
+                                                                        "cpu_count": cpu_count,
+                                                                        "chunk_size": chunk_size})
 
         umsatz_ov = self.umsatz_components.calc_umsatz_oev(rest["pandas_dt"],
                                                                        {"ov_halbzeit": ov_halbzeit,
@@ -367,8 +417,9 @@ class model_MBI_v1_2(ModelBase):
 
         self.process_settings(config)
 
-        # initialize the
+        # initialize the internal classes
         self.umsatz_components = self._umsatz_components_(logger)
+
 
         # check if the model got the right dict with input tables
         # TODO: super basic check for names only. Handle more robustly
@@ -391,9 +442,11 @@ class model_MBI_v1_2(ModelBase):
                                          self.parameters["ausgaben_pendler"][0],
                                          self.parameters["statent_halb_zeit"][0],
                                          self.parameters["statent_penalty_smvm"][0],
-                                        self.parameters["ausgaben_arbeitnehmer"][0]])
+                                         self.parameters["ausgaben_arbeitnehmer"][0]])
                               ),
-                           args=({"pandas_dt": pandas_dt, "stations_pd": self.parameters["stations_pd"]}),
+                           args=({"pandas_dt": pandas_dt, "stations_pd": self.parameters["stations_pd"],
+                                  "parallel": {"cpu_count": self.cpu_count,
+                                               "chunk_size": self.chunk_size}}),
                            method='nelder-mead',
                            options={ 'xtol': 1e-3, 'maxiter': 10},
                            callback=lambda xk: self.logger.info("Iterating. Parameters %s", str(xk)) )
@@ -411,9 +464,11 @@ class model_MBI_v1_2(ModelBase):
                                                                         "hh_halbzeit": habe_p[1],
                                                                         "hh_penalty_smvm": habe_p[2],
                                                                         "debug": self.debug,
-                                                                        "store_ids": self.store_ids,
-                                                                        "haraster_ids": self.ha_rasterids,
-                                                                        "umsatz_output_csv": self.umsatz_output_csv})))
+                                                                        "store_ids": self.store_ids or None,
+                                                                        "haraster_ids": self.ha_rasterids or None,
+                                                                        "umsatz_output_csv": self.umsatz_output_csv,
+                                                                        "cpu_count": self.cpu_count,
+                                                                        "chunk_size": self.chunk_size})))
 
         # -----------------------
         # ---- OEV component
