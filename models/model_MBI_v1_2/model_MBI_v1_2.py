@@ -13,7 +13,9 @@ from multiprocessing import Pool
 
 
 def sumRlATS(dataframe):
-    dataframe['sumRLATs'] = np.sum(dataframe['RLAT'])
+    print("process id = %d / processing group with size %d " % (os.getpid(), len(dataframe)))
+    dataframe['sumRLATs'] = dataframe['RLAT'].sum()
+    print("process id = %d - DONE " % os.getpid())
     return dataframe
 
 
@@ -43,13 +45,6 @@ class model_MBI_v1_2(ModelBase):
         def __init__(self, parent_logger):
             self.logger = parent_logger
 
-        def apply_parallel(self, dfGrouped, func, ncpus, chunk_size):
-
-            with Pool(ncpus) as p:
-                ret_list = p.map(func, [group for name, group in dfGrouped], chunksize=chunk_size)
-            concatenated_pd = pd.concat(ret_list)
-            return concatenated_pd
-
         def calc_umsatz_haushalt(self, pandas_pd, parameters):
             def compute_market_share(pandas_dt, parameters):
                 factor_stadt = parameters["factor_stadt"]
@@ -71,17 +66,19 @@ class model_MBI_v1_2(ModelBase):
                 pandas_dt['RLAT'] = pandas_dt['LAT'] * np.exp(-1.0*pandas_dt['FZ']*np.log(2) / hh_halbzeit_vector)
 
                 self.logger.info('Computing sum RLATs ...')
-                groups_RLAT = pandas_dt.groupby('StartHARasterID')[["RLAT"]]
+                groups_RLAT = pandas_dt.groupby('StartHARasterID', as_index=False,
+                                                sort=False, group_keys=False)[["RLAT"]]
                 self.logger.info(" %d groups", groups_RLAT.ngroups)
                 if parameters["cpu_count"] is None:
-                    pandas_dt['sumRLATs'] = groups_RLAT.transform(lambda x: np.sum(x))
+                    pandas_dt['sumRLATs'] = groups_RLAT.transform(sum)
                 else:
                     self.logger.info("Doing it parallel. Number of cpu_count %d / chunk_size %d",
                                      parameters["cpu_count"], parameters["chunk_size"])
 
                     with Pool(parameters["cpu_count"]) as p:
-                        ret_list = p.map(sumRlATS, [group for name, group in groups_RLAT],
-                                         chunksize=parameters["chunk_size"])
+                        ret_list = p.map(sumRlATS, [group for name, group in groups_RLAT])
+                                         # chunksize=parameters["chunk_size"])
+                    self.logger.info("Concatenating parallel results")
                     pandas_dt = pd.concat(ret_list)
 
                 pandas_dt['LMA'] = pandas_dt['RLAT'] / pandas_dt['sumRLATs']
@@ -263,7 +260,7 @@ class model_MBI_v1_2(ModelBase):
 
             pandas_pd['statent_numerator'] = np.exp(-1.0*np.log(2)*pandas_pd['AutoDistanzKilometer'] / beta_zeit_vector)
             pandas_pd['statent_denumerator'] = pandas_pd.groupby('StartHARasterID')[
-                ['statent_numerator']].transform(lambda x: np.sum(x))
+                ['statent_numerator']].transform(sum)
 
             pandas_pd['statent_probability'] = pandas_pd['statent_numerator'] / pandas_pd['statent_denumerator']
             pandas_pd['statent_additional_kunden'] = pandas_pd['statent_probability'] * pandas_pd['ANTOT']

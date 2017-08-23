@@ -53,7 +53,7 @@ if __name__ == "__main__":
     # -------------------------------------
     # Check if intermediary cache is available. In this case, skip the input reader
     # -------------------------------------
-    if config.getboolean('global', 'cache_intermediary') and config.getboolean('global', 'cache_enabled'):
+    if config.getboolean('global', 'cache_intermediary'):
         logger.info("Reading intermediary cache ...")
         enriched_pd = pd.read_pickle(os.path.join(cache_dir, config['cache_config']['intermediary_cache']))
         # TODO very ugly FIX ITTTT
@@ -72,23 +72,32 @@ if __name__ == "__main__":
         # --- Get only the relevant hektars from the drivetimes, i.e. those from which a Migros store is reachable
         logger.info("Obtaining all drive times only for hectars from which a Migros store is reachable ... ")
         # first join the migros stores and drivetimes
-        migros_merged_pd = pd.merge(left=migros_stores_pd,
-                                    right=drivetimes_pd, how='left',
-                                    left_on='HARasterID', right_on='ZielHARasterID')
-        # second join the competitors' stores and drivetimes
-        konkurrenten_merged_pd = pd.merge(left=konkurrenten_stores_pd, right=drivetimes_pd, how='left',
-                                          left_on='HARasterID', right_on='ZielHARasterID')
+        # migros_merged_pd has index HARasterID
+        # drivetimes_pd has index ZielHARasterID
+        migros_merged_pd = migros_stores_pd.join(drivetimes_pd)
+        logger.info("Done.")
         # now remove all stores without drivetimes info
+        logger.info("Removing stores without fahrzeit information")
         migros_merged_pd = migros_merged_pd.loc[~np.isnan(migros_merged_pd.FZ)]
+        logger.info("Done.")
+
+        logger.info("Sanity check")
         # sanoty check - all stores must have their HARasterIDs as both start and end HARasterID in drivetimes
         x = migros_merged_pd.loc[
-            (migros_merged_pd.HARasterID == migros_merged_pd.StartHARasterID), ['StoreID', 'StoreName', 'HARasterID',
-                                                                                     'StartHARasterID',
-                                                                                     'ZielHARasterID',
-                                                                                 'FZ']]
+            (migros_merged_pd.index == migros_merged_pd.StartHARasterID), ['StoreID', 'StoreName',
+                                                                                'StartHARasterID',
+                                                                                'ZielHARasterID',
+                                                                                'FZ']]
         if len(x) != len(np.unique(migros_merged_pd.StoreID)):
             logger.warn("Some stores do not have the required 0 entry in drivetimes['FZ']")
+            logger.warn("Sanity check failed")
+        else:
+            logger.info("Sanity check passed.")
 
+        logger.info("Removing hectares from which only competitor stores can be reached")
+        # konkurrenten_stores_pd has index HARasterID
+        # drivetimes_pd has index ZielHARasterID
+        konkurrenten_merged_pd = konkurrenten_stores_pd.join(drivetimes_pd)
         konkurrenten_merged_pd = konkurrenten_merged_pd.loc[~np.isnan(konkurrenten_merged_pd.FZ)]
 
         konkurrenten_StartHA = np.unique(konkurrenten_merged_pd.StartHARasterID)
@@ -98,34 +107,51 @@ if __name__ == "__main__":
         # need to re-order the columns, because pandas.concat sorts them
         all_stores_pd = pd.concat([migros_merged_pd, konkurrenten_merged_pd])[migros_merged_pd.columns.tolist()]
         all_stores_pd = all_stores_pd.loc[~all_stores_pd.StartHARasterID.isin(StartHA_to_exclude)]
-
-        # enrich the drivetimes of the relevant hectars with Arbeitnehmer Information
-        logger.info("Enriching with Arbeitnehmer information ...")
-        enriched_pd = all_stores_pd.merge(arbeitnehmer_pd.set_index('HARasterID'),
-                                          left_on='StartHARasterID', right_index=True, how='left')
-
-        logger.info("Number of unique StartHARasterIDs without Arbeitnehmer info: %d out of %d",
-                    len(np.unique(enriched_pd.loc[np.isnan(enriched_pd.ANTOT)].StartHARasterID)),
-                    len(np.unique(enriched_pd.StartHARasterID)))
-
-        # enrich the drivetimes of the relevant hectars with RegionsTyp Information
-        logger.info("Enriching with Regionstyp information ...")
-        enriched_pd = enriched_pd.merge(regionstypen_pd.set_index('HARasterID')[['RegionTyp', 'DTB']],
-                                          left_on='HARasterID', right_index=True, how='left')
-
-        logger.info("Number of unique ZielHARasterIDs without Regionstyp info: %d out of %d",
-                    len(np.unique(enriched_pd.loc[np.isnan(enriched_pd.RegionTyp)].ZielHARasterID)),
-                    len(np.unique(enriched_pd.ZielHARasterID)))
+        logger.info("Done.")
 
         # enrich the drive times of the relevant hectars with Haushalt information
         logger.info("Enriching with Haushalt information ...")
-        enriched_pd = enriched_pd.merge(haushalt_pd[['Tot_Haushaltausgaben']],
-                                                             left_on='StartHARasterID', right_index=True,
-                                                         how='left')
-        logger.info("Number of unique StartHektarIDs without Haushaltausgaben info: %d out of %d",
-                    len(np.unique(enriched_pd.loc[np.isnan(enriched_pd.Tot_Haushaltausgaben), "StartHARasterID"])),
-                    len(np.unique(enriched_pd.StartHARasterID)))
 
+        # haushalt_pd has index HARasterID
+        # all_stores_pd has index HARasterID
+        enriched_pd = all_stores_pd.join(haushalt_pd[['Tot_Haushaltausgaben', 'AnzahlHH']])
+
+        if LOGGING_LEVEL == logging.DEBUG:
+            logger.debug("Number of unique StartHektarIDs without Haushaltausgaben info: %d out of %d",
+                     len(np.unique(enriched_pd.loc[np.isnan(enriched_pd.Tot_Haushaltausgaben), "StartHARasterID"])),
+                     len(np.unique(enriched_pd.StartHARasterID)))
+
+        logger.info("Done.")
+
+        # enrich the drivetimes of the relevant hectars with RegionsTyp Information
+        logger.info("Enriching with Regionstyp information ...")
+        # regionstypen_pd has index HARasterID
+        enriched_pd = enriched_pd.join(regionstypen_pd[['RegionTyp', 'DTB']])
+
+        if LOGGING_LEVEL == logging.DEBUG:
+            logger.debug("Number of unique ZielHARasterIDs without Regionstyp info: %d out of %d",
+                        len(np.unique(enriched_pd.loc[np.isnan(enriched_pd.RegionTyp)].ZielHARasterID)),
+                        len(np.unique(enriched_pd.ZielHARasterID)))
+
+        logger.info("Done.")
+
+        # enrich the drivetimes of the relevant hectars with Arbeitnehmer Information
+        # arbeitnehmer_pd has index HARasterID
+        logger.info("Enriching with Arbeitnehmer information ...")
+        enriched_pd = enriched_pd.merge(arbeitnehmer_pd, how="left", left_on='StartHARasterID', right_index=True)
+
+        if LOGGING_LEVEL == logging.DEBUG:
+            logger.debug("Number of unique StartHARasterIDs without Arbeitnehmer info: %d out of %d",
+                        len(np.unique(enriched_pd.loc[np.isnan(enriched_pd.ANTOT)].StartHARasterID)),
+                        len(np.unique(enriched_pd.StartHARasterID)))
+
+        logger.info("Done.")
+
+        logger.info("Resetting index ... ")
+        # give the index back its original name
+        enriched_pd.index.name = 'HARasterID'
+        enriched_pd.reset_index(inplace=True)
+        logger.info("Done.")
 
         logger.info('Creating intermediary cache ...')
         enriched_pd.to_pickle(os.path.join(cache_dir, config['cache_config']['intermediary_cache']))
