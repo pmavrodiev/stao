@@ -57,7 +57,8 @@ if __name__ == "__main__":
         logger.info("Reading intermediary cache ...")
         enriched_pd = pd.read_pickle(os.path.join(cache_dir, config['cache_config']['intermediary_cache']))
         # TODO very ugly FIX ITTTT
-        stations = config['inputdata']['stations']
+        stations_tuple = eval(config['inputdata']['stations'], {}, {})
+        stations = stations_tuple[0]
         stations_pd = pd.read_csv(stations, sep=';', header=0, index_col=False, encoding='latin-1')
 
         logger.info("Done.")

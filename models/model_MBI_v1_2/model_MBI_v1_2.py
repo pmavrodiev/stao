@@ -10,6 +10,7 @@ from scipy.optimize import minimize
 from models.model_base import ModelBase
 from multiprocessing import Pool
 
+from pyproj import Proj, transform  # coordinate projections and transformations
 
 
 def sumRlATS(dataframe):
@@ -21,6 +22,56 @@ def sumRlATS(dataframe):
 
 @ModelBase.register
 class model_MBI_v1_2(ModelBase):
+
+    """
+    POST-PROCESS DATA FOR VISUALIZATION IN TABLEAU
+    Input: RELI / HARasterID
+    Output: Coordinates (WGS84) of the 4 corners of this hectare, including a Tableau-compatible plotting order
+    Bojan.Skerlak@mgb.ch, August 2017
+    Integrated  pavlin.mavrodiev@mgb.ch, August 2017
+    """
+    class _geo_helpers_:
+        def __init__(self):
+            # --- Import Coordinate Frames
+            self.lv03Proj = Proj(init='epsg:21781')  # LV03 = CH1903 (old Swiss coordinate system, 6 digits)
+            self.lv95Proj = Proj(init='epsg:2056')  # LV95 = CH1903+ (new Swiss coordinate system, 7 digits)
+            self.wgs84Proj = Proj(init='epsg:4326')  # WGS84 (worldwide coordinate system ('default' lat lon)
+
+        # --- Define functions
+        #  Calculates WGS coordinates from LV03
+        def calcWGScoords(self, x, y):
+            return pd.Series(
+                {'lon': transform(self.lv03Proj, self.wgs84Proj, x, y)[0],
+                 'lat': transform(self.lv03Proj, self.wgs84Proj, x, y)[1]})
+
+        #  Extracts first 4 and last 4 digits (note, these are NOT coordinates because they have not yet been multiplied by 100)
+        def getXYfromreli(self, reli):
+            x = int(str(reli)[0:4])
+            y = int(str(reli)[4:9])
+            return pd.Series({'x': x, 'y': y})
+
+        #  Calculates points (corners) of HA, including PlotOrder (needed for Tableau).
+        def calcHRpoints(self, reli):
+            [x0, y0] = self.getXYfromreli(reli)
+            out = pd.DataFrame({'HARasterID': reli,
+                                'x_corner': np.multiply(np.array([x0, x0 + 1, x0 + 1, x0]), 100),
+                                'y_corner': np.multiply(np.array([y0, y0, y0 + 1, y0 + 1]), 100),
+                                'PlotOrder': range(1, 5)}
+                               )
+            out.set_index('HARasterID', inplace=True)  # comment if not needed
+            return out
+
+        #  Adds WGS coordinates to data frame
+        def addHRpointsWGS(self, reli):
+            df = self.calcHRpoints(reli)  # create data frame with corners in Swiss coordinates
+            # calculate WGS84 coordinates and concatenate data frames
+            out = pd.concat([df,
+                             df[['x_corner', 'y_corner']]. \
+                            apply(lambda row: self.calcWGScoords(row['x_corner'], row['y_corner']), axis=1)],
+                            axis=1)
+            # out has a key HARasterID
+            return out[['PlotOrder', 'lat', 'lon']]
+
 
     """
         This subclass implements the calculation of all the different components of the modell turnover.
@@ -42,9 +93,29 @@ class model_MBI_v1_2(ModelBase):
         'FZ', 'RegionTyp', 'DTB', 'ANTOT', 'Tot_Haushaltausgaben']
     """
     class _umsatz_components_:
-        def __init__(self, parent_logger):
+        def __init__(self, parent_logger, geo_helpers = None):
             self.logger = parent_logger
+            self.geo_helpers = geo_helpers
 
+        """
+        class Groupby:
+            def __init__(self, keys):
+                _, self.keys_as_int = np.unique(keys, return_inverse=True)
+                self.n_keys = max(self.keys_as_int)
+                self.set_indices()
+
+            def set_indices(self):
+                self.indices = [[] for i in range(self.n_keys + 1)]
+                for i, k in enumerate(self.keys_as_int):
+                    self.indices[k].append(i)
+                self.indices = [np.array(elt) for elt in self.indices]
+
+            def apply(self, function, vector):
+                result = np.zeros(len(vector))
+                for k in range(self.n_keys):
+                    result[self.indices[k]] = function(vector.iloc[self.indices[k]])
+                return result
+        """
         def calc_umsatz_haushalt(self, pandas_pd, parameters):
             def compute_market_share(pandas_dt, parameters):
                 factor_stadt = parameters["factor_stadt"]
@@ -67,9 +138,11 @@ class model_MBI_v1_2(ModelBase):
 
                 self.logger.info('Computing sum RLATs ...')
                 groups_RLAT = pandas_dt.groupby('StartHARasterID', as_index=False,
-                                                sort=False, group_keys=False)[["RLAT"]]
+                                                 sort=False, group_keys=False)[["RLAT"]]
                 self.logger.info(" %d groups", groups_RLAT.ngroups)
                 if parameters["cpu_count"] is None:
+                    # pandas_dt['sumRLATs'] = self.Groupby(pandas_dt['StartHARasterID'].astype(int)).apply(np.sum,
+                    #                                                                     pandas_dt['RLAT'])
                     pandas_dt['sumRLATs'] = groups_RLAT.transform(sum)
                 else:
                     self.logger.info("Doing it parallel. Number of cpu_count %d / chunk_size %d",
@@ -135,7 +208,8 @@ class model_MBI_v1_2(ModelBase):
 
             if parameters["debug"]:
                 self.logger.info("Exporting debugging info")
-                store_perspective = pandas_postprocessed_dt.loc[pandas_postprocessed_dt["StoreID"].isin(parameters["store_ids"])][["StartHARasterID",
+                store_perspective = pandas_postprocessed_dt.loc[pandas_postprocessed_dt["StoreID"].isin(parameters["store_ids"])][[
+                                                                                              "StartHARasterID",
                                                                                               "AnzahlHH",
                                                                                               "Tot_Haushaltausgaben",
                                                                                               "HARasterID",
@@ -150,8 +224,18 @@ class model_MBI_v1_2(ModelBase):
                                                                                               "E_LV03",
                                                                                               "N_LV03",
                                                                                               "FZ"]]
+                writer = pd.ExcelWriter(parameters["umsatz_output_csv"] + ".debugstores.xlsx")
+                store_perspective.to_excel(writer, "LMA")
+                # now get the WGS84 coordinates of all StartHARasterID
+                self.logger.info("Calculating WGS84 coordinates for all StartHARasterIDs ... ")
+                startHARasterIDs = np.unique(pandas_postprocessed_dt['StartHARasterID'].astype(int))
+                stores_perspective_relis2wgs84 = pd.concat([self.geo_helpers.addHRpointsWGS(x) for x in startHARasterIDs])
+                self.logger.info("Done.")
+                stores_perspective_relis2wgs84.to_excel(writer, "StartRelis2WGS84")
+                #
                 store_perspective.to_csv(parameters["umsatz_output_csv"] + ".debugstores")
-                haraster_perpective = pandas_postprocessed_dt.loc[pandas_postprocessed_dt["StartHARasterID"].isin(parameters["haraster_ids"])][["StartHARasterID",
+                haraster_perpective = pandas_postprocessed_dt.loc[pandas_postprocessed_dt["StartHARasterID"].isin(parameters["haraster_ids"])][[
+                                                                                              "StartHARasterID",
                                                                                               "AnzahlHH",
                                                                                               "Tot_Haushaltausgaben",
                                                                                               "HARasterID",
@@ -363,6 +447,7 @@ class model_MBI_v1_2(ModelBase):
         # general parameters
         cpu_count = rest["parallel"]["cpu_count"]
         chunk_size = rest["parallel"]["chunk_size"]
+        debug = rest["debug"]
 
         # Parameters STATPOP
         factor_stadt = param_vector[0]
@@ -383,7 +468,8 @@ class model_MBI_v1_2(ModelBase):
                                                                         "hh_halbzeit": hh_halbzeit,
                                                                         "hh_penalty_smvm": hh_penalty_smvm,
                                                                         "cpu_count": cpu_count,
-                                                                        "chunk_size": chunk_size})
+                                                                        "chunk_size": chunk_size,
+                                                                        "debug": debug})
 
         umsatz_ov = self.umsatz_components.calc_umsatz_oev(rest["pandas_dt"],
                                                                        {"ov_halbzeit": ov_halbzeit,
@@ -415,7 +501,7 @@ class model_MBI_v1_2(ModelBase):
         self.process_settings(config)
 
         # initialize the internal classes
-        self.umsatz_components = self._umsatz_components_(logger)
+        self.umsatz_components = self._umsatz_components_(logger, geo_helpers=self._geo_helpers_())
 
 
         # check if the model got the right dict with input tables
@@ -443,9 +529,10 @@ class model_MBI_v1_2(ModelBase):
                               ),
                            args=({"pandas_dt": pandas_dt, "stations_pd": self.parameters["stations_pd"],
                                   "parallel": {"cpu_count": self.cpu_count,
-                                               "chunk_size": self.chunk_size}}),
+                                               "chunk_size": self.chunk_size},
+                                  "debug": None}),
                            method='nelder-mead',
-                           options={ 'xtol': 1e-3, 'maxiter': 10},
+                           options={ 'xtol': 1e-3, 'maxiter': 50},
                            callback=lambda xk: self.logger.info("Iterating. Parameters %s", str(xk)) )
 
             logger.info("Optimization finished: ")
