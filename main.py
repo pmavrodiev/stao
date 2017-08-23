@@ -40,7 +40,7 @@ if __name__ == "__main__":
     # -------------------------------------
     # Set up logger
     # -------------------------------------
-    LOGGING_LEVEL = logging.INFO
+    LOGGING_LEVEL = logging.DEBUG
     logger = setup_custom_logger('GM_LOGGER', LOGGING_LEVEL, flog=options.logname)
 
     # -------------------------------------
@@ -114,7 +114,9 @@ if __name__ == "__main__":
 
         # haushalt_pd has index HARasterID
         # all_stores_pd has index HARasterID
-        enriched_pd = all_stores_pd.join(haushalt_pd[['Tot_Haushaltausgaben', 'AnzahlHH']])
+        enriched_pd = all_stores_pd.merge(haushalt_pd[['Tot_Haushaltausgaben', 'AnzahlHH']],
+                                          left_on='StartHARasterID', right_index = True,
+                                          how='left')
 
         if LOGGING_LEVEL == logging.DEBUG:
             logger.debug("Number of unique StartHektarIDs without Haushaltausgaben info: %d out of %d",
@@ -126,12 +128,13 @@ if __name__ == "__main__":
         # enrich the drivetimes of the relevant hectars with RegionsTyp Information
         logger.info("Enriching with Regionstyp information ...")
         # regionstypen_pd has index HARasterID
+        # enriched_pd has index HARasterID
         enriched_pd = enriched_pd.join(regionstypen_pd[['RegionTyp', 'DTB']])
 
         if LOGGING_LEVEL == logging.DEBUG:
             logger.debug("Number of unique ZielHARasterIDs without Regionstyp info: %d out of %d",
-                        len(np.unique(enriched_pd.loc[np.isnan(enriched_pd.RegionTyp)].ZielHARasterID)),
-                        len(np.unique(enriched_pd.ZielHARasterID)))
+                        len(np.unique(enriched_pd.loc[np.isnan(enriched_pd.RegionTyp)].RegionTyp)),
+                        len(np.unique(enriched_pd.RegionTyp)))
 
         logger.info("Done.")
 
