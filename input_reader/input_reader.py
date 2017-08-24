@@ -173,7 +173,7 @@ def get_input(settingsFile, logger):
             drivetimes_pd = read_drivetimes(drivetimes_tuple[0], logger)
             drivetimes_pd.to_pickle(os.path.join(cache_dir, config['cache_config']['drivetimes_cached']))
     else:
-        logger.info("Reading Competitor stores from file. Takes a while. Will not be cached")
+        logger.info("Reading Drivetimes stores from file. Takes a while. Will not be cached")
         drivetimes_pd = read_drivetimes(drivetimes_tuple[0], logger)
     logger.info("Done")
 
