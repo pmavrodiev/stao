@@ -25,10 +25,10 @@ class model_MBI_v1_2(ModelBase):
 
     """
     POST-PROCESS DATA FOR VISUALIZATION IN TABLEAU
-    Input: RELI / HARasterID
+    Input: Numpy ndarray with RELIs / HARasterIDs
     Output: Coordinates (WGS84) of the 4 corners of this hectare, including a Tableau-compatible plotting order
-    Bojan.Skerlak@mgb.ch, August 2017
-    Integrated  pavlin.mavrodiev@mgb.ch, August 2017
+    Based on original code from Bojan.Skerlak@mgb.ch, August 2017
+    Optimized and adapted by Pavlin.Mavrodiev@mgb.ch, August 2017
     """
     class _geo_helpers_:
         def __init__(self):
@@ -38,39 +38,29 @@ class model_MBI_v1_2(ModelBase):
             self.wgs84Proj = Proj(init='epsg:4326')  # WGS84 (worldwide coordinate system ('default' lat lon)
 
         # --- Define functions
-        #  Calculates WGS coordinates from LV03
-        def calcWGScoords(self, x, y):
-            return pd.Series(
-                {'lon': transform(self.lv03Proj, self.wgs84Proj, x, y)[0],
-                 'lat': transform(self.lv03Proj, self.wgs84Proj, x, y)[1]})
-
-        #  Extracts first 4 and last 4 digits (note, these are NOT coordinates because they have not yet been multiplied by 100)
-        def getXYfromreli(self, reli):
-            x = int(str(reli)[0:4])
-            y = int(str(reli)[4:9])
-            return pd.Series({'x': x, 'y': y})
-
         #  Calculates points (corners) of HA, including PlotOrder (needed for Tableau).
         def calcHRpoints(self, reli):
-            [x0, y0] = self.getXYfromreli(reli)
-            out = pd.DataFrame({'HARasterID': reli,
-                                'x_corner': np.multiply(np.array([x0, x0 + 1, x0 + 1, x0]), 100),
-                                'y_corner': np.multiply(np.array([y0, y0, y0 + 1, y0 + 1]), 100),
-                                'PlotOrder': range(1, 5)}
+            # Extracts first 4 and last 4 digits (note, these are NOT coordinates because they have not yet been multiplied by 100)
+            x0 = reli // 10000
+            y0 = reli - (reli // 10000) * 10000
+
+            out = pd.DataFrame({'HARasterID': np.repeat(reli, 4),
+                                'x_corner': np.multiply(np.array([x0, x0 + 1, x0 + 1, x0]), 100).flatten(order='F'),
+                                'y_corner': np.multiply(np.array([y0, y0, y0 + 1, y0 + 1]), 100).flatten(order='F'),
+                                'PlotOrder': np.tile(range(1, 5), len(x0))}
                                )
             out.set_index('HARasterID', inplace=True)  # comment if not needed
             return out
 
         #  Adds WGS coordinates to data frame
         def addHRpointsWGS(self, reli):
-            df = self.calcHRpoints(reli)  # create data frame with corners in Swiss coordinates
-            # calculate WGS84 coordinates and concatenate data frames
-            out = pd.concat([df,
-                             df[['x_corner', 'y_corner']]. \
-                            apply(lambda row: self.calcWGScoords(row['x_corner'], row['y_corner']), axis=1)],
-                            axis=1)
-            # out has a key HARasterID
-            return out[['PlotOrder', 'lat', 'lon']]
+            # create data frame with corners in Swiss coordinates
+            df = self.calcHRpoints(reli)
+            # calculate WGS84 coordinates
+            xyWSG84 = transform(self.lv03Proj, self.wgs84Proj, df['x_corner'].values, df['y_corner'].values)
+            df['lon'] = xyWSG84[0]
+            df['lat'] = xyWSG84[1]
+            return df
 
 
     """
@@ -208,48 +198,20 @@ class model_MBI_v1_2(ModelBase):
 
             if parameters["debug"]:
                 self.logger.info("Exporting debugging info")
-                store_perspective = pandas_postprocessed_dt.loc[pandas_postprocessed_dt["StoreID"].isin(parameters["store_ids"])][[
-                                                                                              "StartHARasterID",
-                                                                                              "AnzahlHH",
-                                                                                              "Tot_Haushaltausgaben",
-                                                                                              "HARasterID",
-                                                                                              "StoreID",
-                                                                                              "StoreName",
-                                                                                              "Format",
-                                                                                              "Retailer",
-                                                                                              "VFL",
-                                                                                              "LMA",
-                                                                                              "lat",
-                                                                                              "lon",
-                                                                                              "E_LV03",
-                                                                                              "N_LV03",
-                                                                                              "FZ"]]
+                store_perspective = pandas_postprocessed_dt.loc[
+                    pandas_postprocessed_dt["StoreID"].isin(parameters["store_ids"])]
                 writer = pd.ExcelWriter(parameters["umsatz_output_csv"] + ".debugstores.xlsx")
                 store_perspective.to_excel(writer, "LMA")
                 # now get the WGS84 coordinates of all StartHARasterID
                 self.logger.info("Calculating WGS84 coordinates for all StartHARasterIDs ... ")
                 startHARasterIDs = np.unique(pandas_postprocessed_dt['StartHARasterID'].astype(int))
-                stores_perspective_relis2wgs84 = pd.concat([self.geo_helpers.addHRpointsWGS(x) for x in startHARasterIDs])
+                stores_perspective_relis2wgs84 = self.geo_helpers.addHRpointsWGS(startHARasterIDs)
                 self.logger.info("Done.")
                 stores_perspective_relis2wgs84.to_excel(writer, "StartRelis2WGS84")
                 #
                 store_perspective.to_csv(parameters["umsatz_output_csv"] + ".debugstores")
-                haraster_perpective = pandas_postprocessed_dt.loc[pandas_postprocessed_dt["StartHARasterID"].isin(parameters["haraster_ids"])][[
-                                                                                              "StartHARasterID",
-                                                                                              "AnzahlHH",
-                                                                                              "Tot_Haushaltausgaben",
-                                                                                              "HARasterID",
-                                                                                              "StoreID",
-                                                                                              "StoreName",
-                                                                                              "Format",
-                                                                                              "Retailer",
-                                                                                              "VFL",
-                                                                                              "LMA",
-                                                                                              "lat",
-                                                                                              "lon",
-                                                                                              "E_LV03",
-                                                                                              "N_LV03",
-                                                                                              "FZ"]]
+                haraster_perpective = pandas_postprocessed_dt.loc[
+                    pandas_postprocessed_dt["StartHARasterID"].isin(parameters["haraster_ids"])]
                 haraster_perpective.to_csv(parameters["umsatz_output_csv"] + ".debugharaster")
                 self.logger.info("Done")
 
