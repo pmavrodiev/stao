@@ -355,16 +355,21 @@ class model_MBI_v1_2(ModelBase):
             #
             self.optimize = config.getboolean('global', 'optimize')
             self.debug = config.getboolean('global', 'debug')
+
             self.store_ids = None
             self.ha_rasterids = None
             if self.debug:
-                try:
-                    self.store_ids = [int(x) for x in json.loads(config["debug"]["store_ids"])]
-                    self.ha_rasterids = [int(x) for x in json.loads(config["debug"]["ha_rasterids"])]
-                    self.logger.info("Debug mode chosen. Will output geo statistics for specific stores and hectars.")
-                except Exception as e:
-                    print(e)
-                    sys.exit(1)
+                if self.optimize:
+                    self.logger.info("Debug option chosen, but will be ignored, because optimize is True. ")
+                    self.debug = None
+                else:
+                    try:
+                        self.store_ids = [int(x) for x in json.loads(config["debug"]["store_ids"])]
+                        self.ha_rasterids = [int(x) for x in json.loads(config["debug"]["ha_rasterids"])]
+                        self.logger.info("Debug mode chosen. Will output geo statistics for specific stores and hectars.")
+                    except Exception as e:
+                        print(e)
+                        sys.exit(1)
 
             self.parallelize = config.getboolean('global', 'parallelize')
             self.cpu_count = None
