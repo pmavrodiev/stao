@@ -356,6 +356,7 @@ class model_MBI_v1_2(ModelBase):
             self.optimize = config.getboolean('global', 'optimize')
             self.debug = config.getboolean('global', 'debug')
 
+            # Debug options
             self.store_ids = None
             self.ha_rasterids = None
             if self.debug:
