@@ -42,7 +42,7 @@ class model_MBI_v1_2(ModelBase):
         def calcHRpoints(self, reli):
             # Extracts first 4 and last 4 digits (note, these are NOT coordinates because they have not yet been multiplied by 100)
             x0 = reli // 10000
-            y0 = reli - (reli // 10000) * 10000
+            y0 = reli - x0 * 10000
 
             out = pd.DataFrame({'HARasterID': np.repeat(reli, 4),
                                 'x_corner': np.multiply(np.array([x0, x0 + 1, x0 + 1, x0]), 100).flatten(order='F'),
