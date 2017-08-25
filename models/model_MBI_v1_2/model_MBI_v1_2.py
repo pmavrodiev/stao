@@ -197,22 +197,39 @@ class model_MBI_v1_2(ModelBase):
             pandas_postprocessed_dt = compute_market_share(pandas_pd, parameters)
 
             if parameters["debug"]:
-                self.logger.info("Exporting debugging info")
+                self.logger.info("Computing debugging info")
+                # get a subset with the relevant stores, defined in the settings
                 store_perspective = pandas_postprocessed_dt.loc[
                     pandas_postprocessed_dt["StoreID"].isin(parameters["store_ids"])]
+                # sort the FZ column for each StoreID
+                store_perspective = store_perspective.sort_values(['StoreID', 'FZ'])
+
+                store_perspective['LUmsatz'] = store_perspective['LMA'] * store_perspective['Tot_Haushaltausgaben']
+                store_perspective['LUmsatz_cumsum'] = store_perspective.groupby('StoreID')['LUmsatz'].transform(np.cumsum)
+
+                store_perspective['LUmsatz_cumsum_percentage'] = store_perspective.groupby('StoreID')['LUmsatz_cumsum'].\
+                    transform(lambda x: x / np.max(x))
+
+                self.logger.info("Exporting debugging info")
+
                 writer = pd.ExcelWriter(parameters["umsatz_output_csv"] + ".debugstores.xlsx")
                 store_perspective.to_excel(writer, "LMA")
                 # now get the WGS84 coordinates of all StartHARasterID
-                self.logger.info("Calculating WGS84 coordinates for all StartHARasterIDs ... ")
-                startHARasterIDs = np.unique(pandas_postprocessed_dt['StartHARasterID'].astype(int))
-                stores_perspective_relis2wgs84 = self.geo_helpers.addHRpointsWGS(startHARasterIDs)
+                self.logger.info("Calculating WGS84 coordinates for the StartHARasterIDs of relevant stores ... ")
+                stores_perspective_relis2wgs84 = pd.DataFrame()
+                for store in parameters["store_ids"]:
+                    startHARasterIDs = np.unique(pandas_postprocessed_dt.loc[pandas_postprocessed_dt['StoreID'] == store,
+                                                                             'StartHARasterID'].astype(int))
+                    x = self.geo_helpers.addHRpointsWGS(startHARasterIDs)
+                    x['StoreID'] = store
+                    stores_perspective_relis2wgs84 = pd.concat([stores_perspective_relis2wgs84, x])
                 self.logger.info("Done.")
                 stores_perspective_relis2wgs84.to_excel(writer, "StartRelis2WGS84")
                 #
-                store_perspective.to_csv(parameters["umsatz_output_csv"] + ".debugstores")
                 haraster_perpective = pandas_postprocessed_dt.loc[
                     pandas_postprocessed_dt["StartHARasterID"].isin(parameters["haraster_ids"])]
                 haraster_perpective.to_csv(parameters["umsatz_output_csv"] + ".debugharaster")
+
                 self.logger.info("Done")
 
             umsatz_potential_pd = gen_umsatz_prognose(pandas_postprocessed_dt)
@@ -500,7 +517,7 @@ class model_MBI_v1_2(ModelBase):
                                                "chunk_size": self.chunk_size},
                                   "debug": None}),
                            method='nelder-mead',
-                           options={ 'xtol': 1e-3, 'maxiter': 50},
+                           options={ 'xtol': 1e-3, 'maxiter': 150},
                            callback=lambda xk: self.logger.info("Iterating. Parameters %s", str(xk)) )
 
             logger.info("Optimization finished: ")
