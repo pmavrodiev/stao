@@ -66,8 +66,8 @@ class model_MBI_v1_2(ModelBase):
     """
         This subclass implements the calculation of all the different components of the modell turnover.
 
-        For example calculating the turnover components due to Haushaltausgaben and commuters is implemented
-        in the methods 'calc_umsatz_haushalt' and 'calc_umsatz_oev'.
+        For example, calculating the turnover components due to Household and Commuter spendings is implemented
+        in the methods 'calc_umsatz_haushalt' and 'calc_umsatz_oev', respectively.
 
         The idea is that the resulting Pandas dataframe will have one column for each turnover component, which
         can then by either directly summed up or used as a basis for the regression part.
@@ -120,9 +120,10 @@ class model_MBI_v1_2(ModelBase):
                                             # np.where(pandas_dt["RegionTyp"].isin([11, 12]), factor_stadt, 1))
 
                 # hh_halbzeit_vector = np.where(pandas_pd["RegionTyp"].isin([11,12]), 0.8*hh_halbzeit, hh_halbzeit)
+
                 hh_halbzeit_vector = np.where(pandas_pd["Format"].isin(["SM/VM 700", "SM/VM 2000"]),
-                                              hh_penalty_smvm * hh_halbzeit,
-                                              hh_halbzeit)
+                                               hh_penalty_smvm * hh_halbzeit,
+                                               hh_halbzeit)
 
                 pandas_dt['RLAT'] = pandas_dt['LAT'] * np.exp(-1.0*pandas_dt['FZ']*np.log(2) / hh_halbzeit_vector)
 
@@ -152,7 +153,7 @@ class model_MBI_v1_2(ModelBase):
 
             def gen_umsatz_prognose(pandas_pd):
                 pandas_pd['lokal_umsatz_potenzial'] = pandas_pd['Tot_Haushaltausgaben'] * pandas_pd['LMA']
-
+                # pandas_pd['lokal_umsatz_potenzial'] = 9000 * pandas_pd['LMA']
                 # get only the Migros stores - StoreID between 0 and 9999
                 umsatz_potential_pd = pandas_pd.loc[pandas_pd.StoreID < 10000].groupby('StoreID').agg({
                     'StoreName': lambda x: x.iloc[0],
@@ -160,7 +161,7 @@ class model_MBI_v1_2(ModelBase):
                     'Format': lambda x: x.iloc[0],
                     'VFL': lambda x: x.iloc[0],
                     'Adresse': lambda x: x.iloc[0],
-                    'PLZ': lambda x: x.iloc[0],
+                    'PLZ_l': lambda x: x.iloc[0],
                     'Ort': lambda x: x.iloc[0],
                     'RegionTyp': lambda x: x.iloc[0],
                     'DTB': lambda x: x.iloc[0],
@@ -175,7 +176,7 @@ class model_MBI_v1_2(ModelBase):
                     'lokal_umsatz_potenzial': lambda x: np.nansum(x),
                 })
                 # stupid Pandas is shuffling the columns for some reason, we need to rename them
-                column_order = ['StoreName', 'Retailer', 'Format', 'VFL', 'Adresse', 'PLZ', 'Ort', 'RegionTyp',
+                column_order = ['StoreName', 'Retailer', 'Format', 'VFL', 'Adresse', 'PLZ_l', 'Ort', 'RegionTyp',
                                 'DTB', 'HARasterID', 'E_LV03', 'N_LV03', 'ProfitKSTID', 'Food', 'Frische',
                                 'Near/Non Food', 'Fachmaerkte', 'lokal_umsatz_potenzial']
                 umsatz_potential_pd = umsatz_potential_pd[column_order]
@@ -225,11 +226,11 @@ class model_MBI_v1_2(ModelBase):
                     stores_perspective_relis2wgs84 = pd.concat([stores_perspective_relis2wgs84, x])
                 self.logger.info("Done.")
                 stores_perspective_relis2wgs84.to_excel(writer, "StartRelis2WGS84")
-                #
+                ####
+                writer2 = pd.ExcelWriter(parameters["umsatz_output_csv"] + ".debugrelis.xlsx")
                 haraster_perpective = pandas_postprocessed_dt.loc[
                     pandas_postprocessed_dt["StartHARasterID"].isin(parameters["haraster_ids"])]
-                haraster_perpective.to_csv(parameters["umsatz_output_csv"] + ".debugharaster")
-
+                haraster_perpective.to_excel(writer2, "RELI")
                 self.logger.info("Done")
 
             umsatz_potential_pd = gen_umsatz_prognose(pandas_postprocessed_dt)
@@ -603,7 +604,7 @@ class model_MBI_v1_2(ModelBase):
         # --- FINALIZE ------
 
         # output only the relevant columns
-        column_order = ['StoreName', 'Retailer', 'Format', 'VFL', 'Adresse', 'PLZ', 'Ort', 'RegionTyp', 'DTB',
+        column_order = ['StoreName', 'Retailer', 'Format', 'VFL', 'Adresse', 'PLZ_l', 'Ort', 'RegionTyp', 'DTB',
                         'HARasterID', 'E_LV03', 'N_LV03', 'ProfitKSTID', 'Food', 'Frische',
                         'Near/Non Food', 'Fachmaerkte', 'additional_kaeufer', 'statent_additional_kunden',
                         'istUmsatz', 'Umsatz_Haushalte', 'Umsatz_Pendler', 'Umsatz_Arbeitnehmer', 'Umsatz_Total']

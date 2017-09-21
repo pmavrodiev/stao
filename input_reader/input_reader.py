@@ -64,7 +64,7 @@ def read_drivetimes(filename, logger):
 
     # --- generate a unified FZ column
     drivetimes_pd['FZ'] = drivetimes_pd['AutoDistanzMinuten']
-    drivetimes_pd = drivetimes_pd.loc[drivetimes_pd.FZ <= 10]
+    drivetimes_pd = drivetimes_pd.loc[drivetimes_pd.FZ <= 30]
     # finally set the index
     drivetimes_pd.set_index('ZielHARasterID', inplace=True)
     return drivetimes_pd

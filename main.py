@@ -46,7 +46,7 @@ if __name__ == "__main__":
     # -------------------------------------
     # Load the chosen model first in order to quit early if misspecified
     # -------------------------------------
-    # TODO: this will spit out a python exception. Handle in a more user friendly manner
+    # TODO: If this fails, it will spit out a python exception. Handle in a more user friendly manner.
     m = importlib.import_module("models." + options.model)
 
     cache_dir = config['cache_config']['cache_dir']
@@ -131,6 +131,9 @@ if __name__ == "__main__":
         # regionstypen_pd has index HARasterID
         # enriched_pd has index HARasterID
         enriched_pd = enriched_pd.join(regionstypen_pd[['RegionTyp', 'DTB']])
+
+        enriched_pd = enriched_pd.merge(regionstypen_pd[['PLZ']], suffixes=('_l', '_r'), left_on = 'StartHARasterID',
+                                        right_index = True, how='left')
 
         if LOGGING_LEVEL == logging.DEBUG:
             logger.debug("Number of unique ZielHARasterIDs without Regionstyp info: %d out of %d",
