@@ -108,21 +108,21 @@ class model_MBI_v1_2(ModelBase):
         """
         def calc_umsatz_haushalt(self, pandas_pd, parameters):
             def compute_market_share(pandas_dt, parameters):
-                factor_stadt = parameters["factor_stadt"]
+                factor_LAT = parameters["factor_LAT"]
                 hh_halbzeit = parameters["hh_halbzeit"]
-                hh_penalty_smvm = parameters["hh_penalty_smvm"]
+                hh_halbzeit_factor_smvm = parameters["hh_halbzeit_factor_smvm"]
 
                 self.logger.info('Computing local market share. This takes a while ...')
-                self.logger.info("Parameters: factor_stadt / hh_halbzeit / hh_penalty_smvm = %f / %f /%f",
-                                 factor_stadt, hh_halbzeit, hh_penalty_smvm)
+                self.logger.info("Parameters: factor_LAT / hh_halbzeit / hh_halbzeit_factor_smvm = %f / %f /%f",
+                                 factor_LAT, hh_halbzeit, hh_halbzeit_factor_smvm)
 
-                pandas_dt['LAT'] = np.power(pandas_dt['VFL'], factor_stadt)
-                                            # np.where(pandas_dt["RegionTyp"].isin([11, 12]), factor_stadt, 1))
+                pandas_dt['LAT'] = np.power(pandas_dt['VFL'], factor_LAT)
+                                            # np.where(pandas_dt["RegionTyp"].isin([11, 12]), factor_LAT, 1))
 
                 # hh_halbzeit_vector = np.where(pandas_pd["RegionTyp"].isin([11,12]), 0.8*hh_halbzeit, hh_halbzeit)
 
                 hh_halbzeit_vector = np.where(pandas_pd["Format"].isin(["SM/VM 700", "SM/VM 2000"]),
-                                               hh_penalty_smvm * hh_halbzeit,
+                                               hh_halbzeit_factor_smvm * hh_halbzeit,
                                                hh_halbzeit)
 
                 pandas_dt['RLAT'] = pandas_dt['LAT'] * np.exp(-1.0*pandas_dt['FZ']*np.log(2) / hh_halbzeit_vector)
@@ -308,17 +308,17 @@ class model_MBI_v1_2(ModelBase):
 
         def calc_umsatz_statent(self, pandas_pd, parameters):
             statent_halb_zeit = parameters["statent_halb_zeit"]
-            statent_penalty_smvm = parameters["statent_penalty_smvm"]
+            statent_halbzeit_factor_smvm = parameters["statent_halbzeit_factor_smvm"]
             ausgaben_arbeitnehmer = parameters["ausgaben_arbeitnehmer"]
 
             self.logger.info("Computing Arbeitnehmer influence ...")
-            self.logger.info("Parameters: statent_halb_zeit / statent_penalty_smvm / ausgaben_arbeitnehmer= %f / %f / %f ",
-                             statent_halb_zeit, statent_penalty_smvm, ausgaben_arbeitnehmer)
+            self.logger.info("Parameters: statent_halb_zeit / statent_halbzeit_factor_smvm / ausgaben_arbeitnehmer= %f / %f / %f ",
+                             statent_halb_zeit, statent_halbzeit_factor_smvm, ausgaben_arbeitnehmer)
 
             # beta_zeit_vector = np.where(pandas_pd["Format"].isin(["SM/VM 700"]), 0.5 * statent_halb_zeit,
               #                           statent_halb_zeit)  # best
             beta_zeit_vector = np.where(pandas_pd["Format"].isin(["SM/VM 700", "SM/VM 2000"]),
-                                        statent_penalty_smvm*statent_halb_zeit,
+                                        statent_halbzeit_factor_smvm*statent_halb_zeit,
                                         statent_halb_zeit)
             # beta_zeit_vector = np.where(pandas_pd["RegionTyp"].isin([11, 12]), 0.5*statent_halb_zeit, statent_halb_zeit) - worst
 
@@ -354,10 +354,10 @@ class model_MBI_v1_2(ModelBase):
     def process_settings(self, config):
         try:
             # Parameters Haushaltausgaben
-            self.parameters["factor_stadt"] = [float(x) for x in json.loads(config["parameters"]["factor_stadt"])]
+            self.parameters["factor_LAT"] = [float(x) for x in json.loads(config["parameters"]["factor_LAT"])]
             self.parameters["hh_halbzeit"] = [float(x) for x in json.loads(config["parameters"]["hh_halbzeit"])]
-            self.parameters["hh_penalty_smvm"] = [float(x) for x in
-                                                  json.loads(config["parameters"]["hh_penalty_smvm"])]
+            self.parameters["hh_halbzeit_factor_smvm"] = [float(x) for x in
+                                                  json.loads(config["parameters"]["hh_halbzeit_factor_smvm"])]
             # Parameters oeV
             self.parameters["ov_halbzeit"] = [float(x) for x in json.loads(config["parameters"]["ov_halbzeit"])]
             self.parameters["ausgaben_pendler"] = [float(x) for x in
@@ -365,8 +365,8 @@ class model_MBI_v1_2(ModelBase):
             # Parameters STATENT
             self.parameters["statent_halb_zeit"] = [float(x) for x in
                                                     json.loads(config["parameters"]["statent_halb_zeit"])]
-            self.parameters["statent_penalty_smvm"] = [float(x) for x in
-                                                    json.loads(config["parameters"]["statent_penalty_smvm"])]
+            self.parameters["statent_halbzeit_factor_smvm"] = [float(x) for x in
+                                                    json.loads(config["parameters"]["statent_halbzeit_factor_smvm"])]
             self.parameters["ausgaben_arbeitnehmer"] = [float(x) for x in
                                                     json.loads(config["parameters"]["ausgaben_arbeitnehmer"])]
 
@@ -414,12 +414,12 @@ class model_MBI_v1_2(ModelBase):
                 print(e)
                 sys.exit(1)
             # now build the cartesian products
-            self.habe_params = [(a, b, c) for a in self.parameters["factor_stadt"]
+            self.habe_params = [(a, b, c) for a in self.parameters["factor_LAT"]
                                 for b in self.parameters["hh_halbzeit"]
-                                for c in self.parameters["hh_penalty_smvm"]]
+                                for c in self.parameters["hh_halbzeit_factor_smvm"]]
             self.ov_params = [(a, b) for a in self.parameters["ov_halbzeit"] for b in self.parameters["ausgaben_pendler"]]
             self.statent_params = [(a, b, c) for a in self.parameters["statent_halb_zeit"]
-                                   for b in self.parameters["statent_penalty_smvm"]
+                                   for b in self.parameters["statent_halbzeit_factor_smvm"]
                                    for c in self.parameters["ausgaben_arbeitnehmer"]]
 
         except Exception:
@@ -436,9 +436,9 @@ class model_MBI_v1_2(ModelBase):
         debug = rest["debug"]
 
         # Parameters STATPOP
-        factor_stadt = param_vector[0]
+        factor_LAT = param_vector[0]
         hh_halbzeit = param_vector[1]
-        hh_penalty_smvm = param_vector[2]
+        hh_halbzeit_factor_smvm = param_vector[2]
 
         # Parameters oeV
         ov_halbzeit = param_vector[3]
@@ -446,13 +446,13 @@ class model_MBI_v1_2(ModelBase):
 
         # Parameters STATENT
         statent_halb_zeit = param_vector[5]
-        statent_penalty_smvm = param_vector[6]
+        statent_halbzeit_factor_smvm = param_vector[6]
         ausgaben_arbeitnehmer = param_vector[7]
 
         umsatz_haushalte = self.umsatz_components.calc_umsatz_haushalt(rest["pandas_dt"],
-                                                                       {"factor_stadt": factor_stadt,
+                                                                       {"factor_LAT": factor_LAT,
                                                                         "hh_halbzeit": hh_halbzeit,
-                                                                        "hh_penalty_smvm": hh_penalty_smvm,
+                                                                        "hh_halbzeit_factor_smvm": hh_halbzeit_factor_smvm,
                                                                         "cpu_count": cpu_count,
                                                                         "chunk_size": chunk_size,
                                                                         "debug": debug})
@@ -464,7 +464,7 @@ class model_MBI_v1_2(ModelBase):
 
         umsatz_statent = self.umsatz_components.calc_umsatz_statent(rest["pandas_dt"],
                                                                     {"statent_halb_zeit": statent_halb_zeit,
-                                                                     "statent_penalty_smvm": statent_penalty_smvm,
+                                                                     "statent_halbzeit_factor_smvm": statent_halbzeit_factor_smvm,
                                                                      "ausgaben_arbeitnehmer": ausgaben_arbeitnehmer})
 
         umsatz_merged_pd = pd.merge(umsatz_haushalte, umsatz_ov, how="left", left_index=True, right_index=True)
@@ -504,13 +504,13 @@ class model_MBI_v1_2(ModelBase):
         if self.optimize:
             logger.info("Starting parameter optimization ")
             res = minimize(self.total_umsatz,
-                           x0=(np.array([self.parameters["factor_stadt"][0],
+                           x0=(np.array([self.parameters["factor_LAT"][0],
                                          self.parameters["hh_halbzeit"][0],
-                                         self.parameters["hh_penalty_smvm"][0],
+                                         self.parameters["hh_halbzeit_factor_smvm"][0],
                                          self.parameters["ov_halbzeit"][0],
                                          self.parameters["ausgaben_pendler"][0],
                                          self.parameters["statent_halb_zeit"][0],
-                                         self.parameters["statent_penalty_smvm"][0],
+                                         self.parameters["statent_halbzeit_factor_smvm"][0],
                                          self.parameters["ausgaben_arbeitnehmer"][0]])
                               ),
                            args=({"pandas_dt": pandas_dt, "stations_pd": self.parameters["stations_pd"],
@@ -530,9 +530,9 @@ class model_MBI_v1_2(ModelBase):
         cache_haushalte_pd = []
         for habe_p in self.habe_params:
             cache_haushalte_pd.append((habe_p,
-                self.umsatz_components.calc_umsatz_haushalt(pandas_dt, {"factor_stadt": habe_p[0],
+                self.umsatz_components.calc_umsatz_haushalt(pandas_dt, {"factor_LAT": habe_p[0],
                                                                         "hh_halbzeit": habe_p[1],
-                                                                        "hh_penalty_smvm": habe_p[2],
+                                                                        "hh_halbzeit_factor_smvm": habe_p[2],
                                                                         "debug": self.debug,
                                                                         "store_ids": self.store_ids or None,
                                                                         "haraster_ids": self.ha_rasterids or None,
@@ -556,7 +556,7 @@ class model_MBI_v1_2(ModelBase):
         for statent_p in self.statent_params:
             cache_statent_pd.append((statent_p,
                 self.umsatz_components.calc_umsatz_statent(pandas_dt, {"statent_halb_zeit": statent_p[0],
-                                                                       "statent_penalty_smvm": statent_p[1],
+                                                                       "statent_halbzeit_factor_smvm": statent_p[1],
                                                                        "ausgaben_arbeitnehmer": statent_p[2]})))
 
         # now find the optimal combination
@@ -582,23 +582,23 @@ class model_MBI_v1_2(ModelBase):
                 umsatz_total_optimal_pd = umsatz_total_pd
                 self.logger.info("New minimum found. TOTAL ERROR: %f / %f", tot_error, tot_error_quant)
                 self.logger.info("Parameters: ")
-                self.logger.info("factor_stadt: %f ", cache_haushalte_pd[idx_haushalt][0][0])
+                self.logger.info("factor_LAT: %f ", cache_haushalte_pd[idx_haushalt][0][0])
                 self.logger.info("hh_halbzeit: %f ", cache_haushalte_pd[idx_haushalt][0][1])
-                self.logger.info("hh_penalty_smvm: %f ", cache_haushalte_pd[idx_haushalt][0][2])
+                self.logger.info("hh_halbzeit_factor_smvm: %f ", cache_haushalte_pd[idx_haushalt][0][2])
                 self.logger.info("ov_halbzeit: %f ", cache_pendler_pd[idx_ov][0][0])
                 self.logger.info("ausgaben_pendler: %f ", cache_pendler_pd[idx_ov][0][1])
                 self.logger.info("statent_halb_zeit: %f ", cache_statent_pd[idx_statent][0][0])
-                self.logger.info("statent_penalty_smvm: %f ", cache_statent_pd[idx_statent][0][1])
+                self.logger.info("statent_halbzeit_factor_smvm: %f ", cache_statent_pd[idx_statent][0][1])
                 self.logger.info("ausgaben_arbeitnehmer: %f ", cache_statent_pd[idx_statent][0][2])
 
                 self.E_min[len(self.E_min) - 1] = (tot_error_quant,
-                                               {"factor_stadt": cache_haushalte_pd[idx_haushalt][0][0],
+                                               {"factor_LAT": cache_haushalte_pd[idx_haushalt][0][0],
                                                 "hh_halbzeit": cache_haushalte_pd[idx_haushalt][0][1],
-                                                "hh_penalty_smvm": cache_haushalte_pd[idx_haushalt][0][2],
+                                                "hh_halbzeit_factor_smvm": cache_haushalte_pd[idx_haushalt][0][2],
                                                 "ov_halbzeit": cache_pendler_pd[idx_ov][0][0],
                                                 "ausgaben_pendler": cache_pendler_pd[idx_ov][0][1],
                                                 "statent_halb_zeit": cache_statent_pd[idx_statent][0][0],
-                                                "statent_penalty_smvm": cache_statent_pd[idx_statent][0][1],
+                                                "statent_halbzeit_factor_smvm": cache_statent_pd[idx_statent][0][1],
                                                 "ausgaben_arbeitnehmer": cache_statent_pd[idx_statent][0][2]})
 
         # --- FINALIZE ------
@@ -615,13 +615,13 @@ class model_MBI_v1_2(ModelBase):
         self.logger.info("Exporting results ...")
 
         with open(output_param_fname, 'w') as f:
-            f.write("factor_stadt: " + str(self.E_min[0][1]["factor_stadt"])+"\n")
+            f.write("factor_LAT: " + str(self.E_min[0][1]["factor_LAT"])+"\n")
             f.write("hh_halbzeit: " + str(self.E_min[0][1]["hh_halbzeit"])+"\n")
-            f.write("hh_penalty_smvm: " + str(self.E_min[0][1]["hh_penalty_smvm"])+"\n")
+            f.write("hh_halbzeit_factor_smvm: " + str(self.E_min[0][1]["hh_halbzeit_factor_smvm"])+"\n")
             f.write("betaov: " + str(self.E_min[0][1]["ov_halbzeit"])+"\n")
             f.write("ausgaben_pendler: " + str(self.E_min[0][1]["ausgaben_pendler"])+"\n")
             f.write("statent_halb_zeit: " + str(self.E_min[0][1]["statent_halb_zeit"])+"\n")
-            f.write("statent_penalty_smvm: " + str(self.E_min[0][1]["statent_penalty_smvm"])+"\n")
+            f.write("statent_halbzeit_factor_smvm: " + str(self.E_min[0][1]["statent_halbzeit_factor_smvm"])+"\n")
             f.write("ausgaben_arbeitnehmer: " + str(self.E_min[0][1]["ausgaben_arbeitnehmer"])+"\n")
 
 
