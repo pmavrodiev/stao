@@ -50,7 +50,7 @@ def read_competitor_stores(filename):
     return konkurrenten_stores_pd
 
 
-def read_drivetimes(filename, logger):
+def read_drivetimes(filename, logger, fz_schwelle = 30):
     kwargs = {"errors": 'coerce'}
     drivetimes_pd = pd.read_csv(filename, sep=',', header=0, index_col=False, encoding='latin-1')
     drivetimes_pd = drivetimes_pd.apply(pd.to_numeric, axis=0, **kwargs)
@@ -64,7 +64,7 @@ def read_drivetimes(filename, logger):
 
     # --- generate a unified FZ column
     drivetimes_pd['FZ'] = drivetimes_pd['AutoDistanzMinuten']
-    drivetimes_pd = drivetimes_pd.loc[drivetimes_pd.FZ <= 30]
+    drivetimes_pd = drivetimes_pd.loc[drivetimes_pd.FZ <= fz_schwelle]
     # finally set the index
     drivetimes_pd.set_index('ZielHARasterID', inplace=True)
     return drivetimes_pd
