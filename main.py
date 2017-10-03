@@ -35,7 +35,8 @@ if __name__ == "__main__":
         sys.exit(1)
 
     config = configparser.ConfigParser()
-    config.read(options.config)
+    config.read_file(open(options.config, mode="r", encoding="utf-8"))
+    # config.read(options.config)
     
     # -------------------------------------
     # Set up logger
@@ -95,6 +96,25 @@ if __name__ == "__main__":
         else:
             logger.info("Sanity check passed.")
 
+        # single-store option
+        single_store = config['global']['single_store'].encode("latin-1")
+        if len(single_store) > 0:
+            # --- SINGLE STORE MODE? ---------
+            logger.info('Single store mode chosen - %s', single_store)
+            logger.info("Removing Migros stores from which %s cannot be reached", single_store)
+            single_store_pd = migros_stores_pd.loc[migros_stores_pd.StoreName == single_store.decode('latin-1')]
+            # single_store_pd has index HARasterID
+            # drivetimes_pd has index ZielHARasterID
+            single_store_merged_pd = single_store_pd.join(drivetimes_pd)
+            single_store_startHA = np.unique(single_store_merged_pd.StartHARasterID)
+            migros_StartHA = np.unique(migros_merged_pd.StartHARasterID)
+            StartHA_to_exclude = np.setdiff1d(migros_StartHA, single_store_startHA, assume_unique=True)
+            # logger.info("%d", len(migros_merged_pd))
+            # migros_merged_pd = pd.concat([migros_merged_pd, single_store_merged_pd])[migros_merged_pd.columns.tolist()]
+            migros_merged_pd = migros_merged_pd.loc[~migros_merged_pd.StartHARasterID.isin(StartHA_to_exclude)]
+
+        # logger.info("%d", len(migros_merged_pd))
+        # sys.exit(1)
         logger.info("Removing hectares from which only competitor stores can be reached")
         # konkurrenten_stores_pd has index HARasterID
         # drivetimes_pd has index ZielHARasterID

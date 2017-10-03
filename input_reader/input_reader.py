@@ -6,7 +6,7 @@ import configparser
 import numpy as np
 
 
-def read_migros_stores(filename, single_store=None, logger=None):
+def read_migros_stores(filename, logger=None):
     migros_stores_pd = pd.read_csv(filename, sep=';', header=0, index_col=False, encoding='latin-1')
     # --- Remove stores with VFL 0 or undefined
     kwargs = {"errors": 'coerce'}
@@ -21,11 +21,6 @@ def read_migros_stores(filename, single_store=None, logger=None):
     migros_stores_pd = migros_stores_pd.apply(pd.to_numeric, axis=0, **kwargs)
     # finally set the index
     migros_stores_pd.set_index('HARasterID', inplace=True)
-
-    # --- SINGLE STORE MODE? -----------------------------------------------------------------------------------
-    if len(single_store) > 0:
-        logger.info('Single store mode chosen - %s', single_store)
-        migros_stores_pd = migros_stores_pd.loc[migros_stores_pd.StoreName == single_store]
 
     return migros_stores_pd
 
@@ -107,11 +102,11 @@ def read_arbeit_info(filename):
 def get_input(settingsFile, logger):
     # read the input data
     config = configparser.ConfigParser()
-    config.read(settingsFile)
+    config.read_file(open(settingsFile, mode="r", encoding="utf-8"))
+    # config.read(settingsFile)
     logger.info("Read settings from settings.cfg")
 
     cache_dir = config['cache_config']['cache_dir'] # cache directory
-    single_store = config['global']['single_store'] # single-store option
 
     migros_stores_tuple = eval(config['inputdata']['migros_stores'], {}, {})
     konkurrenten_stores_tuple = eval(config['inputdata']['konkurrenten_stores'], {}, {})
@@ -132,12 +127,12 @@ def get_input(settingsFile, logger):
                                                            config['cache_config']['migros_stores_cache']))
         except IOError as e:
             logger.info("Cache not found. Regenerating.")
-            migros_stores_pd = read_migros_stores(migros_stores_tuple[0], single_store, logger)
+            migros_stores_pd = read_migros_stores(migros_stores_tuple[0], logger)
             migros_stores_pd.to_pickle(os.path.join(cache_dir, config['cache_config']['migros_stores_cache']))
 
     else:
         logger.info("Reading Migros stores from file. Will not be cached")
-        migros_stores_pd = read_migros_stores(migros_stores_tuple[0], single_store, logger)
+        migros_stores_pd = read_migros_stores(migros_stores_tuple[0], logger)
     logger.info("Done")
 
     # ----------------------------------------------------------------------------------------------------------

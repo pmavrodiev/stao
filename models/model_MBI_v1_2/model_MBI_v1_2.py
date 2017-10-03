@@ -341,18 +341,22 @@ class model_MBI_v1_2(ModelBase):
 
     logger = None
 
-
     # all model parameters go into this dictionary
     parameters = {}
 
    # the minimum error after the parameter sweep
     E_min = [(float("inf"), ())]
 
+    single_store = None
+
     def whoami(self):
         return 'Model_MBI_v1.2'
 
     def process_settings(self, config):
         try:
+            # single store mode
+            self.single_store = config['global']['single_store'].encode("latin-1").decode("latin-1")
+
             # Parameters Haushaltausgaben
             self.parameters["factor_LAT"] = [float(x) for x in json.loads(config["parameters"]["factor_LAT"])]
             self.parameters["hh_halbzeit"] = [float(x) for x in json.loads(config["parameters"]["hh_halbzeit"])]
@@ -380,6 +384,9 @@ class model_MBI_v1_2(ModelBase):
             if self.debug:
                 if self.optimize:
                     self.logger.info("Debug option chosen, but will be ignored, because optimize is True. ")
+                    self.debug = None
+                elif self.single_store:
+                    self.logger.info("Debug option chosen, but will be ignored, because single store mode is on. ")
                     self.debug = None
                 else:
                     try:
@@ -477,7 +484,8 @@ class model_MBI_v1_2(ModelBase):
                                                                         "Umsatz_Arbeitnehmer",
                                                                         "Umsatz_Pendler"],
                                                                     col_istUmsatz="istUmsatz",
-                                                                    quant=0.95)
+                                                                    quant=0.95,
+                                                                    single_store = self.single_store)
         return tot_error_quant
 
     def entry(self, tables_dict, config, logger):
@@ -577,7 +585,8 @@ class model_MBI_v1_2(ModelBase):
                                                                             "Umsatz_Arbeitnehmer",
                                                                             "Umsatz_Pendler"],
                                                                         col_istUmsatz="istUmsatz",
-                                                                        quant=0.95)
+                                                                        quant=0.95,
+                                                                        single_store = self.single_store)
             if tot_error_quant < self.E_min[len(self.E_min) - 1][0]:
                 umsatz_total_optimal_pd = umsatz_total_pd
                 self.logger.info("New minimum found. TOTAL ERROR: %f / %f", tot_error, tot_error_quant)
@@ -610,6 +619,9 @@ class model_MBI_v1_2(ModelBase):
                         'istUmsatz', 'Umsatz_Haushalte', 'Umsatz_Pendler', 'Umsatz_Arbeitnehmer', 'Umsatz_Total']
 
         umsatz_total_optimal_pd = umsatz_total_optimal_pd[column_order]
+        if self.single_store:
+            umsatz_total_optimal_pd = umsatz_total_optimal_pd.loc[umsatz_total_optimal_pd.StoreName == self.single_store]
+
         output_fname = self.umsatz_output_csv + '.txt'
         output_param_fname = self.umsatz_output_csv + '.params'
         self.logger.info("Exporting results ...")
@@ -628,7 +640,7 @@ class model_MBI_v1_2(ModelBase):
         umsatz_total_optimal_pd.to_csv(output_fname)
         self.logger.info("Done.")
 
-    def calc_error(self, pandas_pd, col_modelUmsatz, col_istUmsatz, quant):
+    def calc_error(self, pandas_pd, col_modelUmsatz, col_istUmsatz, quant, single_store = None):
         # ----- Calculate the current Total Umsatz
         pandas_pd['Umsatz_Total'] = 0.0
         for column in col_modelUmsatz:
@@ -636,7 +648,12 @@ class model_MBI_v1_2(ModelBase):
                                                  pandas_pd['Umsatz_Total'] + pandas_pd[column])
 
         # --- Calculate the error ------------------------------------------------
-        error_E_i = np.power(pandas_pd['Umsatz_Total'] - pandas_pd[col_istUmsatz], 2) / pandas_pd[col_istUmsatz]
+        if single_store is not None:
+            x = pandas_pd.loc[pandas_pd.StoreName == single_store]
+            error_E_i = np.power(x['Umsatz_Total'] - x[col_istUmsatz], 2) / x[col_istUmsatz]
+        else:
+            error_E_i = np.power(pandas_pd['Umsatz_Total'] - pandas_pd[col_istUmsatz], 2) / pandas_pd[col_istUmsatz]
+
         error_E_i = error_E_i.loc[~np.isnan(error_E_i)]
 
         total_error = np.sqrt(np.sum(error_E_i))
