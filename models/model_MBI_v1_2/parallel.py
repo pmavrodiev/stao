@@ -7,8 +7,6 @@ def apply_parallel(dfGrouped, func, ncpus, chunk_size):
     concatenated_pd = pd.concat(ret_list)
     return concatenated_pd
 
+
 def filter(n_nearest, d):
     return d.sort_values(by=['FZ'], ascending=True).head(n_nearest)
-
-
-
