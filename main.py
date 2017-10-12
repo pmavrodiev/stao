@@ -141,7 +141,7 @@ if __name__ == "__main__":
                 all_stores_grouped = all_stores_pd.groupby('StartHARasterID', as_index=False, sort=False,
                                                           group_keys=False)
                 func = partial(filter, n_nearest)
-                all_stores_pd = apply_parallel(all_stores_grouped, func, ncpus=1, chunk_size=1)
+                all_stores_pd = apply_parallel(all_stores_grouped, func, ncpus=100, chunk_size=3)
                 logger.info("Done. ")
 
 
