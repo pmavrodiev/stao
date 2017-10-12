@@ -11,7 +11,7 @@ def apply_parallel(dfGrouped, func, ncpus, chunk_size):
 def filter(n_nearest, d):
     # if n_nearest is None:
     #    return d
-    dd = d.sort_values(by=['FZ'], ascending=True)
-    dd["neighbour_index"] = range(1, len(dd) + 1)
-    return dd
-    # return d.sort_values(by=['FZ'], ascending=True).head(n_nearest)
+    ## dd = d.sort_values(by=['FZ'], ascending=True)
+    ## dd["neighbour_index"] = range(1, len(dd) + 1)
+    ## return dd
+    return d.sort_values(by=['FZ'], ascending=True).head(n_nearest)
