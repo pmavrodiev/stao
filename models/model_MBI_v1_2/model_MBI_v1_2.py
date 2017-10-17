@@ -112,8 +112,8 @@ class model_MBI_v1_2(ModelBase):
                 hh_halbzeit = parameters["hh_halbzeit"]
                 hh_halbzeit_factor_smvm = parameters["hh_halbzeit_factor_smvm"]
 
-                self.logger.info('Computing local market share. This takes a while ...')
-                self.logger.info("Parameters: factor_LAT / hh_halbzeit / hh_halbzeit_factor_smvm = %f / %f /%f",
+                self.logger.COMPUTE_UMSATZ_HAUSHALTE('Computing local market share. This takes a while ...')
+                self.logger.COMPUTE_UMSATZ_HAUSHALTE("Parameters: factor_LAT / hh_halbzeit / hh_halbzeit_factor_smvm = %f / %f /%f",
                                  factor_LAT, hh_halbzeit, hh_halbzeit_factor_smvm)
 
                 pandas_dt['LAT'] = np.power(pandas_dt['VFL'], factor_LAT)
@@ -127,27 +127,27 @@ class model_MBI_v1_2(ModelBase):
 
                 pandas_dt['RLAT'] = pandas_dt['LAT'] * np.exp(-1.0*pandas_dt['FZ']*np.log(2) / hh_halbzeit_vector)
 
-                self.logger.info('Computing sum RLATs ...')
+                self.logger.COMPUTE_UMSATZ_HAUSHALTE('Computing sum RLATs ...')
                 groups_RLAT = pandas_dt.groupby('StartHARasterID', as_index=False,
                                                  sort=False, group_keys=False)[["RLAT"]]
-                self.logger.info(" %d groups", groups_RLAT.ngroups)
+                self.logger.COMPUTE_UMSATZ_HAUSHALTE(" %d groups", groups_RLAT.ngroups)
                 if parameters["cpu_count"] is None:
                     # pandas_dt['sumRLATs'] = self.Groupby(pandas_dt['StartHARasterID'].astype(int)).apply(np.sum,
                     #                                                                     pandas_dt['RLAT'])
                     pandas_dt['sumRLATs'] = groups_RLAT.transform(sum)
                 else:
-                    self.logger.info("Doing it parallel. Number of cpu_count %d / chunk_size %d",
+                    self.logger.COMPUTE_UMSATZ_HAUSHALTE("Doing it parallel. Number of cpu_count %d / chunk_size %d",
                                      parameters["cpu_count"], parameters["chunk_size"])
 
                     with Pool(parameters["cpu_count"]) as p:
                         ret_list = p.map(sumRlATS, [group for name, group in groups_RLAT])
                                          # chunksize=parameters["chunk_size"])
-                    self.logger.info("Concatenating parallel results")
+                    self.logger.COMPUTE_UMSATZ_HAUSHALTE("Concatenating parallel results")
                     pandas_dt = pd.concat(ret_list)
 
                 pandas_dt['LMA'] = pandas_dt['RLAT'] / pandas_dt['sumRLATs']
 
-                self.logger.info('Done')
+                self.logger.COMPUTE_UMSATZ_HAUSHALTE('Done')
 
                 return pandas_dt
 
@@ -198,40 +198,59 @@ class model_MBI_v1_2(ModelBase):
             pandas_postprocessed_dt = compute_market_share(pandas_pd, parameters)
 
             if parameters["debug"]:
-                self.logger.info("Computing debugging info")
+                self.logger.COMPUTE_UMSATZ_HAUSHALTE("Computing debugging info")
                 # get a subset with the relevant stores, defined in the settings
                 store_perspective = pandas_postprocessed_dt.loc[
                     pandas_postprocessed_dt["StoreID"].isin(parameters["store_ids"])]
-                # sort the FZ column for each StoreID
-                store_perspective = store_perspective.sort_values(['StoreID', 'FZ'])
 
-                store_perspective['LUmsatz'] = store_perspective['LMA'] * store_perspective['Tot_Haushaltausgaben']
-                store_perspective['LUmsatz_cumsum'] = store_perspective.groupby('StoreID')['LUmsatz'].transform(np.cumsum)
+                if len(store_perspective) == 0:
+                    self.logger.COMPUTE_UMSATZ_HAUSHALTE("Debug mode is ON, but specidifed stores are not available. Bailing. "
+                                     "Is single store mode also ON?")
+                else:
+                    # sort the FZ column for each StoreID
+                    store_perspective = store_perspective.sort_values(['StoreID', 'FZ'])
 
-                store_perspective['LUmsatz_cumsum_percentage'] = store_perspective.groupby('StoreID')['LUmsatz_cumsum'].\
-                    transform(lambda x: x / np.max(x))
+                    store_perspective['LUmsatz'] = store_perspective['LMA'] * store_perspective['Tot_Haushaltausgaben']
+                    store_perspective['LUmsatz_cumsum'] = store_perspective.groupby('StoreID')['LUmsatz'].transform(np.cumsum)
 
-                self.logger.info("Exporting debugging info")
+                    store_perspective['LUmsatz_cumsum_percentage'] = store_perspective.groupby('StoreID')['LUmsatz_cumsum'].\
+                        transform(lambda x: x / np.max(x))
 
-                writer = pd.ExcelWriter(parameters["umsatz_output_csv"] + ".debugstores.xlsx")
-                store_perspective.to_excel(writer, "LMA")
-                # now get the WGS84 coordinates of all StartHARasterID
-                self.logger.info("Calculating WGS84 coordinates for the StartHARasterIDs of relevant stores ... ")
-                stores_perspective_relis2wgs84 = pd.DataFrame()
-                for store in parameters["store_ids"]:
-                    startHARasterIDs = np.unique(pandas_postprocessed_dt.loc[pandas_postprocessed_dt['StoreID'] == store,
-                                                                             'StartHARasterID'].astype(int))
-                    x = self.geo_helpers.addHRpointsWGS(startHARasterIDs)
-                    x['StoreID'] = store
-                    stores_perspective_relis2wgs84 = pd.concat([stores_perspective_relis2wgs84, x])
-                self.logger.info("Done.")
-                stores_perspective_relis2wgs84.to_excel(writer, "StartRelis2WGS84")
-                ####
-                writer2 = pd.ExcelWriter(parameters["umsatz_output_csv"] + ".debugrelis.xlsx")
+                    self.logger.COMPUTE_UMSATZ_HAUSHALTE("Exporting debugging info for stores")
+
+                    writer = pd.ExcelWriter(parameters["umsatz_output_csv"] + ".debugstores.xlsx")
+                    # store_perspective.to_excel(writer, "LMA")
+                    # now get the WGS84 coordinates of all StartHARasterID
+                    self.logger.COMPUTE_UMSATZ_HAUSHALTE("Calculating WGS84 coordinates for the StartHARasterIDs of relevant stores ... ")
+                    stores_perspective_relis2wgs84 = pd.DataFrame()
+                    for store in parameters["store_ids"]:
+                        startHARasterIDs = np.unique(pandas_postprocessed_dt.loc[pandas_postprocessed_dt['StoreID'] == store,
+                                                                                 'StartHARasterID'].astype(int))
+                        x = self.geo_helpers.addHRpointsWGS(startHARasterIDs)
+                        x['StoreID'] = store
+                        stores_perspective_relis2wgs84 = pd.concat([stores_perspective_relis2wgs84, x])
+
+                    y = pd.merge(left=stores_perspective_relis2wgs84.reset_index(), right=store_perspective.reset_index(),
+                              how='left', left_on='HARasterID', right_on='StartHARasterID',
+                                 suffixes=('_start', '_target'))
+                    y.to_excel(writer, "Sheet1")
+                    self.logger.COMPUTE_UMSATZ_HAUSHALTE("Done.")
+                    # stores_perspective_relis2wgs84.to_excel(writer, "StartRelis2WGS84")
+                    ####
                 haraster_perpective = pandas_postprocessed_dt.loc[
                     pandas_postprocessed_dt["StartHARasterID"].isin(parameters["haraster_ids"])]
-                haraster_perpective.to_excel(writer2, "RELI")
-                self.logger.info("Done")
+                if len(haraster_perpective) == 0:
+                    self.logger.COMPUTE_UMSATZ_HAUSHALTE("Debug mode is ON, but specidifed hectare ids are not available. Bailing. "
+                                     "Is single store mode also ON?")
+                else:
+                    self.logger.COMPUTE_UMSATZ_HAUSHALTE("Exporting debugging info for hectares")
+                    writer2 = pd.ExcelWriter(parameters["umsatz_output_csv"] + ".debugrelis.xlsx")
+                    haraster_perpective.to_excel(writer2, "RELI")
+                    # now get the WSG84 coordinates for all relevant hectares
+                    relevant_hektarts = haraster_perpective["StartHARasterID"].append(haraster_perpective["HARasterID"])
+                    x = self.geo_helpers.addHRpointsWGS(np.unique(relevant_hektarts))
+                    x.to_excel(writer2, "StartRelis2WGS84")
+                    self.logger.COMPUTE_UMSATZ_HAUSHALTE("Done")
 
             umsatz_potential_pd = gen_umsatz_prognose(pandas_postprocessed_dt)
             return umsatz_potential_pd
@@ -267,8 +286,8 @@ class model_MBI_v1_2(ModelBase):
                     return rv.set_index(['StoreID'])
 
                 #
-                self.logger.info('Computing Pendler einfluss ...')
-                self.logger.info("Parameters: halbzeit/ausgaben_pendler = %f", halbzeit)
+                self.logger.COMPUTE_UMSATZ_PENDLER('Computing Pendler einfluss ...')
+                self.logger.COMPUTE_UMSATZ_PENDLER("Parameters: halbzeit/ausgaben_pendler = %f", halbzeit)
 
                 x = pd.DataFrame(stores_pd.reset_index().groupby('StoreID',
                                                                  group_keys=False).apply(get_reachable_stations, 300))
@@ -311,8 +330,8 @@ class model_MBI_v1_2(ModelBase):
             statent_halbzeit_factor_smvm = parameters["statent_halbzeit_factor_smvm"]
             ausgaben_arbeitnehmer = parameters["ausgaben_arbeitnehmer"]
 
-            self.logger.info("Computing Arbeitnehmer influence ...")
-            self.logger.info("Parameters: statent_halb_zeit / statent_halbzeit_factor_smvm / ausgaben_arbeitnehmer= %f / %f / %f ",
+            self.logger.COMPUTE_UMSATZ_ARBEITNEHMER("Computing Arbeitnehmer influence ...")
+            self.logger.COMPUTE_UMSATZ_ARBEITNEHMER("Parameters: statent_halb_zeit / statent_halbzeit_factor_smvm / ausgaben_arbeitnehmer= %f / %f / %f ",
                              statent_halb_zeit, statent_halbzeit_factor_smvm, ausgaben_arbeitnehmer)
 
             # beta_zeit_vector = np.where(pandas_pd["Format"].isin(["SM/VM 700"]), 0.5 * statent_halb_zeit,
@@ -356,6 +375,10 @@ class model_MBI_v1_2(ModelBase):
         try:
             # single store mode
             self.single_store = config['global']['single_store'].encode("latin-1").decode("latin-1")
+            if len(self.single_store) == 0:
+                # empty string
+                self.single_store = None
+                self.logger.param_info("Single store mode is off.")
 
             # Parameters Haushaltausgaben
             self.parameters["factor_LAT"] = [float(x) for x in json.loads(config["parameters"]["factor_LAT"])]
@@ -383,16 +406,13 @@ class model_MBI_v1_2(ModelBase):
             self.ha_rasterids = None
             if self.debug:
                 if self.optimize:
-                    self.logger.info("Debug option chosen, but will be ignored, because optimize is True. ")
-                    self.debug = None
-                elif self.single_store:
-                    self.logger.info("Debug option chosen, but will be ignored, because single store mode is on. ")
+                    self.logger.param_info("Debug option chosen, but will be ignored, because optimize is True. ")
                     self.debug = None
                 else:
                     try:
                         self.store_ids = [int(x) for x in json.loads(config["debug"]["store_ids"])]
                         self.ha_rasterids = [int(x) for x in json.loads(config["debug"]["ha_rasterids"])]
-                        self.logger.info("Debug mode chosen. Will output geo statistics for specific stores and hectars.")
+                        self.logger.param_info("Debug mode chosen. Will output geo statistics for specific stores and hectars.")
                     except Exception as e:
                         print(e)
                         sys.exit(1)
@@ -404,7 +424,7 @@ class model_MBI_v1_2(ModelBase):
                 try:
                     self.cpu_count = [int(x) for x in json.loads(config["parallel"]["cpu_count"])][0]
                     self.chunk_size = [int(x) for x in json.loads(config["parallel"]["chunk_size"])][0]
-                    self.logger.info("Parallel mode chosen with cpu_count %d / chunk_size %d",
+                    self.logger.param_info("Parallel mode chosen with cpu_count %d / chunk_size %d",
                                      self.cpu_count, self.chunk_size)
                 except Exception as e:
                     print(e)
@@ -429,7 +449,8 @@ class model_MBI_v1_2(ModelBase):
                                    for b in self.parameters["statent_halbzeit_factor_smvm"]
                                    for c in self.parameters["ausgaben_arbeitnehmer"]]
 
-        except Exception:
+        except Exception as e:
+            print(e)
             self.logger.error('Some of the required parameters for model %s are not supplied in the settings',
                               self.whoami())
             self.logger.error("%s", self.parameters.keys())

@@ -8,8 +8,10 @@ import os
 
 from input_reader.input_reader import get_input
 from simple_logging.custom_logging import setup_custom_logger
-
 from optparse import OptionParser
+from models.model_MBI_v1_2.parallel import apply_parallel, filter
+from functools import partial
+
 import importlib
 
 if __name__ == "__main__":
@@ -130,6 +132,19 @@ if __name__ == "__main__":
         all_stores_pd = all_stores_pd.loc[~all_stores_pd.StartHARasterID.isin(StartHA_to_exclude)]
         logger.info("Done.")
 
+        # Pruning
+        if "pruning" in config:
+            if "number_nearest_stores" in config["pruning"]:
+                n_nearest = int(config["pruning"]["number_nearest_stores"])
+                logger.info("Pruning mode selected. Number of nearest stores set to %d", n_nearest)
+                logger.info("Starting pruning ... ")
+                all_stores_grouped = all_stores_pd.groupby('StartHARasterID', as_index=False, sort=False,
+                                                          group_keys=False)
+                func = partial(filter, n_nearest)
+                all_stores_pd = apply_parallel(all_stores_grouped, func, ncpus=100, chunk_size=3)
+                logger.info("Done. ")
+
+
         # enrich the drive times of the relevant hectars with Haushalt information
         logger.info("Enriching with Haushalt information ...")
 
@@ -179,6 +194,7 @@ if __name__ == "__main__":
         enriched_pd.index.name = 'HARasterID'
         enriched_pd.reset_index(inplace=True)
         logger.info("Done.")
+
 
         logger.info('Creating intermediary cache ...')
         enriched_pd.to_pickle(os.path.join(cache_dir, config['cache_config']['intermediary_cache']))
