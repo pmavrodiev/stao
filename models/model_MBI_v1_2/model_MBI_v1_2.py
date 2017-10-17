@@ -231,7 +231,8 @@ class model_MBI_v1_2(ModelBase):
                         stores_perspective_relis2wgs84 = pd.concat([stores_perspective_relis2wgs84, x])
 
                     y = pd.merge(left=stores_perspective_relis2wgs84.reset_index(), right=store_perspective.reset_index(),
-                              how='left', left_on='HARasterID', right_on='StartHARasterID')
+                              how='left', left_on='HARasterID', right_on='StartHARasterID',
+                                 suffixes=('_start', '_target'))
                     y.to_excel(writer, "Sheet1")
                     self.logger.COMPUTE_UMSATZ_HAUSHALTE("Done.")
                     # stores_perspective_relis2wgs84.to_excel(writer, "StartRelis2WGS84")
