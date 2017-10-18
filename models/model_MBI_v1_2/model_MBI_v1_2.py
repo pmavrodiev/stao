@@ -40,7 +40,8 @@ class model_MBI_v1_2(ModelBase):
         # --- Define functions
         #  Calculates points (corners) of HA, including PlotOrder (needed for Tableau).
         def calcHRpoints(self, reli):
-            # Extracts first 4 and last 4 digits (note, these are NOT coordinates because they have not yet been multiplied by 100)
+            # Extracts first 4 and last 4 digits (these are NOT coordinates because they've not yet been
+            # multiplied by 100)
             x0 = reli // 10000
             y0 = reli - x0 * 10000
 
@@ -49,7 +50,7 @@ class model_MBI_v1_2(ModelBase):
                                 'y_corner': np.multiply(np.array([y0, y0, y0 + 1, y0 + 1]), 100).flatten(order='F'),
                                 'PlotOrder': np.tile(range(1, 5), len(x0))}
                                )
-            out.set_index('HARasterID', inplace=True)  # comment if not needed
+            out.set_index('HARasterID', inplace=True)
             return out
 
         #  Adds WGS coordinates to data frame
@@ -62,6 +63,93 @@ class model_MBI_v1_2(ModelBase):
             df['lat'] = xyWSG84[1]
             return df
 
+    """
+    An internal class to output various debugging information
+    """
+    class _debug_:
+        def __init__(self, parent_logger, params, geo_helpers):
+            self.logger = parent_logger
+            self.params = params
+            self.geo_helpers = geo_helpers
+
+        def startRelis2Stores(self, group, pandas_dt):
+            row = group.iloc[0]
+            all_start_harasters = pandas_dt.loc[pandas_dt.StartHARasterID.isin([row['StartHARasterID']])]
+            all_start_harasters['Reference_StoreID'] = row['StoreID']
+            all_start_harasters['LUmsatz'] = all_start_harasters['LMA'] * all_start_harasters['Tot_Haushaltausgaben']
+
+            return all_start_harasters[
+                ['Reference_StoreID', 'StartHARasterID', 'StoreID', 'StoreName', 'Retailer', 'Format', 'VFL', 'FZ',
+                 'PLZ_l', 'PLZ_r', 'Tot_Haushaltausgaben', 'LMA', 'LUmsatz', 'AnzahlHH', 'HARasterID']]
+
+        def export_debug_info_stores(self, pandas_dt):
+            store_perspective = pandas_dt.loc[pandas_dt["StoreID"].isin(self.params["store_ids"])]
+
+            if len(store_perspective) == 0:
+                self.logger.info( "Debug mode is ON, but specidifed stores are not available. Bailing. "
+                                  "Is single store mode also ON?")
+            else:
+                # ---- Sort the FZ column for each StoreID
+                store_perspective = store_perspective.sort_values(['StoreID', 'FZ'])
+
+                store_perspective['LUmsatz'] = store_perspective['LMA'] * store_perspective['Tot_Haushaltausgaben']
+                store_perspective['LUmsatz_cumsum'] = store_perspective.groupby('StoreID')['LUmsatz'].transform(np.cumsum)
+
+                store_perspective['LUmsatz_cumsum_percentage'] = store_perspective.groupby('StoreID')['LUmsatz_cumsum']. \
+                    transform(lambda x: x / np.max(x))
+
+                writer = pd.ExcelWriter(self.params["umsatz_output_csv"] + ".debugstores.xlsx")
+
+                # ---- Now get the WGS84 coordinates of all StartHARasterID
+                self.logger.info("Calculating WGS84 coordinates for the StartHARasterIDs of relevant stores ... ")
+                stores_perspective_relis2wgs84 = pd.DataFrame()
+                for store in self.params["store_ids"]:
+                    startHARasterIDs = np.unique(
+                        pandas_dt.loc[pandas_dt['StoreID'] == store, 'StartHARasterID'].astype(int))
+                    x = self.geo_helpers.addHRpointsWGS(startHARasterIDs)
+                    x['StoreID'] = store
+                    stores_perspective_relis2wgs84 = pd.concat([stores_perspective_relis2wgs84, x])
+
+                y = pd.merge(left=stores_perspective_relis2wgs84.reset_index(), right=store_perspective.reset_index(),
+                             how='left', left_on='HARasterID', right_on='StartHARasterID',
+                             suffixes=('_start', '_target'))
+
+                self.logger.info("Writing to output")
+                y.to_excel(writer, "Sheet1")
+                writer.close()
+                self.logger.info("Done.")
+
+                # --- Compute the top competitors per hectare for each debugged store
+
+                # get just the catchment area per store, i.e. only the hectares making up 80% of the sales
+                self.logger.info("Computing top competitors")
+                store_perspective = store_perspective.loc[store_perspective.LUmsatz_cumsum_percentage <= 0.8]
+                x = store_perspective.groupby('StartHARasterID',
+                                              group_keys=False).apply(self.startRelis2Stores, pandas_dt)
+                self.logger.info("Done.")
+
+                self.logger.info("Writing to output")
+                writer = pd.ExcelWriter(self.params["umsatz_output_csv"] + ".debug_top_competitors.xlsx")
+                x.to_excel(writer, "Sheet1")
+                self.logger.info("Done.")
+
+        def export_debug_info_hectares(self, pandas_dt):
+
+            haraster_perpective = pandas_dt.loc[pandas_dt["StartHARasterID"].isin(self.params["haraster_ids"])]
+
+            if len(haraster_perpective) == 0:
+                self.logger.info(
+                    "Debug mode is ON, but specidifed hectare ids are not available. Bailing. "
+                    "Is single store mode also ON?")
+            else:
+                self.logger.info("Exporting debugging info for hectares")
+                writer2 = pd.ExcelWriter(self.params["umsatz_output_csv"] + ".debugrelis.xlsx")
+                haraster_perpective.to_excel(writer2, "RELI")
+                # now get the WSG84 coordinates for all relevant hectares
+                relevant_hektarts = haraster_perpective["StartHARasterID"].append(haraster_perpective["HARasterID"])
+                x = self.geo_helpers.addHRpointsWGS(np.unique(relevant_hektarts))
+                x.to_excel(writer2, "StartRelis2WGS84")
+                self.logger.info("Done")
 
     """
         This subclass implements the calculation of all the different components of the modell turnover.
@@ -83,9 +171,9 @@ class model_MBI_v1_2(ModelBase):
         'FZ', 'RegionTyp', 'DTB', 'ANTOT', 'Tot_Haushaltausgaben']
     """
     class _umsatz_components_:
-        def __init__(self, parent_logger, geo_helpers = None):
+        def __init__(self, parent_logger, debug):
             self.logger = parent_logger
-            self.geo_helpers = geo_helpers
+            self.debug = debug
 
         """
         class Groupby:
@@ -198,59 +286,10 @@ class model_MBI_v1_2(ModelBase):
             pandas_postprocessed_dt = compute_market_share(pandas_pd, parameters)
 
             if parameters["debug"]:
-                self.logger.COMPUTE_UMSATZ_HAUSHALTE("Computing debugging info")
-                # get a subset with the relevant stores, defined in the settings
-                store_perspective = pandas_postprocessed_dt.loc[
-                    pandas_postprocessed_dt["StoreID"].isin(parameters["store_ids"])]
-
-                if len(store_perspective) == 0:
-                    self.logger.COMPUTE_UMSATZ_HAUSHALTE("Debug mode is ON, but specidifed stores are not available. Bailing. "
-                                     "Is single store mode also ON?")
-                else:
-                    # sort the FZ column for each StoreID
-                    store_perspective = store_perspective.sort_values(['StoreID', 'FZ'])
-
-                    store_perspective['LUmsatz'] = store_perspective['LMA'] * store_perspective['Tot_Haushaltausgaben']
-                    store_perspective['LUmsatz_cumsum'] = store_perspective.groupby('StoreID')['LUmsatz'].transform(np.cumsum)
-
-                    store_perspective['LUmsatz_cumsum_percentage'] = store_perspective.groupby('StoreID')['LUmsatz_cumsum'].\
-                        transform(lambda x: x / np.max(x))
-
-                    self.logger.COMPUTE_UMSATZ_HAUSHALTE("Exporting debugging info for stores")
-
-                    writer = pd.ExcelWriter(parameters["umsatz_output_csv"] + ".debugstores.xlsx")
-                    # store_perspective.to_excel(writer, "LMA")
-                    # now get the WGS84 coordinates of all StartHARasterID
-                    self.logger.COMPUTE_UMSATZ_HAUSHALTE("Calculating WGS84 coordinates for the StartHARasterIDs of relevant stores ... ")
-                    stores_perspective_relis2wgs84 = pd.DataFrame()
-                    for store in parameters["store_ids"]:
-                        startHARasterIDs = np.unique(pandas_postprocessed_dt.loc[pandas_postprocessed_dt['StoreID'] == store,
-                                                                                 'StartHARasterID'].astype(int))
-                        x = self.geo_helpers.addHRpointsWGS(startHARasterIDs)
-                        x['StoreID'] = store
-                        stores_perspective_relis2wgs84 = pd.concat([stores_perspective_relis2wgs84, x])
-
-                    y = pd.merge(left=stores_perspective_relis2wgs84.reset_index(), right=store_perspective.reset_index(),
-                              how='left', left_on='HARasterID', right_on='StartHARasterID',
-                                 suffixes=('_start', '_target'))
-                    y.to_excel(writer, "Sheet1")
-                    self.logger.COMPUTE_UMSATZ_HAUSHALTE("Done.")
-                    # stores_perspective_relis2wgs84.to_excel(writer, "StartRelis2WGS84")
-                    ####
-                haraster_perpective = pandas_postprocessed_dt.loc[
-                    pandas_postprocessed_dt["StartHARasterID"].isin(parameters["haraster_ids"])]
-                if len(haraster_perpective) == 0:
-                    self.logger.COMPUTE_UMSATZ_HAUSHALTE("Debug mode is ON, but specidifed hectare ids are not available. Bailing. "
-                                     "Is single store mode also ON?")
-                else:
-                    self.logger.COMPUTE_UMSATZ_HAUSHALTE("Exporting debugging info for hectares")
-                    writer2 = pd.ExcelWriter(parameters["umsatz_output_csv"] + ".debugrelis.xlsx")
-                    haraster_perpective.to_excel(writer2, "RELI")
-                    # now get the WSG84 coordinates for all relevant hectares
-                    relevant_hektarts = haraster_perpective["StartHARasterID"].append(haraster_perpective["HARasterID"])
-                    x = self.geo_helpers.addHRpointsWGS(np.unique(relevant_hektarts))
-                    x.to_excel(writer2, "StartRelis2WGS84")
-                    self.logger.COMPUTE_UMSATZ_HAUSHALTE("Done")
+                self.logger.COMPUTE_UMSATZ_HAUSHALTE("Exporting debugging info for stores")
+                self.debug.export_debug_info_stores(pandas_pd)
+                self.logger.COMPUTE_UMSATZ_HAUSHALTE("Exporting debugging info for hectares")
+                self.debug.export_debug_info_hectares(pandas_pd)
 
             umsatz_potential_pd = gen_umsatz_prognose(pandas_postprocessed_dt)
             return umsatz_potential_pd
@@ -356,14 +395,13 @@ class model_MBI_v1_2(ModelBase):
                                                             ausgaben_arbeitnehmer
             return aggregated_over_stores
 
-
-
     logger = None
+    umsatz_components = None
 
     # all model parameters go into this dictionary
     parameters = {}
 
-   # the minimum error after the parameter sweep
+    # the minimum error after the parameter sweep
     E_min = [(float("inf"), ())]
 
     single_store = None
@@ -516,19 +554,25 @@ class model_MBI_v1_2(ModelBase):
         self.process_settings(config)
 
         # initialize the internal classes
-        self.umsatz_components = self._umsatz_components_(logger, geo_helpers=self._geo_helpers_())
-
+        # self.umsatz_components = self._umsatz_components_(logger, geo_helpers=self._geo_helpers_())
+        self.umsatz_components = self._umsatz_components_(logger,
+                                                          debug=self._debug_(logger,
+                                                                            params = {
+                                                                            'store_ids': self.store_ids or None,
+                                                                            'haraster_ids': self.ha_rasterids or None,
+                                                                            'umsatz_output_csv': self.umsatz_output_csv
+                                                                            },
+                                                                            geo_helpers=self._geo_helpers_()))
 
         # check if the model got the right dict with input tables
         # TODO: super basic check for names only. Handle more robustly
         try:
             pandas_dt = tables_dict["all_stores"]
             self.parameters["stations_pd"] = tables_dict["sbb_stations"]
-        except:
+        except Exception:
             logger.error('Model %s did not get the right input table names. Expected %s got %s',
                         self.whoami(), "['all_stores', 'sbb_stations']", list(tables_dict.keys()))
             sys.exit(1)
-
 
         if self.optimize:
             logger.info("Starting parameter optimization ")
