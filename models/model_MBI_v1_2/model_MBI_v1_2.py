@@ -6,12 +6,19 @@ import sys
 import os
 import datetime
 
+from models.model_MBI_v1_2 import _model_MBI_v1_2
+
+
+
 from scipy.optimize import minimize
 from models.model_base import ModelBase
 from multiprocessing import Pool
-
 from pyproj import Proj, transform  # coordinate projections and transformations
 
+# from sklearn import linear_model # needed for the regression
+# from sklearn.metrics import mean_squared_error, r2_score # needed for the regression
+
+import statsmodels.formula.api as smf
 
 def sumRlATS(dataframe):
     print("process id = %d / processing group with size %d " % (os.getpid(), len(dataframe)))
@@ -22,6 +29,22 @@ def sumRlATS(dataframe):
 
 @ModelBase.register
 class model_MBI_v1_2(ModelBase):
+
+    def __init__(self):
+        self.logger = None
+        self.umsatz_components = None
+
+        # all model parameters go into this dictionary
+        self.parameters = {}
+
+        # the minimum error after the parameter sweep
+        self.E_min = [(float("inf"), ())]
+
+        self.single_store = None
+
+        self.regression_formula = None
+
+        self._utility_class = _model_MBI_v1_2._model_MBI_v1_2()
 
     """
     POST-PROCESS DATA FOR VISUALIZATION IN TABLEAU
@@ -152,9 +175,9 @@ class model_MBI_v1_2(ModelBase):
                 self.logger.info("Done")
 
     """
-        This subclass implements the calculation of all the different components of the modell turnover.
+        This subclass implements the calculation of all the different components of the model turnover.
 
-        For example, calculating the turnover components due to Household and Commuter spendings is implemented
+        For example, calculating the turnover components due to Household and Commuter spending is implemented
         in the methods 'calc_umsatz_haushalt' and 'calc_umsatz_oev', respectively.
 
         The idea is that the resulting Pandas dataframe will have one column for each turnover component, which
@@ -395,16 +418,64 @@ class model_MBI_v1_2(ModelBase):
                                                             ausgaben_arbeitnehmer
             return aggregated_over_stores
 
-    logger = None
-    umsatz_components = None
+    class _umsatz_regression_:
+        def __init__(self, parent_logger, data, param_dict):
+            self.logger = parent_logger
+            self.data_pd = data
+            self.regr_formula = param_dict["regr_formula"]
+            self.out = param_dict["output_file"]
 
-    # all model parameters go into this dictionary
-    parameters = {}
+        def prepare_data(self):
+            self.logger.info("Preparing data for the regression")
 
-    # the minimum error after the parameter sweep
-    E_min = [(float("inf"), ())]
+            # prepare the data
+            self.data_pd.loc[pd.isnull(self.data_pd.Umsatz_Pendler), 'Umsatz_Pendler'] = 0
+            self.data_pd.loc[pd.isnull(self.data_pd.Umsatz_Pendler), 'Umsatz_Arbeitnehmer'] = 0
+            self.data_pd.loc[pd.isnull(self.data_pd.Umsatz_Pendler), 'Umsatz_Haushalte'] = 0
 
-    single_store = None
+            # for training take only stores with recorded turnover
+            d_valid = self.data_pd.loc[~pd.isnull(self.data_pd.istUmsatz)]
+
+            # add a column with the invidual error
+            d_valid['error'] = np.abs(d_valid.Umsatz_Total - d_valid.istUmsatz) / d_valid.istUmsatz
+
+            # finally select the training dataset, after removing irrelevant 'outliers'
+            q = d_valid['error'].quantile(q=0.99)
+            d_training = d_valid.loc[d_valid.error < q]
+            return d_training
+
+        def run(self):
+            self.logger.info("Running regression: %s", self.regr_formula)
+
+            d_train = self.prepare_data()
+
+            self.logger.info("Training the regression model")
+            print(type(self.regr_formula))
+
+
+            fitted_model= smf.rlm(formula="istUmsatz ~ Umsatz_Haushalte+Umsatz_Pendler+Umsatz_Arbeitnehmer+Umsatz_Pendler+DTB+C(RegionTyp)+VFL+C(Format)",
+                                  data=d_train).fit()
+            with open(self.out, mode="w") as out_f:
+                out_f.write(fitted_model.summary().as_text())
+
+            # now predict on the whole dataset
+            self.logger.info("Running regression model on test data ")
+            y_train = self.data_pd
+            # If 'Format' was in the formula exclude the Migrolino stores from the test data
+            # The reason is that Migrolino format doesn't appear in the training data and so
+            # we can't do predictions for it. TODO: Find a smarter way to do this check. This feels hacky.
+            if 'Format' in self.regr_formula:
+                self.logger.info("Excluding Migrolino stores from test data, because \"Format\" is a regressor")
+                y_train = y_train.loc[y_train.Format != 'Migrolino']
+
+            y_train["Umsatz_Regression"] = fitted_model.predict(y_train)
+
+            self.logger.info("DONE with regression")
+
+            # now merge the predicted turnover into the original data set
+            return pd.merge(left=self.data_pd,
+                            right=y_train.reset_index()[["StoreID", "Umsatz_Regression"]],
+                            left_index=True, right_on='StoreID', how='left')
 
     def whoami(self):
         return 'Model_MBI_v1.2'
@@ -467,6 +538,12 @@ class model_MBI_v1_2(ModelBase):
                 except Exception as e:
                     print(e)
                     sys.exit(1)
+
+            # Regression formula
+            if "formula" in config["regression"]:
+                self.regression_formula = config["regression"]["formula"]
+                if len(self.regression_formula) == 0:
+                    self.regression_formula = None
 
             self.umsatz_output_csv = config["output"]["output_csv"] + "_" + datetime.datetime.now().isoformat()
             # create output directory if it doesn't exist
@@ -597,6 +674,7 @@ class model_MBI_v1_2(ModelBase):
             logger.info("Optimization finished: ")
             logger.info("%s", str(res))
             sys.exit(1)
+
         # -----------------------
         # ---- HAUSHALT component
         # -----------------------
@@ -675,18 +753,34 @@ class model_MBI_v1_2(ModelBase):
                                                 "statent_halbzeit_factor_smvm": cache_statent_pd[idx_statent][0][1],
                                                 "ausgaben_arbeitnehmer": cache_statent_pd[idx_statent][0][2]})
 
-        # --- FINALIZE ------
+        # -----------------------
+        # ---- RUN THE REGRESSION
+        # -----------------------
 
-        # output only the relevant columns
+        # choose only the relevant columns
         column_order = ['StoreName', 'Retailer', 'Format', 'VFL', 'Adresse', 'PLZ_l', 'Ort', 'RegionTyp', 'DTB',
                         'HARasterID', 'E_LV03', 'N_LV03', 'ProfitKSTID', 'Food', 'Frische',
                         'Near/Non Food', 'Fachmaerkte', 'additional_kaeufer', 'statent_additional_kunden',
                         'istUmsatz', 'Umsatz_Haushalte', 'Umsatz_Pendler', 'Umsatz_Arbeitnehmer', 'Umsatz_Total']
 
         umsatz_total_optimal_pd = umsatz_total_optimal_pd[column_order]
-        if self.single_store:
-            umsatz_total_optimal_pd = umsatz_total_optimal_pd.loc[umsatz_total_optimal_pd.StoreName == self.single_store]
 
+        if self.regression_formula is not None:
+            if self.single_store:
+                self.logger.warning("Cannot run the regression part in single store mode. Skipping.")
+                umsatz_total_optimal_pd = umsatz_total_optimal_pd.loc[umsatz_total_optimal_pd.StoreName == self.single_store]
+            else:
+                umsatz_total_optimal_pd = self._umsatz_regression_(self.logger, umsatz_total_optimal_pd,
+                                                {"regr_formula": self.regression_formula,
+                                                 "output_file": self.umsatz_output_csv + '.regression'}).run()
+
+                # calculate the error after the regression
+                (umsatz_total_pd, tot_error, tot_error_quant) = \
+                    self.calc_error(umsatz_total_optimal_pd, col_modelUmsatz=["Umsatz_Regression"],
+                                    col_istUmsatz="istUmsatz", quant=0.95)
+                self.logger.info("Error after regression is %f ", tot_error_quant)
+
+        # --- FINALIZE ------
         output_fname = self.umsatz_output_csv + '.txt'
         output_param_fname = self.umsatz_output_csv + '.params'
         self.logger.info("Exporting results ...")
@@ -705,7 +799,7 @@ class model_MBI_v1_2(ModelBase):
         umsatz_total_optimal_pd.to_csv(output_fname)
         self.logger.info("Done.")
 
-    def calc_error(self, pandas_pd, col_modelUmsatz, col_istUmsatz, quant, single_store = None):
+    def calc_error(self, pandas_pd, col_modelUmsatz, col_istUmsatz, quant, single_store=None):
         # ----- Calculate the current Total Umsatz
         pandas_pd['Umsatz_Total'] = 0.0
         for column in col_modelUmsatz:

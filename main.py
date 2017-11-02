@@ -47,7 +47,7 @@ if __name__ == "__main__":
     logger = setup_custom_logger('GM_LOGGER', LOGGING_LEVEL, flog=options.logname)
 
     # -------------------------------------
-    # Load the chosen model first in order to quit early if misspecified
+    # Load the chosen model first in order to quit early if mis-specified
     # -------------------------------------
     # TODO: If this fails, it will spit out a python exception. Handle in a more user friendly manner.
     m = importlib.import_module("models." + options.model)
