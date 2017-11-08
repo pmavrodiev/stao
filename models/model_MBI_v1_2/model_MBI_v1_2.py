@@ -6,10 +6,6 @@ import sys
 import os
 import datetime
 
-from models.model_MBI_v1_2 import _model_MBI_v1_2
-
-
-
 from scipy.optimize import minimize
 from models.model_base import ModelBase
 from multiprocessing import Pool
@@ -44,11 +40,9 @@ class model_MBI_v1_2(ModelBase):
 
         self.regression_formula = None
 
-        self._utility_class = _model_MBI_v1_2._model_MBI_v1_2()
-
     """
     POST-PROCESS DATA FOR VISUALIZATION IN TABLEAU
-    Input: Numpy ndarray with RELIs / HARasterIDs
+    Input: Numpy ndarray with RELIs / HARasterIDss
     Output: Coordinates (WGS84) of the 4 corners of this hectare, including a Tableau-compatible plotting order
     Based on original code from Bojan.Skerlak@mgb.ch, August 2017
     Optimized and adapted by Pavlin.Mavrodiev@mgb.ch, August 2017
@@ -418,7 +412,36 @@ class model_MBI_v1_2(ModelBase):
                                                             ausgaben_arbeitnehmer
             return aggregated_over_stores
 
+    """
+        Implements the regression part of the model. This takes place after the main turnover components
+        have been calculated. 
+    """
     class _umsatz_regression_:
+        """
+            :param parent_logger:
+                reference to the parent loggers
+
+            :param data:
+                A Pandas DataFrame with all stores as rows and their relevant
+                features as columns. At the minimum the following features are required:
+                'Umsatz_Pendler', 'Umsatz_Arbeitnehmer' and 'Umsatz_Haushalte'
+
+            :param param_dict:
+                A dictionary with the following keys:
+
+                'regr_formula' - R style regression formula read from the settings file.
+                The names of the formula components must correspond to the available
+                features in the 'data' DataFrame
+
+                'out' - The name of the output file where a summary of the regression
+                will be stored
+
+            :return:
+                The original pandas DataFrame supplied in 'data' with an additional column
+                'Umsatz_Regression'
+
+            Main entry point of a model.
+                """
         def __init__(self, parent_logger, data, param_dict):
             self.logger = parent_logger
             self.data_pd = data
@@ -433,15 +456,15 @@ class model_MBI_v1_2(ModelBase):
             self.data_pd.loc[pd.isnull(self.data_pd.Umsatz_Pendler), 'Umsatz_Arbeitnehmer'] = 0
             self.data_pd.loc[pd.isnull(self.data_pd.Umsatz_Pendler), 'Umsatz_Haushalte'] = 0
 
-            # for training take only stores with recorded turnover
-            d_valid = self.data_pd.loc[~pd.isnull(self.data_pd.istUmsatz)]
-
-            # add a column with the invidual error
-            d_valid['error'] = np.abs(d_valid.Umsatz_Total - d_valid.istUmsatz) / d_valid.istUmsatz
+            # for training take only stores with recorded turnover and add an 'error' column for them
+            self.data_pd.loc[~pd.isnull(self.data_pd.istUmsatz), 'error'] = \
+                np.abs(self.data_pd.loc[~pd.isnull(self.data_pd.istUmsatz), 'Umsatz_Total'] -
+                       self.data_pd.loc[~pd.isnull(self.data_pd.istUmsatz), 'istUmsatz']) / \
+                self.data_pd.loc[~pd.isnull(self.data_pd.istUmsatz), 'istUmsatz']
 
             # finally select the training dataset, after removing irrelevant 'outliers'
-            q = d_valid['error'].quantile(q=0.99)
-            d_training = d_valid.loc[d_valid.error < q]
+            q = self.data_pd['error'].quantile(q=0.99)
+            d_training = self.data_pd.loc[self.data_pd['error'] < q]
             return d_training
 
         def run(self):
@@ -450,25 +473,36 @@ class model_MBI_v1_2(ModelBase):
             d_train = self.prepare_data()
 
             self.logger.info("Training the regression model")
-            print(type(self.regr_formula))
+            fitted_model= smf.rlm(formula=self.regr_formula, data=d_train).fit()
 
-
-            fitted_model= smf.rlm(formula="istUmsatz ~ Umsatz_Haushalte+Umsatz_Pendler+Umsatz_Arbeitnehmer+Umsatz_Pendler+DTB+C(RegionTyp)+VFL+C(Format)",
-                                  data=d_train).fit()
             with open(self.out, mode="w") as out_f:
                 out_f.write(fitted_model.summary().as_text())
 
             # now predict on the whole dataset
             self.logger.info("Running regression model on test data ")
             y_train = self.data_pd
+
+            """
+                This is to deal with the annoying SettingWithCopyWarning
+                When a copy of a data frame is changed, e.g. by adding a new columnn,
+                this warning kicks-in and notifies the user that he is working on a copy
+                and his changes will not be propagated back to the original data frame.
+
+                We don't care about this here, because it is the modified copy that will be returned to the caller.
+                By manually designating this DataFrame as not a copy, this warning won't appear
+                For a larger discussion, please refer here:
+                https://stackoverflow.com/questions/20625582/how-to-deal-with-settingwithcopywarning-in-pandas
+            """
+            y_train.is_copy = False
+
             # If 'Format' was in the formula exclude the Migrolino stores from the test data
-            # The reason is that Migrolino format doesn't appear in the training data and so
+            # The reason is that the Migrolino format doesn't appear in the training data and so
             # we can't do predictions for it. TODO: Find a smarter way to do this check. This feels hacky.
             if 'Format' in self.regr_formula:
                 self.logger.info("Excluding Migrolino stores from test data, because \"Format\" is a regressor")
                 y_train = y_train.loc[y_train.Format != 'Migrolino']
 
-            y_train["Umsatz_Regression"] = fitted_model.predict(y_train)
+            y_train.loc[:, "Umsatz_Regression"] = fitted_model.predict(y_train)
 
             self.logger.info("DONE with regression")
 

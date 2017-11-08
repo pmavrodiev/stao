@@ -10,7 +10,6 @@ class ModelBase(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def entry(self, tables_dict, config, logger):
         """
-
         :param table_l:
             A list with all pandas table objects needed for the model.
             At least the following should be defined.
