@@ -144,7 +144,6 @@ if __name__ == "__main__":
                 all_stores_pd = apply_parallel(all_stores_grouped, func, ncpus=100, chunk_size=3)
                 logger.info("Done. ")
 
-
         # enrich the drive times of the relevant hectars with Haushalt information
         logger.info("Enriching with Haushalt information ...")
 

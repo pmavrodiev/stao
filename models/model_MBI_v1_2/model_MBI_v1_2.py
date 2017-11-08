@@ -5,6 +5,7 @@ import pandas as pd
 import sys
 import os
 import datetime
+import dask.dataframe as dd
 
 from scipy.optimize import minimize
 from models.model_base import ModelBase
@@ -233,22 +234,11 @@ class model_MBI_v1_2(ModelBase):
                 pandas_dt['RLAT'] = pandas_dt['LAT'] * np.exp(-1.0*pandas_dt['FZ']*np.log(2) / hh_halbzeit_vector)
 
                 self.logger.COMPUTE_UMSATZ_HAUSHALTE('Computing sum RLATs ...')
-                groups_RLAT = pandas_dt.groupby('StartHARasterID', as_index=False,
-                                                 sort=False, group_keys=False)[["RLAT"]]
-                self.logger.COMPUTE_UMSATZ_HAUSHALTE(" %d groups", groups_RLAT.ngroups)
-                if parameters["cpu_count"] is None:
-                    # pandas_dt['sumRLATs'] = self.Groupby(pandas_dt['StartHARasterID'].astype(int)).apply(np.sum,
-                    #                                                                     pandas_dt['RLAT'])
-                    pandas_dt['sumRLATs'] = groups_RLAT.transform(sum)
-                else:
-                    self.logger.COMPUTE_UMSATZ_HAUSHALTE("Doing it parallel. Number of cpu_count %d / chunk_size %d",
-                                     parameters["cpu_count"], parameters["chunk_size"])
-
-                    with Pool(parameters["cpu_count"]) as p:
-                        ret_list = p.map(sumRlATS, [group for name, group in groups_RLAT])
-                                         # chunksize=parameters["chunk_size"])
-                    self.logger.COMPUTE_UMSATZ_HAUSHALTE("Concatenating parallel results")
-                    pandas_dt = pd.concat(ret_list)
+                # convert to Dask dataframe and then do a very fast group by
+                df = dd.from_pandas(pandas_dt, npartitions=10)
+                pd_result = pd.DataFrame(df.groupby(df.StartHARasterID).RLAT.sum().compute())
+                pd_result.rename(columns={'RLAT': 'sumRLATs'}, inplace=True)
+                pandas_dt = df.join(pd_result, on='StartHARasterID').compute()
 
                 pandas_dt['LMA'] = pandas_dt['RLAT'] / pandas_dt['sumRLATs']
 
@@ -658,6 +648,28 @@ class model_MBI_v1_2(ModelBase):
                                                                     single_store = self.single_store)
         return tot_error_quant
 
+    def calc_error(self, pandas_pd, col_modelUmsatz, col_istUmsatz, quant, single_store=None):
+        # ----- Calculate the current Total Umsatz
+        pandas_pd['Umsatz_Total'] = 0.0
+        for column in col_modelUmsatz:
+            pandas_pd['Umsatz_Total'] = np.where(np.isnan(pandas_pd[column]), pandas_pd['Umsatz_Total'],
+                                                 pandas_pd['Umsatz_Total'] + pandas_pd[column])
+
+        # --- Calculate the error ------------------------------------------------
+        if single_store is not None:
+            x = pandas_pd.loc[pandas_pd.StoreName == single_store]
+            error_E_i = np.power(x['Umsatz_Total'] - x[col_istUmsatz], 2) / x[col_istUmsatz]
+        else:
+            error_E_i = np.power(pandas_pd['Umsatz_Total'] - pandas_pd[col_istUmsatz], 2) / pandas_pd[col_istUmsatz]
+
+        error_E_i = error_E_i.loc[~np.isnan(error_E_i)]
+
+        total_error = np.sqrt(np.sum(error_E_i))
+        error_quantile = error_E_i.quantile(q=quant)
+        total_error_quant = np.sqrt(np.sum(error_E_i.loc[error_E_i <= error_quantile]))
+
+        return (pandas_pd, total_error, total_error_quant)
+
     def entry(self, tables_dict, config, logger):
         self.logger = logger
         self.logger.info("Initialized model %s", self.whoami())
@@ -829,29 +841,6 @@ class model_MBI_v1_2(ModelBase):
             f.write("statent_halbzeit_factor_smvm: " + str(self.E_min[0][1]["statent_halbzeit_factor_smvm"])+"\n")
             f.write("ausgaben_arbeitnehmer: " + str(self.E_min[0][1]["ausgaben_arbeitnehmer"])+"\n")
 
-
         umsatz_total_optimal_pd.to_csv(output_fname)
         self.logger.info("Done.")
-
-    def calc_error(self, pandas_pd, col_modelUmsatz, col_istUmsatz, quant, single_store=None):
-        # ----- Calculate the current Total Umsatz
-        pandas_pd['Umsatz_Total'] = 0.0
-        for column in col_modelUmsatz:
-            pandas_pd['Umsatz_Total'] = np.where(np.isnan(pandas_pd[column]), pandas_pd['Umsatz_Total'],
-                                                 pandas_pd['Umsatz_Total'] + pandas_pd[column])
-
-        # --- Calculate the error ------------------------------------------------
-        if single_store is not None:
-            x = pandas_pd.loc[pandas_pd.StoreName == single_store]
-            error_E_i = np.power(x['Umsatz_Total'] - x[col_istUmsatz], 2) / x[col_istUmsatz]
-        else:
-            error_E_i = np.power(pandas_pd['Umsatz_Total'] - pandas_pd[col_istUmsatz], 2) / pandas_pd[col_istUmsatz]
-
-        error_E_i = error_E_i.loc[~np.isnan(error_E_i)]
-
-        total_error = np.sqrt(np.sum(error_E_i))
-        error_quantile = error_E_i.quantile(q=quant)
-        total_error_quant = np.sqrt(np.sum(error_E_i.loc[error_E_i <= error_quantile]))
-
-        return (pandas_pd, total_error, total_error_quant)
 
