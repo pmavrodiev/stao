@@ -440,7 +440,7 @@ class model_MBI_v1_2(ModelBase):
                 The original pandas DataFrame supplied in 'data' with an additional column
                 'Umsatz_Regression'
 
-            Main entry point of a model.
+
                 """
         def __init__(self, parent_logger, data, param_dict):
             self.logger = parent_logger
