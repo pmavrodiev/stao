@@ -643,18 +643,13 @@ class model_MBI_v1_2(ModelBase):
         return tot_error_quant
 
     def calc_error(self, pandas_pd, col_modelUmsatz, col_istUmsatz, quant, single_store=None):
-        # ----- Calculate the current Total Umsatz
-        pandas_pd['Umsatz_Total'] = 0.0
-        for column in col_modelUmsatz:
-            pandas_pd['Umsatz_Total'] = np.where(np.isnan(pandas_pd[column]), pandas_pd['Umsatz_Total'],
-                                                 pandas_pd['Umsatz_Total'] + pandas_pd[column])
 
         # --- Calculate the error ------------------------------------------------
         if single_store is not None:
             x = pandas_pd.loc[pandas_pd.StoreName == single_store]
-            error_E_i = np.power(x['Umsatz_Total'] - x[col_istUmsatz], 2) / x[col_istUmsatz]
+            error_E_i = np.power(x[col_modelUmsatz] - x[col_istUmsatz], 2) / x[col_istUmsatz]
         else:
-            error_E_i = np.power(pandas_pd['Umsatz_Total'] - pandas_pd[col_istUmsatz], 2) / pandas_pd[col_istUmsatz]
+            error_E_i = np.power(pandas_pd[col_modelUmsatz] - pandas_pd[col_istUmsatz], 2) / pandas_pd[col_istUmsatz]
 
         error_E_i = error_E_i.loc[~np.isnan(error_E_i)]
 
@@ -662,7 +657,7 @@ class model_MBI_v1_2(ModelBase):
         error_quantile = error_E_i.quantile(q=quant)
         total_error_quant = np.sqrt(np.sum(error_E_i.loc[error_E_i <= error_quantile]))
 
-        return (pandas_pd, total_error, total_error_quant)
+        return (total_error, total_error_quant)
 
     def entry(self, tables_dict, config, logger):
         self.logger = logger
@@ -762,16 +757,19 @@ class model_MBI_v1_2(ModelBase):
                                         left_index=True, right_index=True)
             umsatz_merged_pd = pd.merge(umsatz_merged_pd, cache_statent_pd[idx_statent][1], how="left",
                                         left_index=True, right_index=True)
-            (umsatz_total_pd, tot_error, tot_error_quant) = self.calc_error(umsatz_merged_pd,
-                                                                        col_modelUmsatz=[
-                                                                            "Umsatz_Haushalte",
-                                                                            "Umsatz_Arbeitnehmer",
-                                                                            "Umsatz_Pendler"],
+
+
+            umsatz_merged_pd['Umsatz_Total'] = umsatz_merged_pd["Umsatz_Haushalte"].fillna(0)+\
+                                               umsatz_merged_pd["Umsatz_Arbeitnehmer"].fillna(0)+\
+                                               umsatz_merged_pd["Umsatz_Pendler"].fillna(0)
+
+            (tot_error, tot_error_quant) = self.calc_error(umsatz_merged_pd,
+                                                                        col_modelUmsatz="Umsatz_Total",
                                                                         col_istUmsatz="istUmsatz",
                                                                         quant=0.95,
                                                                         single_store = self.single_store)
             if tot_error_quant < self.E_min[len(self.E_min) - 1][0]:
-                umsatz_total_optimal_pd = umsatz_total_pd
+                umsatz_total_optimal_pd = umsatz_merged_pd
                 self.logger.info("New minimum found. TOTAL ERROR: %f / %f", tot_error, tot_error_quant)
                 self.logger.info("Parameters: ")
                 self.logger.info("factor_LAT: %f ", cache_haushalte_pd[idx_haushalt][0][0])
