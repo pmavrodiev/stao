@@ -427,7 +427,7 @@ class model_MBI_v1_2(ModelBase):
                 """
         def __init__(self, parent_logger, data, param_dict):
             self.logger = parent_logger
-            self.data_pd = data
+            self.data_pd = data.copy(deep=True)
             self.regr_formula = param_dict["regr_formula"]
             self.out = param_dict["output_file"]
 
@@ -448,7 +448,8 @@ class model_MBI_v1_2(ModelBase):
             # finally select the training dataset, after removing irrelevant 'outliers'
             q = self.data_pd['error'].quantile(q=0.99)
             d_training = self.data_pd.loc[self.data_pd['error'] < q]
-            del d_training['error']
+            self.data_pd.drop('error', axis=1, inplace=True)
+
             return d_training
 
         def run(self):
@@ -464,20 +465,8 @@ class model_MBI_v1_2(ModelBase):
 
             # now predict on the whole dataset
             self.logger.info("Running regression model on test data ")
-            y_train = self.data_pd
 
-            """
-                This is to deal with the annoying SettingWithCopyWarning
-                When a copy of a data frame is changed, e.g. by adding a new columnn,
-                this warning kicks-in and notifies the user that he is working on a copy
-                and his changes will not be propagated back to the original data frame.
-
-                We don't care about this here, because it is the modified copy that will be returned to the caller.
-                By manually designating this DataFrame as not a copy, this warning won't appear
-                For a larger discussion, please refer here:
-                https://stackoverflow.com/questions/20625582/how-to-deal-with-settingwithcopywarning-in-pandas
-            """
-            y_train.is_copy = False
+            y_train = self.data_pd.copy(deep=True)
 
             # If 'Format' was in the formula exclude the Migrolino stores from the test data
             # The reason is that the Migrolino format doesn't appear in the training data and so
@@ -813,10 +802,10 @@ class model_MBI_v1_2(ModelBase):
                                                  "output_file": self.umsatz_output_csv + '.regression'}).run()
 
                 # calculate the error after the regression
-                # (umsatz_total_pd, tot_error, tot_error_quant) = \
-                #     self.calc_error(umsatz_total_optimal_pd, col_modelUmsatz=["Umsatz_Regression"],
-                #                     col_istUmsatz="istUmsatz", quant=0.95)
-                # self.logger.info("Error after regression is %f ", tot_error_quant)
+                (tot_error, tot_error_quant) = \
+                     self.calc_error(umsatz_total_optimal_pd, col_modelUmsatz="Umsatz_Regression",
+                                     col_istUmsatz="istUmsatz", quant=0.95)
+                self.logger.info("Error after regression is %f ", tot_error_quant)
 
         # --- FINALIZE ------
         output_fname = self.umsatz_output_csv + '.txt'
