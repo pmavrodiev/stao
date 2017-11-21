@@ -17,13 +17,6 @@ from pyproj import Proj, transform  # coordinate projections and transformations
 
 import statsmodels.formula.api as smf
 
-def sumRlATS(dataframe):
-    print("process id = %d / processing group with size %d " % (os.getpid(), len(dataframe)))
-    dataframe['sumRLATs'] = dataframe['RLAT'].sum()
-    print("process id = %d - DONE " % os.getpid())
-    return dataframe
-
-
 @ModelBase.register
 class model_MBI_v1_2(ModelBase):
 
@@ -455,6 +448,7 @@ class model_MBI_v1_2(ModelBase):
             # finally select the training dataset, after removing irrelevant 'outliers'
             q = self.data_pd['error'].quantile(q=0.99)
             d_training = self.data_pd.loc[self.data_pd['error'] < q]
+            del d_training['error']
             return d_training
 
         def run(self):
@@ -497,9 +491,9 @@ class model_MBI_v1_2(ModelBase):
             self.logger.info("DONE with regression")
 
             # now merge the predicted turnover into the original data set
-            return pd.merge(left=self.data_pd,
+            return pd.merge(left=self.data_pd.reset_index(),
                             right=y_train.reset_index()[["StoreID", "Umsatz_Regression"]],
-                            left_index=True, right_on='StoreID', how='left')
+                            left_on='StoreID', right_on='StoreID', how='left').set_index('StoreID')
 
     def whoami(self):
         return 'Model_MBI_v1.2'
@@ -803,7 +797,7 @@ class model_MBI_v1_2(ModelBase):
         # ---- RUN THE REGRESSION
         # -----------------------
 
-        # choose only the relevant columns
+        # choose only the relevant columns - StoreID is the index
         column_order = ['StoreName', 'Retailer', 'Format', 'VFL', 'Adresse', 'PLZ_l', 'Ort', 'RegionTyp', 'DTB',
                         'HARasterID', 'E_LV03', 'N_LV03', 'ProfitKSTID', 'Food', 'Frische',
                         'Near/Non Food', 'Fachmaerkte', 'additional_kaeufer', 'statent_additional_kunden',
@@ -821,10 +815,10 @@ class model_MBI_v1_2(ModelBase):
                                                  "output_file": self.umsatz_output_csv + '.regression'}).run()
 
                 # calculate the error after the regression
-                (umsatz_total_pd, tot_error, tot_error_quant) = \
-                    self.calc_error(umsatz_total_optimal_pd, col_modelUmsatz=["Umsatz_Regression"],
-                                    col_istUmsatz="istUmsatz", quant=0.95)
-                self.logger.info("Error after regression is %f ", tot_error_quant)
+                # (umsatz_total_pd, tot_error, tot_error_quant) = \
+                #     self.calc_error(umsatz_total_optimal_pd, col_modelUmsatz=["Umsatz_Regression"],
+                #                     col_istUmsatz="istUmsatz", quant=0.95)
+                # self.logger.info("Error after regression is %f ", tot_error_quant)
 
         # --- FINALIZE ------
         output_fname = self.umsatz_output_csv + '.txt'
