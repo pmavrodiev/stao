@@ -219,10 +219,11 @@ class model_MBI_v1_2(ModelBase):
                                             # np.where(pandas_dt["RegionTyp"].isin([11, 12]), factor_LAT, 1))
 
                 # hh_halbzeit_vector = np.where(pandas_pd["RegionTyp"].isin([11,12]), 0.8*hh_halbzeit, hh_halbzeit)
-
-                hh_halbzeit_vector = np.where(pandas_pd["Format"].isin(["SM/VM 700", "SM/VM 2000"]),
-                                               hh_halbzeit_factor_smvm * hh_halbzeit,
-                                               hh_halbzeit)
+        
+                hh_halbzeit_vector = np.where((pandas_pd["Format"].isin(["SM/VM 4000"])) &
+                                              (pandas_pd["RegionTyp"].isin([11,12, 13])),
+                                              hh_halbzeit_factor_smvm * hh_halbzeit,
+                                              hh_halbzeit)
 
                 pandas_dt['RLAT'] = pandas_dt['LAT'] * np.exp(-1.0*pandas_dt['FZ']*np.log(2) / hh_halbzeit_vector)
 
@@ -395,6 +396,14 @@ class model_MBI_v1_2(ModelBase):
                                                             ausgaben_arbeitnehmer
             return aggregated_over_stores
 
+        def calc_umsatz_dtb(self, pandas_pd, parameters):
+            self.logger.COMPUTE_UMSATZ_DTB('Computing the influence of DTB')
+            dtb_coeff = parameters["dtb"]
+            pandas_pd["Umsatz_DTB"] = dtb_coeff * pandas_pd["DTB"].fillna(0)
+            # pandas_pd has index StoreID before reset_index()
+            p = pandas_pd.reset_index().groupby('StoreID', as_index=False)['Umsatz_DTB'].aggregate(np.mean).set_index('StoreID')
+            return p[["Umsatz_DTB"]]
+
     """
         Implements the regression part of the model. This takes place after the main turnover components
         have been calculated. 
@@ -479,6 +488,7 @@ class model_MBI_v1_2(ModelBase):
 
             self.logger.info("DONE with regression")
 
+
             # now merge the predicted turnover into the original data set
             return pd.merge(left=self.data_pd.reset_index(),
                             right=y_train.reset_index()[["StoreID", "Umsatz_Regression"]],
@@ -512,6 +522,8 @@ class model_MBI_v1_2(ModelBase):
                                                     json.loads(config["parameters"]["statent_halbzeit_factor_smvm"])]
             self.parameters["ausgaben_arbeitnehmer"] = [float(x) for x in
                                                     json.loads(config["parameters"]["ausgaben_arbeitnehmer"])]
+            # Distance to Border (DTB)
+            self.parameters["dtb"] = [float(x) for x in json.loads(config["parameters"]["dtb"])]
 
             #
             self.optimize = config.getboolean('global', 'optimize')
@@ -621,32 +633,41 @@ class model_MBI_v1_2(ModelBase):
 
         umsatz_merged_pd = pd.merge(umsatz_merged_pd, umsatz_statent, how="left", left_index=True, right_index=True)
 
-        (umsatz_total_pd, tot_error, tot_error_quant) = self.calc_error(umsatz_merged_pd,
-                                                                    col_modelUmsatz=[
-                                                                        "Umsatz_Haushalte",
-                                                                        "Umsatz_Arbeitnehmer",
-                                                                        "Umsatz_Pendler"],
-                                                                    col_istUmsatz="istUmsatz",
-                                                                    quant=0.95,
-                                                                    single_store = self.single_store)
-        return tot_error_quant
+        (total_error_mean, total_error_median, total_error_quant_median, total_error_quant_mean, sample_size) = \
+            self.calc_error(umsatz_merged_pd, col_modelUmsatz=["Umsatz_Haushalte",
+                                                               "Umsatz_Arbeitnehmer",
+                                                               "Umsatz_Pendler"],
+                            col_istUmsatz="istUmsatz", quant=0.95, single_store = self.single_store)
+        return total_error_median
 
     def calc_error(self, pandas_pd, col_modelUmsatz, col_istUmsatz, quant, single_store=None):
 
         # --- Calculate the error ------------------------------------------------
         if single_store is not None:
             x = pandas_pd.loc[pandas_pd.StoreName == single_store]
-            error_E_i = np.power(x[col_modelUmsatz] - x[col_istUmsatz], 2) / x[col_istUmsatz]
+            # error_E_i = np.power(x[col_modelUmsatz] - x[col_istUmsatz], 2) / x[col_istUmsatz]
+            error_E_i = (x[col_modelUmsatz] - x[col_istUmsatz]) / x[col_istUmsatz]
+
         else:
-            error_E_i = np.power(pandas_pd[col_modelUmsatz] - pandas_pd[col_istUmsatz], 2) / pandas_pd[col_istUmsatz]
+            error_E_i = (pandas_pd[col_modelUmsatz] - pandas_pd[col_istUmsatz]) / pandas_pd[col_istUmsatz]
+            # error_E_i = np.power(pandas_pd[col_modelUmsatz] - pandas_pd[col_istUmsatz], 2) / pandas_pd[col_istUmsatz]
 
         error_E_i = error_E_i.loc[~np.isnan(error_E_i)]
 
-        total_error = np.sqrt(np.sum(error_E_i))
+        # total_error = np.sqrt(np.sum(error_E_i))
+        total_error_mean = np.mean(error_E_i)
+        total_error_median = np.median(error_E_i)
         error_quantile = error_E_i.quantile(q=quant)
-        total_error_quant = np.sqrt(np.sum(error_E_i.loc[error_E_i <= error_quantile]))
+        # total_error_quant = np.sqrt(np.sum(error_E_i.loc[error_E_i <= error_quantile]))
+        total_error_quant_median = np.median(error_E_i.loc[error_E_i <= error_quantile])
+        total_error_quant_mean = np.mean(error_E_i.loc[error_E_i <= error_quantile])
 
-        return (total_error, total_error_quant)
+        num_stores = len(error_E_i)
+        num_relevant_stores = len(error_E_i.loc[error_E_i <= error_quantile])
+
+        return (total_error_mean, total_error_median, total_error_quant_median, total_error_quant_mean,
+                (num_relevant_stores, num_stores))
+
 
     def entry(self, tables_dict, config, logger):
         self.logger = logger
@@ -734,32 +755,50 @@ class model_MBI_v1_2(ModelBase):
                                                                        "statent_halbzeit_factor_smvm": statent_p[1],
                                                                        "ausgaben_arbeitnehmer": statent_p[2]})))
 
+        # -----------------------
+        # ---- DTB component
+        # -----------------------
+        cache_dtb_pd = []
+        for dtb in self.parameters["dtb"]:
+            cache_dtb_pd.append((dtb,
+                                 self.umsatz_components.calc_umsatz_dtb(pandas_dt, {"dtb": dtb})))
+
         # now find the optimal combination
-        idx_combinations = [(a, b, c) for a in range(len(cache_haushalte_pd)) for b in range(len(cache_pendler_pd))
-                                      for c in range(len(cache_statent_pd))]
+        idx_combinations = [(a, b, c, d) for a in range(len(cache_haushalte_pd)) for b in range(len(cache_pendler_pd))
+                                      for c in range(len(cache_statent_pd)) for d in range(len(cache_dtb_pd))]
+
         for idx in idx_combinations:
             idx_haushalt = idx[0] # index into the cache_haushalte_pd tuple, i.e. 0 to len(cache_haushalte_pd)
             idx_ov = idx[1] # index into the cache_pendler_pd tuple, i.e. 0 to len(cache_pendler_pd)
             idx_statent = idx[2] # index into the cache_statent_pd tuple, i.e. 0 to len(cache_statent_pd)
+            idx_dtb = idx[3] # index into the cache_statent_pd tuple, i.e. 0 to len(cache_statent_pd)
 
             umsatz_merged_pd = pd.merge(cache_haushalte_pd[idx_haushalt][1], cache_pendler_pd[idx_ov][1], how="left",
                                         left_index=True, right_index=True)
+
             umsatz_merged_pd = pd.merge(umsatz_merged_pd, cache_statent_pd[idx_statent][1], how="left",
                                         left_index=True, right_index=True)
 
+            umsatz_merged_pd = pd.merge(umsatz_merged_pd, cache_dtb_pd[idx_dtb][1], how="left",
+                                        left_index=True, right_index=True)
 
             umsatz_merged_pd['Umsatz_Total'] = umsatz_merged_pd["Umsatz_Haushalte"].fillna(0)+\
                                                umsatz_merged_pd["Umsatz_Arbeitnehmer"].fillna(0)+\
-                                               umsatz_merged_pd["Umsatz_Pendler"].fillna(0)
+                                               umsatz_merged_pd["Umsatz_Pendler"].fillna(0)+\
+                                               umsatz_merged_pd["Umsatz_DTB"].fillna(0)
 
-            (tot_error, tot_error_quant) = self.calc_error(umsatz_merged_pd,
-                                                                        col_modelUmsatz="Umsatz_Total",
-                                                                        col_istUmsatz="istUmsatz",
-                                                                        quant=0.95,
-                                                                        single_store = self.single_store)
-            if tot_error_quant < self.E_min[len(self.E_min) - 1][0]:
+            (total_error_mean, total_error_median, total_error_quant_median, total_error_quant_mean, sample_size) = \
+                self.calc_error(umsatz_merged_pd, col_modelUmsatz="Umsatz_Total", col_istUmsatz="istUmsatz",
+                                quant=0.95, single_store = self.single_store)
+
+            if np.abs(total_error_quant_median) < self.E_min[len(self.E_min) - 1][0]:
                 umsatz_total_optimal_pd = umsatz_merged_pd
-                self.logger.info("New minimum found. TOTAL ERROR: %f / %f", tot_error, tot_error_quant)
+                self.logger.info("New minimum found.")
+                self.logger.info("Total error all stores (median/mean): %f / %f", total_error_median, total_error_mean)
+                self.logger.info("Total error considered stores only (median/mean): %f / %f", total_error_quant_median,
+                                 total_error_quant_mean)
+                self.logger.info("Number of considered stores out of all stores %d / %d",
+                                 sample_size[0], sample_size[1])
                 self.logger.info("Parameters: ")
                 self.logger.info("factor_LAT: %f ", cache_haushalte_pd[idx_haushalt][0][0])
                 self.logger.info("hh_halbzeit: %f ", cache_haushalte_pd[idx_haushalt][0][1])
@@ -769,8 +808,9 @@ class model_MBI_v1_2(ModelBase):
                 self.logger.info("statent_halb_zeit: %f ", cache_statent_pd[idx_statent][0][0])
                 self.logger.info("statent_halbzeit_factor_smvm: %f ", cache_statent_pd[idx_statent][0][1])
                 self.logger.info("ausgaben_arbeitnehmer: %f ", cache_statent_pd[idx_statent][0][2])
+                self.logger.info("DTB: %f ", cache_dtb_pd[idx_dtb][0])
 
-                self.E_min[len(self.E_min) - 1] = (tot_error_quant,
+                self.E_min[len(self.E_min) - 1] = (np.abs(total_error_quant_median),
                                                {"factor_LAT": cache_haushalte_pd[idx_haushalt][0][0],
                                                 "hh_halbzeit": cache_haushalte_pd[idx_haushalt][0][1],
                                                 "hh_halbzeit_factor_smvm": cache_haushalte_pd[idx_haushalt][0][2],
@@ -778,7 +818,8 @@ class model_MBI_v1_2(ModelBase):
                                                 "ausgaben_pendler": cache_pendler_pd[idx_ov][0][1],
                                                 "statent_halb_zeit": cache_statent_pd[idx_statent][0][0],
                                                 "statent_halbzeit_factor_smvm": cache_statent_pd[idx_statent][0][1],
-                                                "ausgaben_arbeitnehmer": cache_statent_pd[idx_statent][0][2]})
+                                                "ausgaben_arbeitnehmer": cache_statent_pd[idx_statent][0][2],
+                                                "DTB": cache_dtb_pd[idx_dtb][0]})
 
         # -----------------------
         # ---- RUN THE REGRESSION
@@ -788,7 +829,8 @@ class model_MBI_v1_2(ModelBase):
         column_order = ['StoreName', 'Retailer', 'Format', 'VFL', 'Adresse', 'PLZ_l', 'Ort', 'RegionTyp', 'DTB',
                         'HARasterID', 'E_LV03', 'N_LV03', 'ProfitKSTID', 'Food', 'Frische',
                         'Near/Non Food', 'Fachmaerkte', 'additional_kaeufer', 'statent_additional_kunden',
-                        'istUmsatz', 'Umsatz_Haushalte', 'Umsatz_Pendler', 'Umsatz_Arbeitnehmer', 'Umsatz_Total']
+                        'istUmsatz', 'Umsatz_Haushalte', 'Umsatz_Pendler', 'Umsatz_Arbeitnehmer', 'Umsatz_DTB',
+                        'Umsatz_Total']
 
         umsatz_total_optimal_pd = umsatz_total_optimal_pd[column_order]
 
@@ -802,10 +844,12 @@ class model_MBI_v1_2(ModelBase):
                                                  "output_file": self.umsatz_output_csv + '.regression'}).run()
 
                 # calculate the error after the regression
-                (tot_error, tot_error_quant) = \
+                (_, _, total_error_quant_median, _, sample_size) = \
                      self.calc_error(umsatz_total_optimal_pd, col_modelUmsatz="Umsatz_Regression",
                                      col_istUmsatz="istUmsatz", quant=0.95)
-                self.logger.info("Error after regression is %f ", tot_error_quant)
+                self.logger.info("Median Error after regression over considered stores is %f ", total_error_quant_median)
+                self.logger.info("Number of considered stores out of all stores %d / %d",
+                             sample_size[0], sample_size[1])
 
         # --- FINALIZE ------
         output_fname = self.umsatz_output_csv + '.txt'
@@ -821,6 +865,7 @@ class model_MBI_v1_2(ModelBase):
             f.write("statent_halb_zeit: " + str(self.E_min[0][1]["statent_halb_zeit"])+"\n")
             f.write("statent_halbzeit_factor_smvm: " + str(self.E_min[0][1]["statent_halbzeit_factor_smvm"])+"\n")
             f.write("ausgaben_arbeitnehmer: " + str(self.E_min[0][1]["ausgaben_arbeitnehmer"])+"\n")
+            f.write("DTB: " + str(cache_dtb_pd[idx_dtb][0]) + "\n")
 
         umsatz_total_optimal_pd.to_csv(output_fname)
         self.logger.info("Done.")
