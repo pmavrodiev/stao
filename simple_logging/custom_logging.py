@@ -3,11 +3,12 @@ import logging
 import os
 import errno
 
-# level 25 is between INFO (20) and WARNING (30)
+# levels shoudl be between INFO (20) and WARNING (30)
 custom_levels = {"PARAMETER_SETTING": 21,
                  "COMPUTE_UMSATZ_HAUSHALTE": 22,
                  "COMPUTE_UMSATZ_PENDLER": 23,
-                 "COMPUTE_UMSATZ_ARBEITNEHMER": 24}
+                 "COMPUTE_UMSATZ_ARBEITNEHMER": 24,
+                 "COMPUTE_UMSATZ_DTB": 25}
 
 
 
@@ -19,6 +20,9 @@ logging.addLevelName(custom_levels["COMPUTE_UMSATZ_PENDLER"],
                      "COMPUTE_UMSATZ_PENDLER")
 logging.addLevelName(custom_levels["COMPUTE_UMSATZ_ARBEITNEHMER"],
                      "COMPUTE_UMSATZ_ARBEITNEHMER")
+logging.addLevelName(custom_levels["COMPUTE_UMSATZ_DTB"],
+                     "COMPUTE_UMSATZ_DTB")
+
 
 
 def PARAMETER_SETTING(self, message, *args, **kws):
@@ -35,10 +39,15 @@ def COMPUTE_UMSATZ_PENDLER(self, message, *args, **kws):
 def COMPUTE_UMSATZ_ARBEITNEHMER(self, message, *args, **kws):
     self._log(custom_levels["COMPUTE_UMSATZ_ARBEITNEHMER"], message, args, **kws)
 
+def COMPUTE_UMSATZ_DTB(self, message, *args, **kws):
+    self._log(custom_levels["COMPUTE_UMSATZ_DTB"], message, args, **kws)
+
+
 logging.Logger.param_info = PARAMETER_SETTING
 logging.Logger.COMPUTE_UMSATZ_PENDLER = COMPUTE_UMSATZ_PENDLER
 logging.Logger.COMPUTE_UMSATZ_ARBEITNEHMER = COMPUTE_UMSATZ_ARBEITNEHMER
 logging.Logger.COMPUTE_UMSATZ_HAUSHALTE = COMPUTE_UMSATZ_HAUSHALTE
+logging.Logger.COMPUTE_UMSATZ_DTB = COMPUTE_UMSATZ_DTB
 
 def setup_custom_logger(name, logging_level, flog=None,
                         log_format='%(asctime)s - %(levelname)s - [%(module)s]\t%(message)s'):

@@ -5,6 +5,7 @@ import pandas as pd
 def apply_parallel(dfGrouped, func, ncpus, chunk_size):
     with Pool(ncpus) as p:
         ret_list = p.map(func, [group for name, group in dfGrouped], chunksize=chunk_size)
+
     concatenated_pd = pd.concat(ret_list)
     return concatenated_pd
 
