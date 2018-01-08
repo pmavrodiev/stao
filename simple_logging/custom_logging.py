@@ -2,6 +2,7 @@
 import logging
 import os
 import errno
+import types
 
 # levels shoudl be between INFO (20) and WARNING (30)
 custom_levels = {"PARAMETER_SETTING": 21,
@@ -49,6 +50,19 @@ logging.Logger.COMPUTE_UMSATZ_ARBEITNEHMER = COMPUTE_UMSATZ_ARBEITNEHMER
 logging.Logger.COMPUTE_UMSATZ_HAUSHALTE = COMPUTE_UMSATZ_HAUSHALTE
 logging.Logger.COMPUTE_UMSATZ_DTB = COMPUTE_UMSATZ_DTB
 
+def log_newline(self, how_many_lines=1):
+    file_handler = None
+    if self.handlers:
+        file_handler = self.handlers[0]
+
+    # Switch formatter, output a blank line
+    file_handler.setFormatter(self.blank_formatter)
+    for i in range(how_many_lines):
+        self.info('')
+
+    # Switch back
+    file_handler.setFormatter(self.default_formatter)
+
 def setup_custom_logger(name, logging_level, flog=None,
                         log_format='%(asctime)s - %(levelname)s - [%(module)s]\t%(message)s'):
 
@@ -71,5 +85,7 @@ def setup_custom_logger(name, logging_level, flog=None,
     logger = logging.getLogger(name)
     logger.setLevel(logging_level)
     logger.addHandler(fhandler)
-
+    logger.default_formatter = formatter
+    logger.blank_formatter = logging.Formatter(fmt="")
+    logger.newline = types.MethodType(log_newline, logger)
     return logger

@@ -45,6 +45,7 @@ if __name__ == "__main__":
     # -------------------------------------
     LOGGING_LEVEL = logging.DEBUG
     logger = setup_custom_logger('GM_LOGGER', LOGGING_LEVEL, flog=options.logname)
+    logger.newline()
 
     # -------------------------------------
     # Load the chosen model first in order to quit early if mis-specified

@@ -6,6 +6,7 @@ import sys
 import os
 import datetime
 import dask.dataframe as dd
+import statsmodels.formula.api as smf
 
 from scipy.optimize import minimize
 from models.model_base import ModelBase
@@ -15,7 +16,7 @@ from pyproj import Proj, transform  # coordinate projections and transformations
 # from sklearn import linear_model # needed for the regression
 # from sklearn.metrics import mean_squared_error, r2_score # needed for the regression
 
-import statsmodels.formula.api as smf
+from models.model_MBI_v1_2.utils import calc_error
 
 @ModelBase.register
 class model_MBI_v1_2(ModelBase):
@@ -28,7 +29,8 @@ class model_MBI_v1_2(ModelBase):
         self.parameters = {}
 
         # the minimum error after the parameter sweep
-        self.E_min = [(float("inf"), ())]
+        # self.E_min = [(float("inf"), ())]
+        self.E_min = [(0.0, ())]
 
         self.single_store = None
 
@@ -441,7 +443,7 @@ class model_MBI_v1_2(ModelBase):
             self.out = param_dict["output_file"]
 
         def prepare_data(self):
-            self.logger.info("Preparing data for the regression")
+            self.logger.info("\tPreparing data for the regression")
 
             # prepare the data
             self.data_pd.loc[pd.isnull(self.data_pd.Umsatz_Pendler), 'Umsatz_Pendler'] = 0
@@ -466,14 +468,14 @@ class model_MBI_v1_2(ModelBase):
 
             d_train = self.prepare_data()
 
-            self.logger.info("Training the regression model")
+            self.logger.info("\tTraining the regression model")
             fitted_model= smf.rlm(formula=self.regr_formula, data=d_train).fit()
 
             with open(self.out, mode="w") as out_f:
                 out_f.write(fitted_model.summary().as_text())
 
             # now predict on the whole dataset
-            self.logger.info("Running regression model on test data ")
+            self.logger.info("\tRunning regression model on test data ")
 
             y_train = self.data_pd.copy(deep=True)
 
@@ -481,7 +483,7 @@ class model_MBI_v1_2(ModelBase):
             # The reason is that the Migrolino format doesn't appear in the training data and so
             # we can't do predictions for it. TODO: Find a smarter way to do this check. This feels hacky.
             if 'Format' in self.regr_formula:
-                self.logger.info("Excluding Migrolino stores from test data, because \"Format\" is a regressor")
+                self.logger.info("\tExcluding Migrolino stores from test data, because \"Format\" is a regressor")
                 y_train = y_train.loc[y_train.Format != 'Migrolino']
 
             y_train.loc[:, "Umsatz_Regression"] = fitted_model.predict(y_train)
@@ -590,7 +592,7 @@ class model_MBI_v1_2(ModelBase):
             self.logger.error("%s", self.parameters.keys())
             sys.exit(1)
 
-    def total_umsatz(self, param_vector, rest):
+    def optimize_umsatz(self, param_vector, rest):
 
         # general parameters
         cpu_count = rest["parallel"]["cpu_count"]
@@ -611,13 +613,17 @@ class model_MBI_v1_2(ModelBase):
         statent_halbzeit_factor_smvm = param_vector[6]
         ausgaben_arbeitnehmer = param_vector[7]
 
+
+
+        ###
         umsatz_haushalte = self.umsatz_components.calc_umsatz_haushalt(rest["pandas_dt"],
                                                                        {"factor_LAT": factor_LAT,
                                                                         "hh_halbzeit": hh_halbzeit,
                                                                         "hh_halbzeit_factor_smvm": hh_halbzeit_factor_smvm,
                                                                         "cpu_count": cpu_count,
                                                                         "chunk_size": chunk_size,
-                                                                        "debug": debug})
+                                                                        "debug": debug
+        })
 
         umsatz_ov = self.umsatz_components.calc_umsatz_oev(rest["pandas_dt"],
                                                                        {"ov_halbzeit": ov_halbzeit,
@@ -629,45 +635,25 @@ class model_MBI_v1_2(ModelBase):
                                                                      "statent_halbzeit_factor_smvm": statent_halbzeit_factor_smvm,
                                                                      "ausgaben_arbeitnehmer": ausgaben_arbeitnehmer})
 
+
         umsatz_merged_pd = pd.merge(umsatz_haushalte, umsatz_ov, how="left", left_index=True, right_index=True)
 
         umsatz_merged_pd = pd.merge(umsatz_merged_pd, umsatz_statent, how="left", left_index=True, right_index=True)
 
-        (total_error_mean, total_error_median, total_error_quant_median, total_error_quant_mean, sample_size) = \
-            self.calc_error(umsatz_merged_pd, col_modelUmsatz=["Umsatz_Haushalte",
-                                                               "Umsatz_Arbeitnehmer",
-                                                               "Umsatz_Pendler"],
-                            col_istUmsatz="istUmsatz", quant=0.95, single_store = self.single_store)
-        return total_error_median
+        umsatz_merged_pd['Umsatz_Total'] = umsatz_merged_pd["Umsatz_Haushalte"].fillna(0) + \
+                                           umsatz_merged_pd["Umsatz_Arbeitnehmer"].fillna(0) + \
+                                           umsatz_merged_pd["Umsatz_Pendler"].fillna(0)
 
-    def calc_error(self, pandas_pd, col_modelUmsatz, col_istUmsatz, quant, single_store=None):
+        (total_error_mean, total_error_median,
+         total_error_quant_median, total_error_quant_mean,
+         goodness, inner_range, sample_size) = \
+            calc_error(umsatz_merged_pd,
+                       col_modelUmsatz="Umsatz_Total",
+                       col_istUmsatz="istUmsatz", quant=0.95, inner_range=0.1,
+                       single_store = self.single_store)
 
-        # --- Calculate the error ------------------------------------------------
-        if single_store is not None:
-            x = pandas_pd.loc[pandas_pd.StoreName == single_store]
-            # error_E_i = np.power(x[col_modelUmsatz] - x[col_istUmsatz], 2) / x[col_istUmsatz]
-            error_E_i = (x[col_modelUmsatz] - x[col_istUmsatz]) / x[col_istUmsatz]
 
-        else:
-            error_E_i = (pandas_pd[col_modelUmsatz] - pandas_pd[col_istUmsatz]) / pandas_pd[col_istUmsatz]
-            # error_E_i = np.power(pandas_pd[col_modelUmsatz] - pandas_pd[col_istUmsatz], 2) / pandas_pd[col_istUmsatz]
-
-        error_E_i = error_E_i.loc[~np.isnan(error_E_i)]
-
-        # total_error = np.sqrt(np.sum(error_E_i))
-        total_error_mean = np.mean(error_E_i)
-        total_error_median = np.median(error_E_i)
-        error_quantile = error_E_i.quantile(q=quant)
-        # total_error_quant = np.sqrt(np.sum(error_E_i.loc[error_E_i <= error_quantile]))
-        total_error_quant_median = np.median(error_E_i.loc[error_E_i <= error_quantile])
-        total_error_quant_mean = np.mean(error_E_i.loc[error_E_i <= error_quantile])
-
-        num_stores = len(error_E_i)
-        num_relevant_stores = len(error_E_i.loc[error_E_i <= error_quantile])
-
-        return (total_error_mean, total_error_median, total_error_quant_median, total_error_quant_mean,
-                (num_relevant_stores, num_stores))
-
+        return 1.0 / inner_range
 
     def entry(self, tables_dict, config, logger):
         self.logger = logger
@@ -698,7 +684,7 @@ class model_MBI_v1_2(ModelBase):
 
         if self.optimize:
             logger.info("Starting parameter optimization ")
-            res = minimize(self.total_umsatz,
+            res = minimize(self.optimize_umsatz,
                            x0=(np.array([self.parameters["factor_LAT"][0],
                                          self.parameters["hh_halbzeit"][0],
                                          self.parameters["hh_halbzeit_factor_smvm"][0],
@@ -787,30 +773,34 @@ class model_MBI_v1_2(ModelBase):
                                                umsatz_merged_pd["Umsatz_Pendler"].fillna(0)+\
                                                umsatz_merged_pd["Umsatz_DTB"].fillna(0)
 
-            (total_error_mean, total_error_median, total_error_quant_median, total_error_quant_mean, sample_size) = \
-                self.calc_error(umsatz_merged_pd, col_modelUmsatz="Umsatz_Total", col_istUmsatz="istUmsatz",
-                                quant=0.95, single_store = self.single_store)
+            (total_error_mean, total_error_median,
+             total_error_quant_median, total_error_quant_mean,
+             goodness, inner_range,sample_size) = calc_error(umsatz_merged_pd,
+                                                 col_modelUmsatz="Umsatz_Total",
+                                                 col_istUmsatz="istUmsatz", quant=0.95, inner_range=0.1,
+                                                 single_store = self.single_store)
 
-            if np.abs(total_error_quant_median) < self.E_min[len(self.E_min) - 1][0]:
+            if inner_range > self.E_min[len(self.E_min) - 1][0]:
                 umsatz_total_optimal_pd = umsatz_merged_pd
-                self.logger.info("New minimum found.")
-                self.logger.info("Total error all stores (median/mean): %f / %f", total_error_median, total_error_mean)
-                self.logger.info("Total error considered stores only (median/mean): %f / %f", total_error_quant_median,
+                self.logger.info("NEW MINIMUM FOUND.")
+                self.logger.info("\tInner range percentage = %f", inner_range)
+                self.logger.info("\tGoodness (kurtosis+skew) = %f", goodness)
+                self.logger.info("\tTotal error all stores (median/mean): %f / %f", total_error_median, total_error_mean)
+                self.logger.info("\tTotal error stores (quantile) (median/mean): %f / %f", total_error_quant_median,
                                  total_error_quant_mean)
-                self.logger.info("Number of considered stores out of all stores %d / %d",
-                                 sample_size[0], sample_size[1])
-                self.logger.info("Parameters: ")
-                self.logger.info("factor_LAT: %f ", cache_haushalte_pd[idx_haushalt][0][0])
-                self.logger.info("hh_halbzeit: %f ", cache_haushalte_pd[idx_haushalt][0][1])
-                self.logger.info("hh_halbzeit_factor_smvm: %f ", cache_haushalte_pd[idx_haushalt][0][2])
-                self.logger.info("ov_halbzeit: %f ", cache_pendler_pd[idx_ov][0][0])
-                self.logger.info("ausgaben_pendler: %f ", cache_pendler_pd[idx_ov][0][1])
-                self.logger.info("statent_halb_zeit: %f ", cache_statent_pd[idx_statent][0][0])
-                self.logger.info("statent_halbzeit_factor_smvm: %f ", cache_statent_pd[idx_statent][0][1])
-                self.logger.info("ausgaben_arbeitnehmer: %f ", cache_statent_pd[idx_statent][0][2])
-                self.logger.info("DTB: %f ", cache_dtb_pd[idx_dtb][0])
+                self.logger.info("\tNumber of quantile stores = %d out of  %d", sample_size[0], sample_size[1])
+                self.logger.info("\tParameters: ")
+                self.logger.info("\t\tfactor_LAT: %f ", cache_haushalte_pd[idx_haushalt][0][0])
+                self.logger.info("\t\thh_halbzeit: %f ", cache_haushalte_pd[idx_haushalt][0][1])
+                self.logger.info("\t\thh_halbzeit_factor_smvm: %f ", cache_haushalte_pd[idx_haushalt][0][2])
+                self.logger.info("\t\tov_halbzeit: %f ", cache_pendler_pd[idx_ov][0][0])
+                self.logger.info("\t\tausgaben_pendler: %f ", cache_pendler_pd[idx_ov][0][1])
+                self.logger.info("\t\tstatent_halb_zeit: %f ", cache_statent_pd[idx_statent][0][0])
+                self.logger.info("\t\tstatent_halbzeit_factor_smvm: %f ", cache_statent_pd[idx_statent][0][1])
+                self.logger.info("\t\tausgaben_arbeitnehmer: %f ", cache_statent_pd[idx_statent][0][2])
+                self.logger.info("\t\tDTB: %f ", cache_dtb_pd[idx_dtb][0])
 
-                self.E_min[len(self.E_min) - 1] = (np.abs(total_error_quant_median),
+                self.E_min[len(self.E_min) - 1] = (inner_range,
                                                {"factor_LAT": cache_haushalte_pd[idx_haushalt][0][0],
                                                 "hh_halbzeit": cache_haushalte_pd[idx_haushalt][0][1],
                                                 "hh_halbzeit_factor_smvm": cache_haushalte_pd[idx_haushalt][0][2],
@@ -844,12 +834,16 @@ class model_MBI_v1_2(ModelBase):
                                                  "output_file": self.umsatz_output_csv + '.regression'}).run()
 
                 # calculate the error after the regression
-                (_, _, total_error_quant_median, _, sample_size) = \
-                     self.calc_error(umsatz_total_optimal_pd, col_modelUmsatz="Umsatz_Regression",
-                                     col_istUmsatz="istUmsatz", quant=0.95)
-                self.logger.info("Median Error after regression over considered stores is %f ", total_error_quant_median)
-                self.logger.info("Number of considered stores out of all stores %d / %d",
-                             sample_size[0], sample_size[1])
+                (_, _, total_error_quant_median, _, goodness, inner_range,
+                                                    sample_size) = calc_error(umsatz_total_optimal_pd,
+                                                                              col_modelUmsatz="Umsatz_Regression",
+                                                                              col_istUmsatz="istUmsatz",
+                                                                              inner_range=0.1,
+                                                                              quant=1.0) # no restriction on quantiles here
+                self.logger.info("Inner range percentage = %f", inner_range)
+                self.logger.info("Median Error after regression = %f ", total_error_quant_median)
+                self.logger.info("Goodness (kurtosis+skewn) = %f", goodness)
+                self.logger.info("Number of quantile quantile stores = %d out of  %d", sample_size[0], sample_size[1])
 
         # --- FINALIZE ------
         output_fname = self.umsatz_output_csv + '.txt'
